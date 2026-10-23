@@ -34,3 +34,5 @@
 - [x] **Admin-Bildmarke:** Die Seitenleiste der Verwaltung zeigt das originale Pflanzfarm-Logo als vollständig sichtbare, kontrastreiche Bildmarke statt eines unpassenden Platzhalters.
 
 - [x] **GitHub-Quellcode-Übergabe:** Der interaktive, statische Prototyp liegt vollständig im öffentlichen Repository `stibe881/pflanzfarm.ch` auf `main`. Asset-URLs, interne Navigation und Direktaufrufe der öffentlichen Unterseiten sind für `/pflanzfarm.ch/` vorbereitet. Die Einrichtung und Auslösung von GitHub Pages erfolgt auf Benutzerwunsch manuell in GitHub. GitHub Pages stellt nur die Demo bereit; Laravel, MySQL, Stripe und Resend verbleiben für den späteren Serverbetrieb.
+
+- [ ] **GitHub-Pages-Fehlerbehebung:** Der fertig gebaute Vite-Output wird als eigenständiger Branch `gh-pages` bereitgestellt. Dieser Branch enthält nur statische Dateien aus `dist`, einschliesslich `.nojekyll` und dem SPA-Fallback `404.html`. Nach der Umstellung der GitHub-Pages-Quelle auf `gh-pages` / `/(root)` muss `https://stibe881.github.io/pflanzfarm.ch/` ohne eine 404-Anfrage für `src/main.tsx` laden; direkte Aufrufe öffentlicher Unterseiten müssen weiter funktionieren.
