@@ -503,7 +503,7 @@ function App() {
 
   useEffect(() => {
     document.title = pageTitles[view]
-    const timer = window.setTimeout(() => document.getElementById('main-content')?.focus(), 0)
+    const timer = window.setTimeout(() => document.getElementById('main-content')?.focus({ preventScroll: true }), 0)
     return () => window.clearTimeout(timer)
   }, [view])
 
@@ -583,7 +583,7 @@ function App() {
     if (staysOnSamePage) {
       setMobileNavOpen(false)
       scrollToPageStart()
-      window.setTimeout(() => document.getElementById('main-content')?.focus(), 0)
+      window.setTimeout(() => document.getElementById('main-content')?.focus({ preventScroll: true }), 0)
     }
   }
 
@@ -992,6 +992,36 @@ function AdminInventory({ products, StatusPill }: { products: Product[]; StatusP
 
 function AdminNewsletter({ newsletter, onChange, onSave, onTest, onSend }: { newsletter: NewsletterDraft; onChange: NewsletterUpdate; onSave: () => void; onTest: () => void; onSend: () => void }) {
   const selectedImage = newsletterImageOptions.find((image) => image.value === newsletter.image)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isDraggingImage, setIsDraggingImage] = useState(false)
+  const [uploadMessage, setUploadMessage] = useState('')
+
+  const triggerFilePicker = () => fileInputRef.current?.click()
+  const chooseLibraryImage = (value: string) => {
+    const image = newsletterImageOptions.find((item) => item.value === value)
+    onChange('image', value)
+    if (image) onChange('imageAlt', image.alt)
+    setUploadMessage(image ? `${image.label} wurde als Bildblock ausgewählt.` : '')
+  }
+  const acceptImageFile = (file?: File) => {
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setUploadMessage('Bitte wählen Sie eine Bilddatei im Format JPG, PNG oder WebP aus.')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadMessage('Die Bilddatei ist grösser als 5 MB. Bitte wählen Sie eine kleinere Datei aus.')
+      return
+    }
+    const reader = new FileReader()
+    reader.addEventListener('load', () => {
+      if (typeof reader.result !== 'string') return
+      onChange('image', reader.result)
+      onChange('imageAlt', file.name.replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' '))
+      setUploadMessage(`${file.name} wurde für die lokale Vorschau hinzugefügt.`)
+    })
+    reader.readAsDataURL(file)
+  }
 
   return <div className="newsletter-admin">
     <div className="admin-intro">
@@ -1013,9 +1043,16 @@ function AdminNewsletter({ newsletter, onChange, onSave, onTest, onSend }: { new
           <h3>Inhaltsblöcke</h3>
           <label>Überschrift<input value={newsletter.headline} onChange={(event) => onChange('headline', event.target.value)} /></label>
           <label>Text<textarea rows={5} value={newsletter.body} onChange={(event) => onChange('body', event.target.value)} /></label>
-          <label>Bild auswählen<select value={selectedImage ? newsletter.image : ''} onChange={(event) => { const image = newsletterImageOptions.find((item) => item.value === event.target.value); onChange('image', event.target.value); if (image) onChange('imageAlt', image.alt) }}>{newsletterImageOptions.map((image) => <option value={image.value} key={image.value}>{image.label}</option>)}{!selectedImage && <option value={newsletter.image}>Eigene Bild-URL</option>}</select></label>
-          <label>Bild-URL<input value={newsletter.image} onChange={(event) => onChange('image', event.target.value)} placeholder="https://…" /></label>
-          <label>Alternativtext<input value={newsletter.imageAlt} onChange={(event) => onChange('imageAlt', event.target.value)} /></label>
+          <section className="newsletter-image-block" aria-labelledby="newsletter-image-title">
+            <div className="newsletter-image-block__header"><div><span>Bildblock</span><h4 id="newsletter-image-title">Bild hinzufügen</h4></div>{newsletter.image && <button type="button" className="newsletter-image-block__remove" onClick={() => { onChange('image', ''); onChange('imageAlt', ''); setUploadMessage('Bildblock entfernt.') }}>Entfernen</button>}</div>
+            <input ref={fileInputRef} className="newsletter-file-input" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { acceptImageFile(event.target.files?.[0]); event.currentTarget.value = '' }} />
+            <div className={`newsletter-image-dropzone ${isDraggingImage ? 'newsletter-image-dropzone--active' : ''}`} role="button" tabIndex={0} aria-label="Bild per Drag-and-drop oder Dateiauswahl hinzufügen" onClick={triggerFilePicker} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); triggerFilePicker() } }} onDragEnter={(event) => { event.preventDefault(); setIsDraggingImage(true) }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setIsDraggingImage(false)} onDrop={(event) => { event.preventDefault(); setIsDraggingImage(false); acceptImageFile(event.dataTransfer.files?.[0]) }}>
+              <span className="newsletter-image-dropzone__icon"><Image size={22} /><Plus size={13} /></span><strong>Bild hier ablegen</strong><span>oder vom Computer auswählen</span><small>JPG, PNG oder WebP · maximal 5 MB · nur lokale Vorschau</small>
+            </div>
+            {uploadMessage && <p className="newsletter-image-upload-message" role="status">{uploadMessage}</p>}
+            <div className="newsletter-image-library"><label>Aus Pflanzenbibliothek auswählen<select value={selectedImage ? newsletter.image : ''} onChange={(event) => chooseLibraryImage(event.target.value)}><option value="">Motiv auswählen</option>{newsletterImageOptions.map((image) => <option value={image.value} key={image.value}>{image.label}</option>)}</select></label>{newsletter.image && <div className="newsletter-image-preview"><img src={assetUrl(newsletter.image)} alt={newsletter.imageAlt || ''} /><div><b>Bildvorschau</b><span>{selectedImage?.label ?? 'Eigenes Bild aus lokaler Vorschau'}</span></div></div>}</div>
+            <label>Alternativtext<input value={newsletter.imageAlt} onChange={(event) => onChange('imageAlt', event.target.value)} placeholder="Bildinhalt für Screenreader beschreiben" /></label>
+          </section>
           <div className="form-two"><label>Button-Text<input value={newsletter.ctaLabel} onChange={(event) => onChange('ctaLabel', event.target.value)} /></label><label>Ziel-URL<input type="url" value={newsletter.ctaUrl} onChange={(event) => onChange('ctaUrl', event.target.value)} placeholder="https://…" /></label></div>
           <label className="switch-row"><span><b>Zusatzblock anzeigen</b><small>Weitere Informationen zwischen CTA und Fussbereich</small></span><input type="checkbox" checked={newsletter.showExtraBlock} onChange={(event) => onChange('showExtraBlock', event.target.checked)} /><i /></label>
           {newsletter.showExtraBlock && <label>Zusatztext<textarea rows={3} value={newsletter.extraText} onChange={(event) => onChange('extraText', event.target.value)} /></label>}
