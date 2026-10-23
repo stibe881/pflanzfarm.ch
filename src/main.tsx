@@ -459,6 +459,7 @@ function App() {
   const consentDialogRef = useRef<HTMLElement | null>(null)
   const popupDialogRef = useRef<HTMLElement | null>(null)
   const shopSearchRef = useRef<HTMLInputElement | null>(null)
+  const heroVideoRef = useRef<HTMLVideoElement | null>(null)
   const sessionPopupHistoryRef = useRef(new Set<string>())
   const cartFeedbackTimerRef = useRef<number | null>(null)
   const cartPulseTimerRef = useRef<number | null>(null)
@@ -765,6 +766,25 @@ function App() {
     goTo(popup.target === 'shop' ? 'shop' : 'home')
   }
 
+  const prepareHeroVideo = (element: HTMLVideoElement | null) => {
+    heroVideoRef.current = element
+    if (!element) return
+    element.setAttribute('playsinline', '')
+    element.setAttribute('webkit-playsinline', '')
+    element.muted = true
+    element.defaultMuted = true
+    element.playsInline = true
+    element.controls = false
+    element.disablePictureInPicture = true
+  }
+
+  const startHeroVideoInline = (element: HTMLVideoElement) => {
+    element.muted = true
+    element.defaultMuted = true
+    void element.play().catch(() => { /* Das Poster bleibt sichtbar, falls ein Browser Autoplay blockiert. */ })
+    setHeroVideoReady(true)
+  }
+
   const Header = () => (
     <header className={headerScrolled ? 'site-header site-header--scrolled' : 'site-header'}>
       <div className="announcement-bar">
@@ -801,7 +821,7 @@ function App() {
           <source type="image/webp" srcSet={assetSourceSet('/assets/pflanzfarm-hero-mitarbeitende-poster-768.webp 768w, /assets/pflanzfarm-hero-mitarbeitende-poster-1280.webp 1280w')} sizes="100vw" />
           <img src={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-poster-1280.webp')} srcSet={assetSourceSet('/assets/pflanzfarm-hero-mitarbeitende-poster-768.webp 768w, /assets/pflanzfarm-hero-mitarbeitende-poster-1280.webp 1280w')} sizes="100vw" width="1280" height="720" fetchPriority="high" decoding="async" alt="" />
         </picture>
-        {heroVideoEnabled && <video className={heroVideoReady ? 'hero__video hero__video--ready' : 'hero__video'} autoPlay muted loop playsInline preload="metadata" poster={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-poster-1280.avif')} aria-hidden="true" onCanPlay={() => setHeroVideoReady(true)}>
+        {heroVideoEnabled && <video ref={prepareHeroVideo} className={heroVideoReady ? 'hero__video hero__video--ready' : 'hero__video'} autoPlay muted loop playsInline disablePictureInPicture controls={false} controlsList="nodownload noplaybackrate nofullscreen" tabIndex={-1} preload="metadata" poster={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-poster-1280.avif')} aria-hidden="true" onCanPlay={(event) => startHeroVideoInline(event.currentTarget)}>
           <source src={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-forward-hq-loop.mp4')} type="video/mp4" />
         </video>}
         <div className="hero__shade" />

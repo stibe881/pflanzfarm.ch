@@ -94,3 +94,7 @@ Die finale Webdatei ist 12.9 Sekunden lang, 1280 × 720 px gross und wird mit ru
 
 Die Rücklaufvariante wird nicht verwendet, weil die Arbeitsschritte der Mitarbeitenden dadurch rückwärts wirken. Die finale Webfassung spielt den freigegebenen Clip ausschliesslich vorwärts und verlangsamt die gesamte Kamerafahrt auf 150 %. Um die Wiederholung ohne Bildsprung zu schliessen, beginnt und endet sie mit einer kurzen, gleichfarbigen Überblendung in das dunkle Pflanzfarm-Grün `#0a2a1f`. Diese Farbe entspricht der vorhandenen Hero-Überlagerung, sodass die Rücksetzung vom Ende zum Start als bewusste, ruhige Bildatmung erscheint – nicht als Rückwärtsbewegung oder Doppelbild.
 Die finale vorwärtsgerichtete Webdatei ist 12.0 Sekunden lang, 1280 × 720 px gross und wird mit rund 7.8 Mbit/s ausgeliefert. Sie wurde in einer zweifachen Wiedergabe auf natürliche Vorwärtsbewegung, Bildschärfe, ruhiges Tempo und eine Ghosting-freie Markenblende am Loop-Ende geprüft.
+
+### Inline-Playback statt nativer Videoplayer
+
+Das Hero-Medium bleibt ein rein dekorativer Hintergrund und darf nie als bedienbarer Player erscheinen. Neben `autoplay`, `muted`, `loop` und `playsInline` setzt die React-Referenz beim Einhängen auch das mobile Kompatibilitätsattribut `webkit-playsinline`, erzwingt den stummen Inline-Start und deaktiviert Controls sowie Picture-in-Picture. Die Videoebene hat keine Pointer-Interaktion; die sichtbaren Hero-Buttons bleiben darüber uneingeschränkt bedienbar.

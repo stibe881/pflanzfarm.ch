@@ -583,3 +583,16 @@ main[id="main-content"] { animation:page-enter .34s ease both; }
 @media (prefers-reduced-motion:reduce) {
   .hero__video { display:none; }
 }
+
+
+/* Das Hero-Video ist ein rein dekorativer Hintergrund, niemals ein bedienbarer Player. */
+.hero__video {
+  pointer-events:none;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+}
+.hero__video::-webkit-media-controls,
+.hero__video::-webkit-media-controls-enclosure {
+  display:none !important;
+}
