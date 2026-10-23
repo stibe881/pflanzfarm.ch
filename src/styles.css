@@ -489,3 +489,20 @@ p { color:var(--muted); line-height:1.65; }
 .consent-dialog__choice:focus-visible { outline:3px solid #d79a7e; outline-offset:3px; }
 .consent-dialog .text-link { min-height:24px; color:#24493a; font-size:.73rem; }
 @media (max-width:520px) { .consent-backdrop { padding:12px; place-items:end center; } .consent-dialog { padding:20px 18px 16px; } .consent-dialog__actions { grid-template-columns:1fr; } }
+
+/* Visuelle Angleichung der Datenschutzkarte an die Pflanzfarm-Oberfläche */
+.consent-backdrop { place-items:end end; padding:28px; background:rgba(5,28,20,.12); }
+.consent-dialog { width:min(380px,100%); padding:21px 21px 17px; border:1px solid #e0dbcf; border-left:1px solid #e0dbcf; border-radius:8px; background:#f7f3ea; box-shadow:var(--shadow); }
+.consent-dialog__eyebrow { margin-bottom:5px; color:#a16952; font-size:.72rem; letter-spacing:.01em; }
+.consent-dialog h2 { margin:0 0 8px; font-size:1.36rem; line-height:1.18; }
+.consent-dialog > p { margin:0 0 14px; font-size:.8rem; line-height:1.5; }
+.consent-option { align-items:center; gap:12px; padding:12px 0; border:0; border-top:1px solid #ddd8cc; border-radius:0; background:transparent; }
+.consent-option span { gap:3px; }
+.consent-option b { font-size:.78rem; }
+.consent-option small { font-size:.68rem; line-height:1.4; }
+.consent-option input { width:18px; height:18px; margin-top:0; border-radius:3px; }
+.consent-dialog__actions { gap:8px; margin:13px 0 10px; }
+.consent-dialog__choice { min-height:39px; border-color:#315f4b; border-radius:4px; background:transparent; color:#153c31; font-size:.68rem; }
+.consent-dialog__choice:hover { background:#e8eee4; }
+.consent-dialog .text-link { color:#315f4b; font-size:.7rem; }
+@media (max-width:520px) { .consent-backdrop { padding:12px; place-items:end center; } .consent-dialog { width:min(100%,400px); padding:19px 18px 15px; } }
