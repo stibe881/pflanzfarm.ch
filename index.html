@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="de-CH">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#143d31" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>Pflanzfarm – Interaktiver Prototyp</title>
+    <script>
+      (function () {
+        var recoveredPath = new URLSearchParams(window.location.search).get('p')
+        if (!recoveredPath) return
+        var basePath = window.location.pathname.replace(/\/$/, '')
+        var path = recoveredPath.charAt(0) === '/' ? recoveredPath : '/' + recoveredPath
+        window.history.replaceState(null, '', basePath + path + window.location.hash)
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
