@@ -564,7 +564,7 @@ main[id="main-content"] { animation:page-enter .34s ease both; }
 @media (max-width:760px) { .gallery-insight { min-height:420px; } }
 
 
-/* Hero-Video: optimierter, stummer Desktop-Hintergrund mit responsivem Standbild */
+/* Hero-Video: optimierter, stummer Hintergrund mit Bewegungs-Fallback */
 .hero__poster,
 .hero__poster img,
 .hero__video {
@@ -580,6 +580,6 @@ main[id="main-content"] { animation:page-enter .34s ease both; }
 .hero__video--ready { opacity:1; }
 .hero__shade { z-index:2; }
 .hero__content { z-index:3; }
-@media (max-width:760px), (prefers-reduced-motion:reduce) {
+@media (prefers-reduced-motion:reduce) {
   .hero__video { display:none; }
 }

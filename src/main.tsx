@@ -549,18 +549,15 @@ function App() {
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const compactViewport = window.matchMedia('(max-width: 760px)')
     const updateHeroVideo = () => {
-      const enabled = !reducedMotion.matches && !compactViewport.matches
+      const enabled = !reducedMotion.matches
       setHeroVideoEnabled(enabled)
       if (!enabled) setHeroVideoReady(false)
     }
     updateHeroVideo()
     reducedMotion.addEventListener('change', updateHeroVideo)
-    compactViewport.addEventListener('change', updateHeroVideo)
     return () => {
       reducedMotion.removeEventListener('change', updateHeroVideo)
-      compactViewport.removeEventListener('change', updateHeroVideo)
     }
   }, [])
 
