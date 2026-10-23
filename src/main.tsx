@@ -802,7 +802,7 @@ function App() {
           <img src={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-poster-1280.webp')} srcSet={assetSourceSet('/assets/pflanzfarm-hero-mitarbeitende-poster-768.webp 768w, /assets/pflanzfarm-hero-mitarbeitende-poster-1280.webp 1280w')} sizes="100vw" width="1280" height="720" fetchPriority="high" decoding="async" alt="" />
         </picture>
         {heroVideoEnabled && <video className={heroVideoReady ? 'hero__video hero__video--ready' : 'hero__video'} autoPlay muted loop playsInline preload="metadata" poster={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-poster-1280.avif')} aria-hidden="true" onCanPlay={() => setHeroVideoReady(true)}>
-          <source src={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-seamless-loop.mp4')} type="video/mp4" />
+          <source src={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-slow-hq-seamless-loop.mp4')} type="video/mp4" />
         </video>}
         <div className="hero__shade" />
         <div className="container hero__content">
