@@ -48,3 +48,5 @@
 - [x] **Erneute Kontrastprüfung für Lesetext:** Alle sichtbaren Fliesstexte und sekundären Beschriftungen auf der Landingpage werden erneut gegen ihren tatsächlichen Hintergrund geprüft und nötigenfalls auf mindestens WCAG-AA-Kontrast angehoben, ohne das bestehende Layout oder Bildmaterial zu verändern.
 
 - [x] **Popup-Schalter:** Die Popup-Aktivierung erhält denselben kompakten, klar beschrifteten Kippschalter wie der Newsletter-Zusatzblock. Der bisherige überbreite Balken wird entfernt; Ein-/Aus-Zustand, Tastaturfokus und ausreichende Zielgrösse bleiben sichtbar.
+
+- [x] **Dezente Datenschutzmeldung:** Die Einwilligungsabfrage erscheint als zurückhaltende, zur Pflanzenbranche passende Privatsphäre-Karte. Sie erläutert die tatsächlich eingesetzte optionale lokale Speicherung verständlich, bietet gleichwertige Entscheidungen ohne Dark Patterns und bleibt per Tastatur sowie Screenreader zugänglich.
