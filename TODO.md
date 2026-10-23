@@ -42,3 +42,5 @@
 - [x] **Footer-Link zur Verwaltung:** Der Footer enthält einen gut erkennbaren Link `Verwaltung (Demo)`, der zur Admin-Route führt. Der Link erhält eine eindeutige Beschriftung, funktioniert auf GitHub Pages und darf keine echte Anmeldung oder den Schutz realer Daten vortäuschen.
 
 - [x] **Moderner Newsletter-Bildblock:** Die Newsletter-Redaktion erlaubt das Hinzufügen von Bildern per Drag-and-drop oder Dateiauswahl, zeigt eine direkte Vorschau, übernimmt einen bearbeitbaren Alternativtext und behält die Auswahl vorhandener Pflanzenmotive. Der Prototyp weist transparent darauf hin, dass neue Dateien nur lokal im Browser angezeigt werden; die spätere Laravel-Version speichert sie dauerhaft und prüft Dateityp sowie Dateigrösse serverseitig.
+
+- [x] **Newsletter-Schalter für Zusatzblock:** Der Zusatzblock erhält einen kompakten, klar beschrifteten Kippschalter mit sichtbarem Ein-/Aus-Zustand, Tastaturfokus und ausreichender Zielgrösse. Der bisherige überbreite Balken wird entfernt.
