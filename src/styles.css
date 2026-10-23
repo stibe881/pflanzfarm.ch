@@ -458,3 +458,17 @@ p { color:var(--muted); line-height:1.65; }
 .newsletter-toggle-control input:focus-visible + .newsletter-toggle-control__track { outline:3px solid #d79a7e; outline-offset:3px; }
 .newsletter-toggle-control__state { min-width:33px; font-size:.74rem; font-weight:700; }
 @media (max-width:520px) { .newsletter-toggle-card { align-items:flex-start; flex-direction:column; gap:12px; } }
+
+/* popup activation toggle */
+.popup-toggle-card { display:flex; align-items:center; justify-content:space-between; gap:20px; margin:16px 0; padding:15px 16px; border:1px solid #d6dfd6; border-radius:7px; background:#f7faf6; }
+.popup-toggle-card h3 { margin:0; font-family:"Iowan Old Style",Baskerville,"Palatino Linotype",Palatino,Georgia,serif; font-size:1.05rem; letter-spacing:-.02em; }
+.popup-toggle-card p { margin:3px 0 0; color:#24493a; font-size:.74rem; line-height:1.42; }
+.popup-toggle-control { display:inline-flex !important; grid-template-columns:none !important; grid-auto-flow:column; align-items:center; gap:9px !important; flex:0 0 auto; margin:0 !important; color:#153c31 !important; cursor:pointer; }
+.popup-form .popup-toggle-control input { position:absolute; width:1px; height:1px; min-height:0; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+.popup-toggle-control__track { position:relative; width:46px; height:26px; border-radius:999px; background:#a6b7aa; box-shadow:inset 0 0 0 1px rgba(15,47,37,.16); transition:background .18s; }
+.popup-toggle-control__track::after { content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 2px 5px rgba(11,43,32,.22); transition:transform .18s; }
+.popup-toggle-control input:checked + .popup-toggle-control__track { background:#2d7450; }
+.popup-toggle-control input:checked + .popup-toggle-control__track::after { transform:translateX(20px); }
+.popup-toggle-control input:focus-visible + .popup-toggle-control__track { outline:3px solid #d79a7e; outline-offset:3px; }
+.popup-toggle-control__state { min-width:33px; font-size:.74rem; font-weight:700; }
+@media (max-width:520px) { .popup-toggle-card { align-items:flex-start; flex-direction:column; gap:12px; } }
