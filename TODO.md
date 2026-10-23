@@ -44,3 +44,5 @@
 - [x] **Moderner Newsletter-Bildblock:** Die Newsletter-Redaktion erlaubt das Hinzufügen von Bildern per Drag-and-drop oder Dateiauswahl, zeigt eine direkte Vorschau, übernimmt einen bearbeitbaren Alternativtext und behält die Auswahl vorhandener Pflanzenmotive. Der Prototyp weist transparent darauf hin, dass neue Dateien nur lokal im Browser angezeigt werden; die spätere Laravel-Version speichert sie dauerhaft und prüft Dateityp sowie Dateigrösse serverseitig.
 
 - [x] **Newsletter-Schalter für Zusatzblock:** Der Zusatzblock erhält einen kompakten, klar beschrifteten Kippschalter mit sichtbarem Ein-/Aus-Zustand, Tastaturfokus und ausreichender Zielgrösse. Der bisherige überbreite Balken wird entfernt.
+
+- [x] **Erneute Kontrastprüfung für Lesetext:** Alle sichtbaren Fliesstexte und sekundären Beschriftungen auf der Landingpage werden erneut gegen ihren tatsächlichen Hintergrund geprüft und nötigenfalls auf mindestens WCAG-AA-Kontrast angehoben, ohne das bestehende Layout oder Bildmaterial zu verändern.
