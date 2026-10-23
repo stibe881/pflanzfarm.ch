@@ -59,7 +59,7 @@ Die Datenschutzerklärung dokumentiert den tatsächlichen Stand des Prototyps un
 
 Die WCAG-2.2-AA-Härtung umfasst Sprunglink, Landmarken, gut sichtbaren Fokus, native Formlabels, dialogfähige Consent-Bedienung, reduzierte Bewegung, ausreichende Zielgrössen und eine Barrierefreiheitserklärung. Ein automatisierter Check und ein manueller Tastatur- und Screenreader-Test sind vor der Live-Schaltung erforderlich. Vollständige Rechtssicherheit kann erst nach Bereitstellung der verantwortlichen Person, Rechtsform, Handelsregister-/UID-Angaben falls vorhanden, konkreten Aufbewahrungsfristen und abgeschlossenen Dienstleisterverträgen bestätigt werden.
 
-Im Prototypen sind zusätzlich dynamische Seitentitel, Fokus nach dem virtuellen Seitenwechsel, zugängliche Namen für Suche und Mengeneingaben, fokusverwaltete Dialoge, eine versionierte lokale Consent-Wahl und semantisch tastaturbedienbare Referenzkarten umgesetzt. Die Admin-Demo wird aus Footer und öffentlichem Routenmanifest entfernt; sie bleibt jedoch bis zur Laravel-Phase ausdrücklich keine Zugangskontrolle und darf nie reale Kundendaten als Client-Bundle ausliefern.
+Im Prototypen sind zusätzlich dynamische Seitentitel, Fokus nach dem virtuellen Seitenwechsel, zugängliche Namen für Suche und Mengeneingaben, fokusverwaltete Dialoge, eine versionierte lokale Consent-Wahl und semantisch tastaturbedienbare Referenzkarten umgesetzt. Die Admin-Demo ist auf ausdrücklichen Wunsch über einen klar bezeichneten Footer-Link erreichbar; sie bleibt jedoch bis zur Laravel-Phase ausdrücklich keine Zugangskontrolle und darf nie reale Kundendaten als Client-Bundle ausliefern.
 
 ## GitHub Pages
 

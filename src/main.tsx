@@ -447,6 +447,10 @@ function App() {
     return window.localStorage.getItem(popupKey) !== 'shown'
   }
 
+  const scrollToPageStart = () => {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
+
   const recordPopupDisplay = () => {
     if (!consent?.preferences) return
     if (popup.frequency === 'sitzung') window.sessionStorage.setItem(popupKey, 'shown')
@@ -506,8 +510,7 @@ function App() {
   useEffect(() => {
     setMobileNavOpen(false)
     setDismissedPopupKey(null)
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
+    scrollToPageStart()
   }, [view])
 
   useEffect(() => {
@@ -574,8 +577,14 @@ function App() {
   }, [popupVisible, popupKey])
 
   const goTo = (nextView: View) => {
+    const staysOnSamePage = nextView === view
     window.history.pushState({}, '', pageUrl(routeMap[nextView]))
     setView(nextView)
+    if (staysOnSamePage) {
+      setMobileNavOpen(false)
+      scrollToPageStart()
+      window.setTimeout(() => document.getElementById('main-content')?.focus(), 0)
+    }
   }
 
   const goToProduct = (product: Product) => {
@@ -583,6 +592,7 @@ function App() {
     setSelectedProduct(product)
     setSelectedVariant(product.variants[0])
     setProductQuantity(1)
+    scrollToPageStart()
     setView('product')
   }
 
@@ -908,7 +918,7 @@ function App() {
             <div className="container">
               <div><BrandMark compact onActivate={() => goTo('home')} /><p>Robuste Pflanzen und persönliche Gartenkompetenz aus der Schweiz.</p></div>
               <div><span>Shop</span><button onClick={() => goTo('shop')}>Alle Pflanzen</button><button onClick={() => goTo('cart')}>Warenkorb</button><button onClick={() => goTo('references')}>Referenzen</button></div>
-              <div><span>Service</span><button onClick={() => goTo('references')}>Gartenprojekt</button><button onClick={() => goTo('about')}>Über uns</button><button onClick={() => setToast('Kontakt im finalen Shop.')}>Kontakt</button></div>
+              <div><span>Service</span><button onClick={() => goTo('references')}>Gartenprojekt</button><button onClick={() => goTo('about')}>Über uns</button><button onClick={() => setToast('Kontakt im finalen Shop.')}>Kontakt</button><button onClick={() => goTo('admin')}>Verwaltung (Demo)</button></div>
               <div><span>Kontakt</span><p>Untergretti 2<br />6245 Ebersecken</p><p><a href="mailto:info@pflanzfarm.ch">info@pflanzfarm.ch</a></p><SocialLinks /></div>
             </div>
             <div className="container site-footer__bottom"><span>© 2026 Pflanzfarm · Interaktiver Prototyp</span><div className="footer-legal-links"><button onClick={() => goTo('privacy')}>Datenschutz</button><button onClick={() => goTo('imprint')}>Impressum</button><button onClick={() => goTo('accessibility')}>Barrierefreiheit</button><button onClick={openConsentSettings}>Cookie-Einstellungen</button></div></div>
