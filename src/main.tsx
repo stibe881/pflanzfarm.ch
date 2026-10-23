@@ -454,6 +454,8 @@ function App() {
   const [galleryMode, setGalleryMode] = useState<'photo' | 'traits' | 'care'>('photo')
   const [newsletterEmail, setNewsletterEmail] = useState('')
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false)
+  const [heroVideoEnabled, setHeroVideoEnabled] = useState(false)
+  const [heroVideoReady, setHeroVideoReady] = useState(false)
   const consentDialogRef = useRef<HTMLElement | null>(null)
   const popupDialogRef = useRef<HTMLElement | null>(null)
   const shopSearchRef = useRef<HTMLInputElement | null>(null)
@@ -543,6 +545,23 @@ function App() {
     updateHeader()
     window.addEventListener('scroll', updateHeader, { passive: true })
     return () => window.removeEventListener('scroll', updateHeader)
+  }, [])
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const compactViewport = window.matchMedia('(max-width: 760px)')
+    const updateHeroVideo = () => {
+      const enabled = !reducedMotion.matches && !compactViewport.matches
+      setHeroVideoEnabled(enabled)
+      if (!enabled) setHeroVideoReady(false)
+    }
+    updateHeroVideo()
+    reducedMotion.addEventListener('change', updateHeroVideo)
+    compactViewport.addEventListener('change', updateHeroVideo)
+    return () => {
+      reducedMotion.removeEventListener('change', updateHeroVideo)
+      compactViewport.removeEventListener('change', updateHeroVideo)
+    }
   }, [])
 
   useEffect(() => {
@@ -780,7 +799,14 @@ function App() {
   const Home = () => (
     <main id="main-content" tabIndex={-1}>
       <section className="hero">
-        <img src={assetUrl('/assets/pflanzfarm-hero.jpeg')} srcSet={assetSourceSet('/assets/pflanzfarm-hero-768.webp 768w, /assets/pflanzfarm-hero-1440.webp 1440w')} sizes="100vw" fetchPriority="high" decoding="async" alt="Pflanzfarm Steinmann mit Baumschule und Pflanzenquartieren" />
+        <picture className="hero__poster" aria-hidden="true">
+          <source type="image/avif" srcSet={assetSourceSet('/assets/pflanzfarm-hero-mitarbeitende-poster-768.avif 768w, /assets/pflanzfarm-hero-mitarbeitende-poster-1280.avif 1280w')} sizes="100vw" />
+          <source type="image/webp" srcSet={assetSourceSet('/assets/pflanzfarm-hero-mitarbeitende-poster-768.webp 768w, /assets/pflanzfarm-hero-mitarbeitende-poster-1280.webp 1280w')} sizes="100vw" />
+          <img src={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-poster-1280.webp')} srcSet={assetSourceSet('/assets/pflanzfarm-hero-mitarbeitende-poster-768.webp 768w, /assets/pflanzfarm-hero-mitarbeitende-poster-1280.webp 1280w')} sizes="100vw" width="1280" height="720" fetchPriority="high" decoding="async" alt="" />
+        </picture>
+        {heroVideoEnabled && <video className={heroVideoReady ? 'hero__video hero__video--ready' : 'hero__video'} autoPlay muted loop playsInline preload="metadata" poster={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-poster-1280.avif')} aria-hidden="true" onCanPlay={() => setHeroVideoReady(true)}>
+          <source src={assetUrl('/assets/pflanzfarm-hero-mitarbeitende-seamless-loop.mp4')} type="video/mp4" />
+        </video>}
         <div className="hero__shade" />
         <div className="container hero__content">
           <p className="hero__kicker">Pflanzen für ein schöneres Zuhause</p>

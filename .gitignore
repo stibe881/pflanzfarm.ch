@@ -2,3 +2,5 @@ node_modules/
 dist/
 .env
 .env.*
+video-proposals/
+video_*_analysis_*.md
