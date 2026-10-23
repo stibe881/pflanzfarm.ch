@@ -70,3 +70,11 @@ Der Produktionsbuild erhält für GitHub Pages die Repository-Basis `/pflanzfarm
 ### Newsletter-Bildblock
 
 Die Redaktion enthält eine zugängliche Dropzone für JPG-, PNG- und WebP-Dateien bis 5 MB sowie eine Dateiauswahl, eine direkte Vorschau, eine Auswahl vorhandener Pflanzenmotive und einen editierbaren Alternativtext. Im statischen Prototyp werden neue Dateien nur als lokale Browser-Vorschau verarbeitet und nicht versendet oder gespeichert. In der Laravel-Produktionsphase werden Uploads serverseitig nach Dateityp, Grösse und Zugriff geprüft, in einem nicht öffentlichen Speicher abgelegt und erst danach als Resend-kompatible E-Mail-Medien verwendet.
+
+## Dynamischere Bedienung
+
+Die statische Vorschau wird zu einer reaktionsfreudigeren Oberfläche ausgebaut, ohne den ruhigen, fachlich geprägten Charakter der Pflanzfarm zu verlieren. Auf allen öffentlichen und administrativen Ansichten erhalten Inhaltsbereiche eine einmalige, kurze Einblendung beim Erreichen des Sichtbereichs. Der Header reagiert auf die Scrollposition; beim Navigieren erscheinen Ansichten sanft und die Seite bleibt am Seitenanfang. Diese Bewegungen sind funktional – sie zeigen Orientierung, Hierarchie und Zustandswechsel – statt dauerhaft dekorativ zu laufen.
+
+Im Shop werden Ergebniszahl, Sortierung, Filter und aktive Auswahl unmittelbar sichtbar aktualisiert. Produktkarten erhalten einen zugänglichen Merken-Schalter; das Hinzufügen in den Warenkorb löst eine klare Rückmeldung und eine kurze Zähleranimation aus. Die Produktdetailseite erhält aufklappbare, inhaltlich echte Bereiche für Pflanzanleitung, Lieferung und Pflege. Das Referenzarchiv wird nach Projektart filterbar. Die Newsletter-Anmeldung validiert im Prototypen die E-Mail-Adresse und zeigt nach erfolgreicher Demo-Anmeldung einen beständigen Bestätigungszustand.
+
+Auch die Verwaltungsdemo erhält die gleiche Reaktionsqualität: Kennzahlen und Diagrammbalken bauen sich beim Anzeigen auf, die Bereichsnavigation erhält sichtbare Zustandswechsel und Inhaltskarten werden gestaffelt eingeblendet. Alle Animationen beachten `prefers-reduced-motion`; in diesem Modus bleiben Inhalte ohne Verzögerung vollständig sichtbar und die Bedienung unverändert. Die neue Bewegung verwendet weder automatische Datenübermittlung noch zusätzliche Tracker und verändert keine Datenschutz- oder Backend-Abgrenzung.

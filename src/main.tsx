@@ -170,7 +170,7 @@ const products: Product[] = [
     imageSet: '/assets/photinia-red-robin-400.webp 400w, /assets/photinia-red-robin-800.webp 800w',
     badge: 'Beliebt',
     height: 'Liefergrösse auf Anfrage',
-    traits: ['Immergrün', 'Sonnig'],
+    traits: ['Immergrün', 'Sonnig', 'Blütenreich'],
     description: 'Glanzmispel mit attraktivem rotem Austrieb für strukturierte, immergrüne Pflanzungen.',
     variants: ['Liefergrösse auf Anfrage'],
     stock: 17,
@@ -309,6 +309,20 @@ const socialLinks = [
   { label: 'Facebook', href: 'https://www.facebook.com/pflanzfarm.steinmann', icon: Facebook },
 ]
 
+const referenceFilters = ['Alle', 'Sichtschutz', 'Gartenumbau', 'Neubau', 'Pflege'] as const
+const referenceTags: Record<string, string[]> = {
+  'Formgehölze & Taxus': ['Neubau'],
+  'Sichtschutz mit Photinia': ['Sichtschutz', 'Gartenumbau'],
+  'Thuja-Sichtschutz': ['Sichtschutz'],
+  'Pflege mit Perspektive': ['Pflege'],
+}
+
+const productGuides = [
+  { id: 'pflanzung', title: 'Pflanzanleitung', text: 'Vor dem Pflanzen den Wurzelballen gut wässern, ein grosszügiges Pflanzloch ausheben und die Erde anschliessend leicht andrücken. Bei Fragen beraten wir Sie gern persönlich.' },
+  { id: 'lieferung', title: 'Lieferung & Abholung', text: 'Wir liefern schweizweit oder bereiten Ihre Pflanzen zur Abholung in Ebersecken vor. Den passenden Termin stimmen wir im Live-Shop verbindlich mit Ihnen ab.' },
+  { id: 'pflege', title: 'Pflege', text: 'In den ersten Wochen gleichmässig wässern. Die genaue Pflege richtet sich nach Standort, Jahreszeit und gewählter Pflanzenhöhe.' },
+] as const
+
 const pageTitles: Record<View, string> = {
   home: 'Pflanzfarm – Pflanzen für Ihren Garten',
   shop: 'Pflanzen-Shop | Pflanzfarm',
@@ -382,7 +396,7 @@ function SocialLinks() {
   return <nav className="social-links" aria-label="Social Media"><span className="social-links__label">Folgen Sie uns</span><div>{socialLinks.map(({ label, href, icon: Icon }) => <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={`Pflanzfarm auf ${label} öffnen`}><Icon size={17} /><span>{label}</span></a>)}</div></nav>
 }
 
-function ProductCard({ product, onOpen, onAdd }: { product: Product; onOpen: () => void; onAdd: () => void }) {
+function ProductCard({ product, onOpen, onAdd, isSaved, onToggleSaved, justAdded }: { product: Product; onOpen: () => void; onAdd: () => void; isSaved: boolean; onToggleSaved: () => void; justAdded: boolean }) {
   return (
     <article className="product-card">
       <button className="product-card__image" onClick={onOpen} aria-label={`${product.name} öffnen`}>
@@ -390,6 +404,7 @@ function ProductCard({ product, onOpen, onAdd }: { product: Product; onOpen: () 
         <img src={assetUrl(product.image)} srcSet={assetSourceSet(product.imageSet)} sizes="(max-width: 760px) 92vw, (max-width: 1100px) 45vw, 360px" loading="lazy" decoding="async" alt={product.name} />
         <span className="quick-view"><Eye size={17} /> Details</span>
       </button>
+      <button className={isSaved ? 'product-favourite product-favourite--active' : 'product-favourite'} type="button" aria-label={isSaved ? `${product.name} nicht mehr merken` : `${product.name} merken`} aria-pressed={isSaved} onClick={onToggleSaved}><Heart size={17} fill={isSaved ? 'currentColor' : 'none'} /></button>
       <div className="product-card__body">
         <span className="product-category">{product.category}</span>
         <button className="product-card__title" onClick={onOpen}>{product.name}</button>
@@ -400,7 +415,7 @@ function ProductCard({ product, onOpen, onAdd }: { product: Product; onOpen: () 
         </div>
         <div className="product-card__bottom">
           <strong>{money(product.price)}</strong>
-          <button className="round-button" onClick={onAdd} aria-label={`${product.name} in Warenkorb`}><Plus size={18} /></button>
+          <button className={justAdded ? 'round-button round-button--confirmed' : 'round-button'} onClick={onAdd} aria-label={`${product.name} in Warenkorb`}>{justAdded ? <Check size={18} /> : <Plus size={18} />}</button>
         </div>
       </div>
     </article>
@@ -429,8 +444,22 @@ function App() {
   const [dismissedPopupKey, setDismissedPopupKey] = useState<string | null>(null)
   const [toast, setToast] = useState('')
   const [productQuantity, setProductQuantity] = useState(1)
+  const [headerScrolled, setHeaderScrolled] = useState(false)
+  const [savedProducts, setSavedProducts] = useState<string[]>([])
+  const [lastAddedProductId, setLastAddedProductId] = useState<string | null>(null)
+  const [cartPulse, setCartPulse] = useState(false)
+  const [sortBy, setSortBy] = useState<'popular' | 'price-asc' | 'price-desc'>('popular')
+  const [referenceFilter, setReferenceFilter] = useState<(typeof referenceFilters)[number]>('Alle')
+  const [openProductGuide, setOpenProductGuide] = useState<(typeof productGuides)[number]['id'] | null>('pflanzung')
+  const [galleryMode, setGalleryMode] = useState<'photo' | 'traits' | 'care'>('photo')
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false)
   const consentDialogRef = useRef<HTMLElement | null>(null)
   const popupDialogRef = useRef<HTMLElement | null>(null)
+  const shopSearchRef = useRef<HTMLInputElement | null>(null)
+  const sessionPopupHistoryRef = useRef(new Set<string>())
+  const cartFeedbackTimerRef = useRef<number | null>(null)
+  const cartPulseTimerRef = useRef<number | null>(null)
 
   const cartItems = useMemo(() => Object.entries(cart).map(([key, line]) => ({ key, ...line })), [cart])
   const cartQuantity = cartItems.reduce((total, line) => total + line.quantity, 0)
@@ -441,7 +470,8 @@ function App() {
   const popupKey = `pflanzfarm-popup:${popup.title}:${popup.startsAt}:${popup.endsAt}`
 
   const popupFrequencyAllows = () => {
-    if (!consent?.preferences || popup.frequency === 'immer') return true
+    if (popup.frequency === 'immer') return true
+    if (!consent?.preferences) return !sessionPopupHistoryRef.current.has(popupKey)
     if (popup.frequency === 'sitzung') return window.sessionStorage.getItem(popupKey) !== 'shown'
     if (popup.frequency === 'taeglich') return window.localStorage.getItem(popupKey) !== today
     return window.localStorage.getItem(popupKey) !== 'shown'
@@ -452,6 +482,7 @@ function App() {
   }
 
   const recordPopupDisplay = () => {
+    if (popup.frequency !== 'immer') sessionPopupHistoryRef.current.add(popupKey)
     if (!consent?.preferences) return
     if (popup.frequency === 'sitzung') window.sessionStorage.setItem(popupKey, 'shown')
     if (popup.frequency === 'taeglich') window.localStorage.setItem(popupKey, today)
@@ -508,6 +539,37 @@ function App() {
   }, [view])
 
   useEffect(() => {
+    const updateHeader = () => setHeaderScrolled(window.scrollY > 24)
+    updateHeader()
+    window.addEventListener('scroll', updateHeader, { passive: true })
+    return () => window.removeEventListener('scroll', updateHeader)
+  }, [])
+
+  useEffect(() => {
+    const targets = Array.from(document.querySelectorAll<HTMLElement>('main[id="main-content"] > section, main[id="main-content"] article, .product-card, .category-card, .metric-card, .admin-card'))
+    if (!targets.length) return
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+      targets.forEach((target) => target.classList.add('reveal', 'is-revealed'))
+      return
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-revealed')
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' })
+    targets.forEach((target, index) => {
+      target.classList.add('reveal')
+      target.style.setProperty('--reveal-delay', `${Math.min((index % 6) * 45, 180)}ms`)
+      observer.observe(target)
+    })
+    return () => observer.disconnect()
+  }, [view, adminSection])
+
+  useEffect(() => {
     setMobileNavOpen(false)
     setDismissedPopupKey(null)
     scrollToPageStart()
@@ -529,6 +591,10 @@ function App() {
   useEffect(() => {
     if (!consentDialogOpen) return
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const appShell = document.querySelector<HTMLElement>('.app')
+    const previousOverflow = document.body.style.overflow
+    appShell?.setAttribute('inert', '')
+    document.body.style.overflow = 'hidden'
     const container = consentDialogRef.current
     container?.focus()
     const handleKeys = (event: KeyboardEvent) => {
@@ -542,7 +608,7 @@ function App() {
       if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
     }
     window.addEventListener('keydown', handleKeys)
-    return () => { window.removeEventListener('keydown', handleKeys); previous?.focus() }
+    return () => { window.removeEventListener('keydown', handleKeys); appShell?.removeAttribute('inert'); document.body.style.overflow = previousOverflow; previous?.focus() }
   }, [consentDialogOpen, consent])
 
   useEffect(() => {
@@ -550,6 +616,11 @@ function App() {
     const timer = window.setTimeout(() => setToast(''), 2600)
     return () => window.clearTimeout(timer)
   }, [toast])
+
+  useEffect(() => () => {
+    if (cartFeedbackTimerRef.current) window.clearTimeout(cartFeedbackTimerRef.current)
+    if (cartPulseTimerRef.current) window.clearTimeout(cartPulseTimerRef.current)
+  }, [])
 
   const closePopup = () => {
     setPopupVisible(false)
@@ -560,6 +631,10 @@ function App() {
   useEffect(() => {
     if (!popupVisible) return
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const appShell = document.querySelector<HTMLElement>('.app')
+    const previousOverflow = document.body.style.overflow
+    appShell?.setAttribute('inert', '')
+    document.body.style.overflow = 'hidden'
     const container = popupDialogRef.current
     container?.focus()
     const handleKeys = (event: KeyboardEvent) => {
@@ -573,7 +648,7 @@ function App() {
       if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
     }
     window.addEventListener('keydown', handleKeys)
-    return () => { window.removeEventListener('keydown', handleKeys); previous?.focus() }
+    return () => { window.removeEventListener('keydown', handleKeys); appShell?.removeAttribute('inert'); document.body.style.overflow = previousOverflow; previous?.focus() }
   }, [popupVisible, popupKey])
 
   const goTo = (nextView: View) => {
@@ -592,11 +667,17 @@ function App() {
     setSelectedProduct(product)
     setSelectedVariant(product.variants[0])
     setProductQuantity(1)
+    setOpenProductGuide('pflanzung')
+    setGalleryMode('photo')
     scrollToPageStart()
     setView('product')
   }
 
   const openProduct = (product: Product) => goToProduct(product)
+  const openShopSearch = () => {
+    goTo('shop')
+    window.setTimeout(() => shopSearchRef.current?.focus(), 0)
+  }
 
   const addToCart = (product: Product, amount = 1, variant = product.variants[0]) => {
     const key = `${product.id}::${variant}`
@@ -608,7 +689,27 @@ function App() {
         quantity: (current[key]?.quantity ?? 0) + amount,
       },
     }))
+    if (cartFeedbackTimerRef.current) window.clearTimeout(cartFeedbackTimerRef.current)
+    if (cartPulseTimerRef.current) window.clearTimeout(cartPulseTimerRef.current)
+    setLastAddedProductId(product.id)
+    setCartPulse(false)
+    window.requestAnimationFrame(() => setCartPulse(true))
+    cartFeedbackTimerRef.current = window.setTimeout(() => setLastAddedProductId(null), 900)
+    cartPulseTimerRef.current = window.setTimeout(() => setCartPulse(false), 460)
     setToast(`${product.name} (${variant}) wurde in den Warenkorb gelegt.`)
+  }
+
+  const toggleSavedProduct = (productId: string) => {
+    setSavedProducts((current) => current.includes(productId) ? current.filter((id) => id !== productId) : [...current, productId])
+  }
+
+  const submitNewsletter = () => {
+    if (!/^\S+@\S+\.\S+$/.test(newsletterEmail.trim())) {
+      setToast('Bitte geben Sie eine gültige E-Mail-Adresse ein.')
+      return
+    }
+    setNewsletterSubscribed(true)
+    setToast('Danke – Ihre Demo-Anmeldung wurde vorgemerkt.')
   }
 
   const changeCartQuantity = (key: string, delta: number) => {
@@ -618,6 +719,7 @@ function App() {
       const quantity = Math.max(0, line.quantity + delta)
       if (quantity === 0) {
         const { [key]: _removed, ...remaining } = current
+        window.setTimeout(() => document.getElementById('cart-heading')?.focus(), 0)
         return remaining
       }
       return { ...current, [key]: { ...line, quantity } }
@@ -638,6 +740,7 @@ function App() {
     const matchesTrait = trait === 'Alle Merkmale' || product.traits.includes(trait)
     return matchesQuery && matchesCategory && matchesTrait
   })
+  const sortedProducts = [...filteredProducts].sort((a, b) => sortBy === 'price-asc' ? a.price - b.price : sortBy === 'price-desc' ? b.price - a.price : products.indexOf(a) - products.indexOf(b))
 
   const openPopupPreview = () => {
     setDismissedPopupKey(null)
@@ -647,7 +750,7 @@ function App() {
   }
 
   const Header = () => (
-    <header className="site-header">
+    <header className={headerScrolled ? 'site-header site-header--scrolled' : 'site-header'}>
       <div className="announcement-bar">
         <span><Truck size={14} /> Schweizweit lieferbar</span>
         <span><Leaf size={14} /> Schweizer Familienbetrieb</span>
@@ -663,8 +766,8 @@ function App() {
           <button onClick={() => goTo('about')}>Über uns</button>
         </nav>
         <div className="header-actions">
-          <button className="icon-button hide-mobile" aria-label="Suche öffnen" onClick={() => goTo('shop')}><Search size={21} /></button>
-          <button className="cart-button" aria-label="Warenkorb öffnen" onClick={() => goTo('cart')}>
+          <button className="icon-button hide-mobile" aria-label="Pflanzensuche öffnen" onClick={openShopSearch}><Search size={21} /></button>
+          <button className={cartPulse ? 'cart-button cart-button--pulse' : 'cart-button'} aria-label={`Warenkorb öffnen – ${cartQuantity} ${cartQuantity === 1 ? 'Artikel' : 'Artikel'}`} onClick={() => goTo('cart')}>
             <ShoppingBag size={21} />
             <span>{cartQuantity}</span>
           </button>
@@ -717,7 +820,7 @@ function App() {
             <div><h2>Unsere Empfehlungen</h2></div>
             <button className="text-link" onClick={() => goTo('shop')}>Alle Pflanzen ansehen <ArrowRight size={16} /></button>
           </div>
-          <div className="product-grid">{products.map((product) => <ProductCard key={product.id} product={product} onOpen={() => openProduct(product)} onAdd={() => addToCart(product)} />)}</div>
+          <div className="product-grid">{products.map((product) => <ProductCard key={product.id} product={product} onOpen={() => openProduct(product)} onAdd={() => addToCart(product)} isSaved={savedProducts.includes(product.id)} onToggleSaved={() => toggleSavedProduct(product.id)} justAdded={lastAddedProductId === product.id} />)}</div>
         </div>
       </section>
 
@@ -745,7 +848,7 @@ function App() {
         </div>
       </section>
 
-      <section className="newsletter container"><div><h2>Ideen, Tipps und<br />grüne Neuigkeiten.</h2></div><div className="newsletter__form"><p>Erhalten Sie saisonale Pflanztipps direkt in Ihr Postfach.</p><div><input placeholder="Ihre E-Mail-Adresse" aria-label="Ihre E-Mail-Adresse" /><button onClick={() => setToast('Danke – dies ist eine Demo-Anmeldung.')}>Anmelden <ArrowRight size={17} /></button></div><small>Mit der Anmeldung akzeptieren Sie unsere <button className="inline-link" onClick={() => goTo('privacy')}>Datenschutzbestimmungen</button>.</small></div></section>
+      <section className={newsletterSubscribed ? 'newsletter newsletter--subscribed container' : 'newsletter container'}><div><h2>Ideen, Tipps und<br />grüne Neuigkeiten.</h2></div><div className="newsletter__form">{newsletterSubscribed ? <div className="newsletter__success" role="status"><Check size={22} /><div><b>Danke für Ihr Interesse.</b><span>Ihre Demo-Anmeldung ist vorgemerkt.</span></div><button className="inline-link" onClick={() => { setNewsletterSubscribed(false); setNewsletterEmail('') }}>Adresse ändern</button></div> : <><p>Erhalten Sie saisonale Pflanztipps direkt in Ihr Postfach.</p><div><input value={newsletterEmail} onChange={(event) => setNewsletterEmail(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') submitNewsletter() }} placeholder="Ihre E-Mail-Adresse" aria-label="Ihre E-Mail-Adresse" inputMode="email" /><button onClick={submitNewsletter}>Anmelden <ArrowRight size={17} /></button></div><small>Mit der Anmeldung akzeptieren Sie unsere <button className="inline-link" onClick={() => goTo('privacy')}>Datenschutzbestimmungen</button>.</small></>}</div></section>
     </main>
   )
 
@@ -753,10 +856,10 @@ function App() {
     <main id="main-content" tabIndex={-1} className="shop-page">
       <div className="container shop-page__intro"><h1>Finden, was in Ihrem<br />Garten wachsen soll.</h1><p>Robuste Pflanzen, passend zu Ihrem Standort und mit fachkundiger Beratung.</p></div>
       <div className="container shop-toolbar">
-        <label className="search-field"><Search size={20} /><input aria-label="Pflanzen suchen" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pflanzen, botanische Namen …" /></label>
+        <label className="search-field"><Search size={20} /><input ref={shopSearchRef} aria-label="Pflanzen suchen" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pflanzen, botanische Namen …" /></label>
         <div className="filter-group"><SlidersHorizontal size={18} /><select aria-label="Pflanzenkategorie filtern" value={category} onChange={(event) => setCategory(event.target.value)}><option>Alle Pflanzen</option><option>Heckenpflanzen</option><option>Beerensträucher</option></select><select aria-label="Pflanzeneigenschaft filtern" value={trait} onChange={(event) => setTrait(event.target.value)}><option>Alle Merkmale</option><option>Immergrün</option><option>Pflegeleicht</option><option>Sonnig</option><option>Blütenreich</option></select></div>
       </div>
-      <div className="container shop-results"><div className="shop-results__top"><span><strong>{filteredProducts.length}</strong> Pflanzen gefunden</span><button className="sort-control">Beliebtheit <ChevronDown size={16} /></button></div><div className="product-grid product-grid--shop">{filteredProducts.map((product) => <ProductCard key={product.id} product={product} onOpen={() => openProduct(product)} onAdd={() => addToCart(product)} />)}</div>{filteredProducts.length === 0 && <div className="empty-state"><Leaf size={37} /><h3>Keine passende Pflanze gefunden.</h3><p>Versuchen Sie eine andere Suche oder setzen Sie den Filter zurück.</p><button className="button button--dark" onClick={() => { setQuery(''); setCategory('Alle Pflanzen'); setTrait('Alle Merkmale') }}>Filter zurücksetzen</button></div>}</div>
+      <div className="container shop-results"><div className="shop-results__top"><span><strong>{sortedProducts.length}</strong> Pflanzen gefunden {savedProducts.length > 0 && <em>{savedProducts.length} gemerkt</em>}</span><label className="sort-control">Sortieren <select aria-label="Pflanzen sortieren" value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)}><option value="popular">Beliebtheit</option><option value="price-asc">Preis aufsteigend</option><option value="price-desc">Preis absteigend</option></select><ChevronDown size={16} /></label></div><div className="product-grid product-grid--shop">{sortedProducts.map((product) => <ProductCard key={product.id} product={product} onOpen={() => openProduct(product)} onAdd={() => addToCart(product)} isSaved={savedProducts.includes(product.id)} onToggleSaved={() => toggleSavedProduct(product.id)} justAdded={lastAddedProductId === product.id} />)}</div>{sortedProducts.length === 0 && <div className="empty-state"><Leaf size={37} /><h3>Keine passende Pflanze gefunden.</h3><p>Versuchen Sie eine andere Suche oder setzen Sie den Filter zurück.</p><button className="button button--dark" onClick={() => { setQuery(''); setCategory('Alle Pflanzen'); setTrait('Alle Merkmale') }}>Filter zurücksetzen</button></div>}</div>
     </main>
   )
 
@@ -764,18 +867,20 @@ function App() {
     <main id="main-content" tabIndex={-1} className="product-page container">
       <button className="breadcrumb" onClick={() => goTo('shop')}>Shop <ChevronRight size={14} /> {selectedProduct.category}</button>
       <div className="product-detail">
-        <div className="product-gallery"><div className="product-gallery__thumbs"><button className="selected"><img src={assetUrl(selectedProduct.image)} srcSet={assetSourceSet(selectedProduct.imageSet)} sizes="96px" alt="" /></button><button className="placeholder-thumb"><Leaf size={19} /></button><button className="placeholder-thumb"><Sprout size={19} /></button></div><div className="product-gallery__main"><img src={assetUrl(selectedProduct.image)} srcSet={assetSourceSet(selectedProduct.imageSet)} sizes="(max-width: 900px) 92vw, 560px" fetchPriority="high" decoding="async" alt={selectedProduct.name} /><span className="gallery-caption"><Eye size={15} /> Produktansicht</span></div></div>
-        <div className="product-detail__info"><span className="eyebrow">{selectedProduct.category}</span><h1>{selectedProduct.name}</h1><p className="latin">{selectedProduct.latin}</p><p className="product-description">{selectedProduct.description}</p><div className="care-tags">{selectedProduct.traits.map((item) => <span key={item}><Leaf size={15} /> {item}</span>)}<span><Sprout size={15} /> Winterhart</span></div><div className="in-stock"><Check size={16} /> {selectedProduct.stock} Stück verfügbar</div><label className="variant-label">Grösse<select value={selectedVariant} onChange={(event) => setSelectedVariant(event.target.value)}>{selectedProduct.variants.map((variant) => <option key={variant}>{variant}</option>)}</select></label><div className="product-purchase"><div><strong>{money(selectedProduct.price)}</strong><span>inkl. MwSt.</span></div><div className="quantity-control"><button aria-label="Menge verringern" onClick={() => setProductQuantity((quantity) => Math.max(1, quantity - 1))}><Minus size={17} /></button><span>{productQuantity}</span><button aria-label="Menge erhöhen" onClick={() => setProductQuantity((quantity) => quantity + 1)}><Plus size={17} /></button></div><button className="button button--primary button--cart" onClick={() => addToCart(selectedProduct, productQuantity, selectedVariant)}><ShoppingCart size={18} /> In den Warenkorb</button></div><div className="delivery-points"><span><Truck size={20} /><b>Schweizweit lieferbar</b><small>Zuverlässig zu Ihnen</small></span><span><MapPin size={20} /><b>Abholung möglich</b><small>Direkt bei uns vor Ort</small></span><span><Sprout size={20} /><b>Pflanzservice buchbar</b><small>Auf Wunsch direkt bei Ihnen</small></span></div><div className="accordions"><button>Pflanzanleitung <ChevronDown size={18} /></button><button>Lieferung & Abholung <ChevronDown size={18} /></button><button>Pflege <ChevronDown size={18} /></button></div></div>
+        <div className="product-gallery"><div className="product-gallery__thumbs"><button className={galleryMode === 'photo' ? 'selected' : ''} aria-label="Produktbild anzeigen" aria-pressed={galleryMode === 'photo'} onClick={() => setGalleryMode('photo')}><img src={assetUrl(selectedProduct.image)} srcSet={assetSourceSet(selectedProduct.imageSet)} sizes="96px" alt="" /></button><button className={galleryMode === 'traits' ? 'selected placeholder-thumb' : 'placeholder-thumb'} aria-label="Pflanzeigenschaften anzeigen" aria-pressed={galleryMode === 'traits'} onClick={() => setGalleryMode('traits')}><Leaf size={19} /></button><button className={galleryMode === 'care' ? 'selected placeholder-thumb' : 'placeholder-thumb'} aria-label="Pflanzberatung anzeigen" aria-pressed={galleryMode === 'care'} onClick={() => setGalleryMode('care')}><Sprout size={19} /></button></div><div className="product-gallery__main">{galleryMode === 'photo' ? <img src={assetUrl(selectedProduct.image)} srcSet={assetSourceSet(selectedProduct.imageSet)} sizes="(max-width: 900px) 92vw, 560px" fetchPriority="high" decoding="async" alt={selectedProduct.name} /> : <div className="gallery-insight"><span>{galleryMode === 'traits' ? <Leaf size={38} /> : <Sprout size={38} />}</span><h2>{galleryMode === 'traits' ? 'Auf einen Blick' : 'Gut begleitet'}</h2><p>{galleryMode === 'traits' ? `${selectedProduct.name} ist ${selectedProduct.traits.join(', ').toLowerCase()} und für einen langlebigen Garten geeignet.` : 'Unsere Fachberatung unterstützt Sie bei Standort, Pflanzung und der ersten Pflege.'}</p></div>}<span className="gallery-caption"><Eye size={15} /> {galleryMode === 'photo' ? 'Produktansicht' : galleryMode === 'traits' ? 'Eigenschaften' : 'Pflanzberatung'}</span></div></div>
+        <div className="product-detail__info"><span className="eyebrow">{selectedProduct.category}</span><h1>{selectedProduct.name}</h1><p className="latin">{selectedProduct.latin}</p><p className="product-description">{selectedProduct.description}</p><div className="care-tags">{selectedProduct.traits.map((item) => <span key={item}><Leaf size={15} /> {item}</span>)}<span><Sprout size={15} /> Winterhart</span></div><div className="in-stock"><Check size={16} /> {selectedProduct.stock} Stück verfügbar</div><label className="variant-label">Grösse<select value={selectedVariant} onChange={(event) => setSelectedVariant(event.target.value)}>{selectedProduct.variants.map((variant) => <option key={variant}>{variant}</option>)}</select></label><div className="product-purchase"><div><strong>{money(selectedProduct.price)}</strong><span>inkl. MwSt.</span></div><div className="quantity-control"><button aria-label="Menge verringern" onClick={() => setProductQuantity((quantity) => Math.max(1, quantity - 1))}><Minus size={17} /></button><span>{productQuantity}</span><button aria-label="Menge erhöhen" onClick={() => setProductQuantity((quantity) => quantity + 1)}><Plus size={17} /></button></div><button className="button button--primary button--cart" onClick={() => addToCart(selectedProduct, productQuantity, selectedVariant)}><ShoppingCart size={18} /> In den Warenkorb</button></div><div className="delivery-points"><span><Truck size={20} /><b>Schweizweit lieferbar</b><small>Zuverlässig zu Ihnen</small></span><span><MapPin size={20} /><b>Abholung möglich</b><small>Direkt bei uns vor Ort</small></span><span><Sprout size={20} /><b>Pflanzservice buchbar</b><small>Auf Wunsch direkt bei Ihnen</small></span></div><div className="accordions">{productGuides.map((guide) => <section className={openProductGuide === guide.id ? 'accordion-item accordion-item--open' : 'accordion-item'} key={guide.id}><button aria-expanded={openProductGuide === guide.id} aria-controls={`guide-${guide.id}`} onClick={() => setOpenProductGuide((current) => current === guide.id ? null : guide.id)}><span>{guide.title}</span><ChevronDown size={18} /></button><div id={`guide-${guide.id}`} className="accordion-item__content" hidden={openProductGuide !== guide.id}><p>{guide.text}</p></div></section>)}</div></div>
       </div>
     </main>
   )
 
-  const References = () => (
-    <main id="main-content" tabIndex={-1} className="references-page">
+  const References = () => {
+    const allProjects = projectCards.concat([{ title: 'Pflege mit Perspektive', category: 'Baumpflege', description: 'Sorgfältige Pflege macht aus gewachsenen Gärten langjährige Lieblingsorte.', image: '', imageSet: '', featured: false }])
+    const visibleProjects = allProjects.filter((project) => referenceFilter === 'Alle' || referenceTags[project.title]?.includes(referenceFilter))
+    return <main id="main-content" tabIndex={-1} className="references-page">
       <section className="references-hero"><div className="container"><span className="eyebrow eyebrow--light">Referenzen</span><h1>Gärten, die<br />weiterwachsen.</h1><p>Wir verbinden Pflanzenwissen, Handwerk und Orte, an denen man gern zuhause ist.</p></div></section>
-      <section className="container section"><div className="reference-filter"><span>Projektart:</span><button className="active">Alle</button><button>Sichtschutz</button><button>Gartenumbau</button><button>Neubau</button><button>Pflege</button></div><div className="references-list">{projectCards.concat([{ title: 'Pflege mit Perspektive', category: 'Baumpflege', description: 'Sorgfältige Pflege macht aus gewachsenen Gärten langjährige Lieblingsorte.', image: '', imageSet: '', featured: false }]).map((project, index) => <article className="reference-list-card" key={project.title}><div className={`reference-list-card__image reference-list-card__image--${index}`}>{project.image ? <img src={assetUrl(project.image)} srcSet={assetSourceSet(project.imageSet)} sizes="(max-width: 760px) 92vw, 46vw" loading="lazy" decoding="async" alt={project.title} /> : <div><Sprout size={42} /><span>{project.category}</span></div>}</div><div className="reference-list-card__body"><span className="eyebrow">{project.category}</span><h2>{project.title}</h2><p>{project.description}</p><div className="reference-facts"><span><MapPin size={16} /> Kanton Luzern</span><span><CalendarDays size={16} /> 2025</span></div><button className="text-link" onClick={() => setToast('Die Referenzdetailseite ist im finalen Shop vorgesehen.')}>Projekt ansehen <ArrowRight size={16} /></button></div></article>)}</div></section>
+      <section className="container section"><div className="reference-filter"><span>Projektart:</span>{referenceFilters.map((filter) => <button key={filter} className={referenceFilter === filter ? 'active' : ''} aria-pressed={referenceFilter === filter} onClick={() => setReferenceFilter(filter)}>{filter}</button>)}</div><div className="references-filter-status" role="status">{visibleProjects.length} {visibleProjects.length === 1 ? 'Projekt' : 'Projekte'} sichtbar</div><div className="references-list">{visibleProjects.map((project, index) => <article className="reference-list-card" key={project.title}><div className={`reference-list-card__image reference-list-card__image--${index}`}>{project.image ? <img src={assetUrl(project.image)} srcSet={assetSourceSet(project.imageSet)} sizes="(max-width: 760px) 92vw, 46vw" loading="lazy" decoding="async" alt={project.title} /> : <div><Sprout size={42} /><span>{project.category}</span></div>}</div><div className="reference-list-card__body"><span className="eyebrow">{project.category}</span><h2>{project.title}</h2><p>{project.description}</p><div className="reference-facts"><span><MapPin size={16} /> Kanton Luzern</span><span><CalendarDays size={16} /> 2025</span></div><button className="text-link" onClick={() => setToast('Die Referenzdetailseite ist im finalen Shop vorgesehen.')}>Projekt ansehen <ArrowRight size={16} /></button></div></article>)}</div>{visibleProjects.length === 0 && <div className="empty-state"><Leaf size={37} /><h3>Keine Referenz in dieser Kategorie.</h3><button className="button button--dark" onClick={() => setReferenceFilter('Alle')}>Alle Projekte anzeigen</button></div>}</section>
     </main>
-  )
+  }
 
   const About = () => {
     const team = [
@@ -802,7 +907,7 @@ function App() {
     <main id="main-content" tabIndex={-1} className="cart-page container">
       <div className="cart-page__heading">
         <span className="eyebrow">Ihr Warenkorb</span>
-        <h1>Fast bereit zum Einpflanzen.</h1>
+        <h1 id="cart-heading" tabIndex={-1}>Fast bereit zum Einpflanzen.</h1>
         <p>{cartQuantity ? `${cartQuantity} Pflanzen warten auf ihren neuen Garten.` : 'Ihr Warenkorb ist noch leer.'}</p>
       </div>
       {cartItems.length ? (
@@ -896,7 +1001,7 @@ function App() {
       { id: 'newsletter', label: 'Newsletter', icon: Mail },
     ]
     const StatusPill = ({ children, variant = 'green' }: { children: string; variant?: string }) => <span className={`status-pill status-pill--${variant}`}>{children}</span>
-    return <main id="main-content" tabIndex={-1} className="admin-shell"><aside className="admin-sidebar"><BrandMark compact onActivate={() => goTo('home')} /><span className="admin-sidebar__label">Verwaltung</span><nav>{sections.map((section) => { const Icon = section.icon; return <button key={section.id} className={adminSection === section.id ? 'active' : ''} onClick={() => setAdminSection(section.id)}><Icon size={19} /> {section.label}</button> })}</nav><div className="admin-sidebar__footer"><button onClick={() => goTo('home')}><ExternalLink size={16} /> Website ansehen</button><span>Prototyp · Demo-Modus</span></div></aside><section className="admin-main"><header className="admin-topbar"><label className="admin-search"><Search size={18} /><input placeholder="Produkte, Bestellungen, Kundschaft …" /></label><div><button className="icon-button"><Settings2 size={19} /></button><span className="admin-user"><i>MK</i><b>Martina Keller<small>Administratorin</small></b><ChevronDown size={16} /></span></div></header><div className="admin-content">{adminSection === 'dashboard' && <><div className="admin-intro"><div><span className="eyebrow">Dienstag, 27. Mai</span><h1>Guten Morgen, Martina</h1><p>Hier ist Ihr Überblick für heute.</p></div><button className="button button--dark" onClick={() => setAdminSection('products')}><PackagePlus size={18} /> Produkt erfassen</button></div><div className="metric-grid"><Metric icon={<CircleDollarSign />} label="Umsatz heute" value="CHF 1’284" trend="+ 12 %" /><Metric icon={<ShoppingBag />} label="Neue Bestellungen" value="12" trend="+ 33 %" /><Metric icon={<AlertTriangle />} label="Niedriger Bestand" value="5" trend="2 neu" warning /><Metric icon={<FileText />} label="Offene Anfragen" value="3" trend="heute" /></div><div className="admin-two-col"><section className="admin-card chart-card"><div className="admin-card__header"><div><h2>Umsatzentwicklung</h2><p>Letzte 7 Tage</p></div><select><option>Letzte 7 Tage</option></select></div><div className="chart"><div className="chart__axis"><span>2’000</span><span>1’000</span><span>0</span></div><div className="chart__bars">{[28, 39, 59, 49, 73, 56, 84].map((height, index) => <div key={index}><i style={{ height: `${height}%` }} /><small>{20 + index}. Mai</small></div>)}</div></div></section><section className="admin-card stock-card"><div className="admin-card__header"><div><h2>Lagerhinweise</h2><p>Jetzt prüfen</p></div><button className="text-link">Alle <ArrowRight size={15} /></button></div>{products.map((product, index) => <div className="stock-row" key={product.id}><img src={assetUrl(product.image)} alt="" /><div><strong>{product.name}</strong><span>{index === 0 ? '12 Stück auf Lager' : `${product.stock} Stück auf Lager`}</span></div><StatusPill variant={index === 1 ? 'amber' : 'red'}>{index === 1 ? 'Fast ausverkauft' : 'Niedriger Bestand'}</StatusPill></div>)}</section></div><section className="admin-card orders-card"><div className="admin-card__header"><div><h2>Neueste Bestellungen</h2><p>Aus dem Shop</p></div><button className="text-link" onClick={() => setAdminSection('orders')}>Alle Bestellungen <ArrowRight size={15} /></button></div><table><thead><tr><th>Bestellnummer</th><th>Kunde</th><th>Produkte</th><th>Total</th><th>Status</th></tr></thead><tbody>{[['#PF-2026-1042', 'Sandro Meier', '3', 'CHF 89.70', 'Bezahlt'], ['#PF-2026-1041', 'Claudia Baumann', '5', 'CHF 124.50', 'In Bearbeitung'], ['#PF-2026-1040', 'Lukas Steiner', '4', 'CHF 214.20', 'Abholung bereit']].map((order) => <tr key={order[0]}>{order.map((value, index) => <td key={index}>{index === 4 ? <StatusPill variant={value === 'In Bearbeitung' ? 'blue' : 'green'}>{value}</StatusPill> : value}</td>)}</tr>)}</tbody></table></section></>}{adminSection === 'products' && <AdminProducts products={products} onAdd={() => setToast('Produktformular ist im Laravel-Backend vorgesehen.')} />}{adminSection === 'orders' && <AdminOrders StatusPill={StatusPill} />}{adminSection === 'customers' && <AdminCustomers customers={customers} selectedId={selectedCustomerId} onSelect={setSelectedCustomerId} StatusPill={StatusPill} onUpdate={(id, changes) => setCustomers((current) => current.map((customer) => customer.id === id ? { ...customer, ...changes } : customer))} onSaved={() => setToast('Kontaktdaten der Kundschaft gespeichert (Demo).')} />}{adminSection === 'inventory' && <AdminInventory products={products} StatusPill={StatusPill} />}{adminSection === 'references' && <AdminReferences />}{adminSection === 'newsletter' && <AdminNewsletter newsletter={newsletter} onChange={updateNewsletter} onSave={() => setToast('Newsletter-Entwurf gespeichert (Demo).')} onTest={() => setToast('Demo-Modus: Ein Resend-Testversand wird erst im Laravel-Backend ausgelöst.')} onSend={() => setToast('Demo-Modus: Keine E-Mail gesendet. Der Produktivversand erfolgt serverseitig über Resend.')} />}{adminSection === 'popup' && <div className="popup-admin"><div className="admin-intro"><div><span className="eyebrow">Website-Inhalt</span><h1>Popup verwalten</h1><p>Steuern Sie saisonale Hinweise und Kampagnen direkt im Shop.</p></div><span className={popup.active ? 'live-status' : 'live-status live-status--off'}><i /> {popup.active ? 'Aktiv' : 'Inaktiv'}</span></div><div className="popup-admin__layout"><section className="admin-card popup-form"><div className="admin-card__header"><div><h2>Inhalt & Ausspielung</h2><p>Änderungen erscheinen in der Vorschau.</p></div><PanelTop size={20} /></div><div className="popup-toggle-card"><div><h3>Popup aktiv</h3><p>Auf der Website anzeigen.</p></div><label className="popup-toggle-control"><input type="checkbox" aria-label="Popup aktivieren" checked={popup.active} onChange={(event) => updatePopup('active', event.target.checked)} /><span className="popup-toggle-control__track" aria-hidden="true" /><span className="popup-toggle-control__state">{popup.active ? 'Aktiv' : 'Aus'}</span></label></div><label>Titel<input value={popup.title} onChange={(event) => updatePopup('title', event.target.value)} /></label><label>Text<textarea rows={4} value={popup.text} onChange={(event) => updatePopup('text', event.target.value)} /></label><div className="form-two"><label>Button-Text<input value={popup.cta} onChange={(event) => updatePopup('cta', event.target.value)} /></label><label>Zielseite<select value={popup.target} onChange={(event) => updatePopup('target', event.target.value as PopupTarget)}><option value="startseite">Startseite</option><option value="shop">Shop</option><option value="alle">Alle Seiten</option></select></label></div><div className="form-two"><label>Verzögerung<select value={popup.delay} onChange={(event) => updatePopup('delay', Number(event.target.value))}><option value={0}>Sofort</option><option value={1}>1 Sekunde</option><option value={3}>3 Sekunden</option></select></label><label>Häufigkeit<select value={popup.frequency} onChange={(event) => updatePopup('frequency', event.target.value as PopupFrequency)}><option value="einmalig">Einmalig</option><option value="sitzung">Einmal pro Sitzung</option><option value="taeglich">Einmal pro Tag</option><option value="immer">Bei jedem Besuch</option></select></label></div><div className="form-two"><label>Startdatum<input type="date" value={popup.startsAt} onChange={(event) => updatePopup('startsAt', event.target.value)} /></label><label>Enddatum<input type="date" value={popup.endsAt} onChange={(event) => updatePopup('endsAt', event.target.value)} /></label></div><div className="popup-form__footer"><button className="button button--soft" onClick={() => setToast('Entwurf ist gespeichert (Demo).')}><FileText size={17} /> Entwurf speichern</button><button className="button button--dark" onClick={openPopupPreview}><Eye size={17} /> Im Frontend testen</button></div></section><aside className="admin-card popup-analytics"><span className="eyebrow">Aktuelle Kampagne</span><h2>{popup.title || 'Ohne Titel'}</h2><div className="mini-popup"><button aria-label="Popup schliessen"><X size={15} /></button><Leaf size={24} /><strong>{popup.title || 'Ihr Popup-Titel'}</strong><p>{popup.text || 'Ihr Beschreibungstext erscheint hier.'}</p><span>{popup.cta || 'Button-Text'} <ArrowRight size={14} /></span></div><hr /><div className="analytics-grid"><div><span>Einblendungen</span><b>1’284</b></div><div><span>Klickrate</span><b>8.6 %</b></div><div><span>Schliessungen</span><b>73 %</b></div><div><span>Zeitraum</span><b>15.09.–30.11.</b></div></div><div className="popup-rule"><Clock3 size={18} /><p><b>Regel:</b> {popup.frequency === 'sitzung' ? 'Einmal pro Sitzung' : popup.frequency === 'taeglich' ? 'Einmal pro Tag' : popup.frequency === 'einmalig' ? 'Einmalig' : 'Bei jedem Besuch'} · {popup.target === 'startseite' ? 'Nur Startseite' : popup.target === 'shop' ? 'Nur Shop' : 'Alle Seiten'}</p></div></aside></div></div>}</div></section></main>
+    return <main id="main-content" tabIndex={-1} className="admin-shell"><aside className="admin-sidebar"><BrandMark compact onActivate={() => goTo('home')} /><span className="admin-sidebar__label">Verwaltung</span><nav>{sections.map((section) => { const Icon = section.icon; return <button key={section.id} className={adminSection === section.id ? 'active' : ''} onClick={() => setAdminSection(section.id)}><Icon size={19} /> {section.label}</button> })}</nav><div className="admin-sidebar__footer"><button onClick={() => goTo('home')}><ExternalLink size={16} /> Website ansehen</button><span>Prototyp · Demo-Modus</span></div></aside><section className="admin-main"><header className="admin-topbar"><label className="admin-search"><Search size={18} /><input placeholder="Produkte, Bestellungen, Kundschaft …" /></label><div><button className="icon-button" aria-label="Verwaltungseinstellungen öffnen" onClick={() => setToast('Verwaltungseinstellungen werden im produktiven Laravel-Backend verfügbar.') }><Settings2 size={19} /></button><span className="admin-user"><i>MK</i><b>Martina Keller<small>Administratorin</small></b><ChevronDown size={16} /></span></div></header><div className="admin-content">{adminSection === 'dashboard' && <><div className="admin-intro"><div><span className="eyebrow">Dienstag, 27. Mai</span><h1>Guten Morgen, Martina</h1><p>Hier ist Ihr Überblick für heute.</p></div><button className="button button--dark" onClick={() => setAdminSection('products')}><PackagePlus size={18} /> Produkt erfassen</button></div><div className="metric-grid"><Metric icon={<CircleDollarSign />} label="Umsatz heute" value="CHF 1’284" trend="+ 12 %" /><Metric icon={<ShoppingBag />} label="Neue Bestellungen" value="12" trend="+ 33 %" /><Metric icon={<AlertTriangle />} label="Niedriger Bestand" value="5" trend="2 neu" warning /><Metric icon={<FileText />} label="Offene Anfragen" value="3" trend="heute" /></div><div className="admin-two-col"><section className="admin-card chart-card"><div className="admin-card__header"><div><h2>Umsatzentwicklung</h2><p>Letzte 7 Tage</p></div><select><option>Letzte 7 Tage</option></select></div><div className="chart"><div className="chart__axis"><span>2’000</span><span>1’000</span><span>0</span></div><div className="chart__bars">{[28, 39, 59, 49, 73, 56, 84].map((height, index) => <div key={index}><i style={{ height: `${height}%` }} /><small>{20 + index}. Mai</small></div>)}</div></div></section><section className="admin-card stock-card"><div className="admin-card__header"><div><h2>Lagerhinweise</h2><p>Jetzt prüfen</p></div><button className="text-link">Alle <ArrowRight size={15} /></button></div>{products.map((product, index) => <div className="stock-row" key={product.id}><img src={assetUrl(product.image)} alt="" /><div><strong>{product.name}</strong><span>{index === 0 ? '12 Stück auf Lager' : `${product.stock} Stück auf Lager`}</span></div><StatusPill variant={index === 1 ? 'amber' : 'red'}>{index === 1 ? 'Fast ausverkauft' : 'Niedriger Bestand'}</StatusPill></div>)}</section></div><section className="admin-card orders-card"><div className="admin-card__header"><div><h2>Neueste Bestellungen</h2><p>Aus dem Shop</p></div><button className="text-link" onClick={() => setAdminSection('orders')}>Alle Bestellungen <ArrowRight size={15} /></button></div><table><thead><tr><th>Bestellnummer</th><th>Kunde</th><th>Produkte</th><th>Total</th><th>Status</th></tr></thead><tbody>{[['#PF-2026-1042', 'Sandro Meier', '3', 'CHF 89.70', 'Bezahlt'], ['#PF-2026-1041', 'Claudia Baumann', '5', 'CHF 124.50', 'In Bearbeitung'], ['#PF-2026-1040', 'Lukas Steiner', '4', 'CHF 214.20', 'Abholung bereit']].map((order) => <tr key={order[0]}>{order.map((value, index) => <td key={index}>{index === 4 ? <StatusPill variant={value === 'In Bearbeitung' ? 'blue' : 'green'}>{value}</StatusPill> : value}</td>)}</tr>)}</tbody></table></section></>}{adminSection === 'products' && <AdminProducts products={products} onAdd={() => setToast('Produktformular ist im Laravel-Backend vorgesehen.')} />}{adminSection === 'orders' && <AdminOrders StatusPill={StatusPill} />}{adminSection === 'customers' && <AdminCustomers customers={customers} selectedId={selectedCustomerId} onSelect={setSelectedCustomerId} StatusPill={StatusPill} onUpdate={(id, changes) => setCustomers((current) => current.map((customer) => customer.id === id ? { ...customer, ...changes } : customer))} onSaved={() => setToast('Kontaktdaten der Kundschaft gespeichert (Demo).')} />}{adminSection === 'inventory' && <AdminInventory products={products} StatusPill={StatusPill} />}{adminSection === 'references' && <AdminReferences />}{adminSection === 'newsletter' && <AdminNewsletter newsletter={newsletter} onChange={updateNewsletter} onSave={() => setToast('Newsletter-Entwurf gespeichert (Demo).')} onTest={() => setToast('Demo-Modus: Ein Resend-Testversand wird erst im Laravel-Backend ausgelöst.')} onSend={() => setToast('Demo-Modus: Keine E-Mail gesendet. Der Produktivversand erfolgt serverseitig über Resend.')} />}{adminSection === 'popup' && <div className="popup-admin"><div className="admin-intro"><div><span className="eyebrow">Website-Inhalt</span><h1>Popup verwalten</h1><p>Steuern Sie saisonale Hinweise und Kampagnen direkt im Shop.</p></div><span className={popup.active ? 'live-status' : 'live-status live-status--off'}><i /> {popup.active ? 'Aktiv' : 'Inaktiv'}</span></div><div className="popup-admin__layout"><section className="admin-card popup-form"><div className="admin-card__header"><div><h2>Inhalt & Ausspielung</h2><p>Änderungen erscheinen in der Vorschau.</p></div><PanelTop size={20} /></div><div className="popup-toggle-card"><div><h3>Popup aktiv</h3><p>Auf der Website anzeigen.</p></div><label className="popup-toggle-control"><input type="checkbox" aria-label="Popup aktivieren" checked={popup.active} onChange={(event) => updatePopup('active', event.target.checked)} /><span className="popup-toggle-control__track" aria-hidden="true" /><span className="popup-toggle-control__state">{popup.active ? 'Aktiv' : 'Aus'}</span></label></div><label>Titel<input value={popup.title} onChange={(event) => updatePopup('title', event.target.value)} /></label><label>Text<textarea rows={4} value={popup.text} onChange={(event) => updatePopup('text', event.target.value)} /></label><div className="form-two"><label>Button-Text<input value={popup.cta} onChange={(event) => updatePopup('cta', event.target.value)} /></label><label>Zielseite<select value={popup.target} onChange={(event) => updatePopup('target', event.target.value as PopupTarget)}><option value="startseite">Startseite</option><option value="shop">Shop</option><option value="alle">Alle Seiten</option></select></label></div><div className="form-two"><label>Verzögerung<select value={popup.delay} onChange={(event) => updatePopup('delay', Number(event.target.value))}><option value={0}>Sofort</option><option value={1}>1 Sekunde</option><option value={3}>3 Sekunden</option></select></label><label>Häufigkeit<select value={popup.frequency} onChange={(event) => updatePopup('frequency', event.target.value as PopupFrequency)}><option value="einmalig">Einmalig</option><option value="sitzung">Einmal pro Sitzung</option><option value="taeglich">Einmal pro Tag</option><option value="immer">Bei jedem Besuch</option></select></label></div><div className="form-two"><label>Startdatum<input type="date" value={popup.startsAt} onChange={(event) => updatePopup('startsAt', event.target.value)} /></label><label>Enddatum<input type="date" value={popup.endsAt} onChange={(event) => updatePopup('endsAt', event.target.value)} /></label></div><div className="popup-form__footer"><button className="button button--soft" onClick={() => setToast('Entwurf ist gespeichert (Demo).')}><FileText size={17} /> Entwurf speichern</button><button className="button button--dark" onClick={openPopupPreview}><Eye size={17} /> Im Frontend testen</button></div></section><aside className="admin-card popup-analytics"><span className="eyebrow">Aktuelle Kampagne</span><h2>{popup.title || 'Ohne Titel'}</h2><div className="mini-popup"><span className="mini-popup__close" aria-hidden="true"><X size={15} /></span><Leaf size={24} /><strong>{popup.title || 'Ihr Popup-Titel'}</strong><p>{popup.text || 'Ihr Beschreibungstext erscheint hier.'}</p><span>{popup.cta || 'Button-Text'} <ArrowRight size={14} /></span></div><hr /><div className="analytics-grid"><div><span>Einblendungen</span><b>1’284</b></div><div><span>Klickrate</span><b>8.6 %</b></div><div><span>Schliessungen</span><b>73 %</b></div><div><span>Zeitraum</span><b>15.09.–30.11.</b></div></div><div className="popup-rule"><Clock3 size={18} /><p><b>Regel:</b> {popup.frequency === 'sitzung' ? 'Einmal pro Sitzung' : popup.frequency === 'taeglich' ? 'Einmal pro Tag' : popup.frequency === 'einmalig' ? 'Einmalig' : 'Bei jedem Besuch'} · {popup.target === 'startseite' ? 'Nur Startseite' : popup.target === 'shop' ? 'Nur Shop' : 'Alle Seiten'}</p></div></aside></div></div>}</div></section></main>
   }
 
   return (
