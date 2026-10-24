@@ -102,3 +102,7 @@ Das Hero-Medium bleibt ein rein dekorativer Hintergrund und darf nie als bedienb
 ## Optische Dynamik ohne zusätzliche Inhalte
 
 Der zurückgenommene Pflanzenfinder wird durch sichtbare, aber zurückhaltende Interface-Bewegung ersetzt. Beim Seitenwechsel werden Inhalte sanft eingeblendet; beim Scrollen erscheinen wichtige Bereiche, Karten und Redaktionsflächen gestaffelt aus wechselnden Richtungen. Der Hero erhält einen abgestuften Texteinstieg sowie eine dezente Tiefenbewegung des bereits vorhandenen Hintergrundvideos. Eine schmale Fortschrittslinie am Header vermittelt die Scrollposition; Bildkacheln und relevante Buttons reagieren bei Maus-/Tastaturinteraktion spürbar, ohne den Lesefluss zu unterbrechen. Alle rein dekorativen Bewegungen sind für `prefers-reduced-motion` deaktiviert; der Inhalt bleibt dabei vollständig und sofort sichtbar.
+
+### Stabilitätskorrektur der Bewegung
+
+Die experimentellen, scrollgebundenen CSS-View-Timelines werden entfernt, da sie auf einzelnen Mobilbrowsern flackernde Repaints auslösen können. Die klare visuelle Dynamik bleibt über einmalige Hero-Einblendungen, Seitenwechsel, die leichte Hero-Tiefenbewegung, den Scrollfortschritt im Header und vorhandene Hover-/Aktionsrückmeldungen erhalten. Damit bleibt jede Seite beim Scrollen stabil und vollständig lesbar.
