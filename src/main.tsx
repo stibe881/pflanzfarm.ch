@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   AlertTriangle,
@@ -323,52 +323,6 @@ const productGuides = [
   { id: 'pflege', title: 'Pflege', text: 'In den ersten Wochen gleichmässig wässern. Die genaue Pflege richtet sich nach Standort, Jahreszeit und gewählter Pflanzenhöhe.' },
 ] as const
 
-type FinderKey = 'gartenwunsch' | 'standort' | 'begleitung'
-type FinderValue = 'sichtschutz' | 'naschgarten' | 'struktur' | 'sonnig' | 'gemischt' | 'pflegeleicht' | 'fachberatung'
-type FinderAnswers = Partial<Record<FinderKey, FinderValue>>
-
-type FinderStep = {
-  key: FinderKey
-  progress: string
-  title: string
-  hint: string
-  options: { value: FinderValue; label: string; description: string }[]
-}
-
-const finderSteps: FinderStep[] = [
-  {
-    key: 'gartenwunsch',
-    progress: 'Gartenwunsch',
-    title: 'Was soll Ihr Garten können?',
-    hint: 'Wählen Sie, was Ihnen im Moment am wichtigsten ist.',
-    options: [
-      { value: 'sichtschutz', label: 'Sichtschutz schaffen', description: 'Für einen ruhigen, immergrünen Gartenraum.' },
-      { value: 'naschgarten', label: 'Beeren ernten', description: 'Für kleine Genussmomente direkt aus dem Garten.' },
-      { value: 'struktur', label: 'Struktur gestalten', description: 'Für klare Linien und dauerhaftes Grün.' },
-    ],
-  },
-  {
-    key: 'standort',
-    progress: 'Standort',
-    title: 'Wie liegt der geplante Standort?',
-    hint: 'Eine grobe Einschätzung genügt – wir beraten auch persönlich weiter.',
-    options: [
-      { value: 'sonnig', label: 'Sonnig', description: 'Viel direktes Licht über den Tag.' },
-      { value: 'gemischt', label: 'Sonne und Schatten', description: 'Wechselnde Lichtverhältnisse im Tagesverlauf.' },
-    ],
-  },
-  {
-    key: 'begleitung',
-    progress: 'Begleitung',
-    title: 'Wie möchten Sie starten?',
-    hint: 'Damit wir die Auswahl noch besser eingrenzen können.',
-    options: [
-      { value: 'pflegeleicht', label: 'Möglichst pflegeleicht', description: 'Robuste Pflanzen für einen unkomplizierten Start.' },
-      { value: 'fachberatung', label: 'Mit persönlicher Beratung', description: 'Wir begleiten Sie bei Auswahl und Pflanzung.' },
-    ],
-  },
-]
-
 const pageTitles: Record<View, string> = {
   home: 'Pflanzfarm – Pflanzen für Ihren Garten',
   shop: 'Pflanzen-Shop | Pflanzfarm',
@@ -491,6 +445,8 @@ function App() {
   const [toast, setToast] = useState('')
   const [productQuantity, setProductQuantity] = useState(1)
   const [headerScrolled, setHeaderScrolled] = useState(false)
+  const [scrollProgress, setScrollProgress] = useState(0)
+  const [heroMediaOffset, setHeroMediaOffset] = useState(0)
   const [savedProducts, setSavedProducts] = useState<string[]>([])
   const [lastAddedProductId, setLastAddedProductId] = useState<string | null>(null)
   const [cartPulse, setCartPulse] = useState(false)
@@ -502,8 +458,6 @@ function App() {
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false)
   const [heroVideoEnabled, setHeroVideoEnabled] = useState(false)
   const [heroVideoReady, setHeroVideoReady] = useState(false)
-  const [finderStepIndex, setFinderStepIndex] = useState(0)
-  const [finderAnswers, setFinderAnswers] = useState<FinderAnswers>({})
   const consentDialogRef = useRef<HTMLElement | null>(null)
   const popupDialogRef = useRef<HTMLElement | null>(null)
   const shopSearchRef = useRef<HTMLInputElement | null>(null)
@@ -590,11 +544,28 @@ function App() {
   }, [view])
 
   useEffect(() => {
-    const updateHeader = () => setHeaderScrolled(window.scrollY > 24)
-    updateHeader()
-    window.addEventListener('scroll', updateHeader, { passive: true })
-    return () => window.removeEventListener('scroll', updateHeader)
-  }, [])
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let frame: number | null = null
+    const updateMotion = () => {
+      if (frame !== null) return
+      frame = window.requestAnimationFrame(() => {
+        const scrollTop = window.scrollY
+        const maximumScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1)
+        setHeaderScrolled(scrollTop > 24)
+        setScrollProgress(Math.min(Math.max(scrollTop / maximumScroll, 0), 1))
+        setHeroMediaOffset(reduceMotion.matches ? 0 : Math.min(scrollTop * .045, 30))
+        frame = null
+      })
+    }
+    updateMotion()
+    window.addEventListener('scroll', updateMotion, { passive: true })
+    window.addEventListener('resize', updateMotion)
+    return () => {
+      window.removeEventListener('scroll', updateMotion)
+      window.removeEventListener('resize', updateMotion)
+      if (frame !== null) window.cancelAnimationFrame(frame)
+    }
+  }, [view])
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -609,30 +580,6 @@ function App() {
       reducedMotion.removeEventListener('change', updateHeroVideo)
     }
   }, [])
-
-  useEffect(() => {
-    const targets = Array.from(document.querySelectorAll<HTMLElement>('main[id="main-content"] > section, main[id="main-content"] article, .product-card, .category-card, .metric-card, .admin-card'))
-    if (!targets.length) return
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduceMotion || !('IntersectionObserver' in window)) {
-      targets.forEach((target) => target.classList.add('reveal', 'is-revealed'))
-      return
-    }
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-revealed')
-          observer.unobserve(entry.target)
-        }
-      })
-    }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' })
-    targets.forEach((target, index) => {
-      target.classList.add('reveal')
-      target.style.setProperty('--reveal-delay', `${Math.min((index % 6) * 45, 180)}ms`)
-      observer.observe(target)
-    })
-    return () => observer.disconnect()
-  }, [view, adminSection])
 
   useEffect(() => {
     setMobileNavOpen(false)
@@ -806,45 +753,6 @@ function App() {
     return matchesQuery && matchesCategory && matchesTrait
   })
   const sortedProducts = [...filteredProducts].sort((a, b) => sortBy === 'price-asc' ? a.price - b.price : sortBy === 'price-desc' ? b.price - a.price : products.indexOf(a) - products.indexOf(b))
-  const finderComplete = finderStepIndex >= finderSteps.length
-  const finderRecommendations = useMemo(() => {
-    if (!finderComplete) return []
-    const gardenWish = finderAnswers.gartenwunsch
-    const preference = finderAnswers.begleitung
-    const location = finderAnswers.standort
-    let result: Product[]
-
-    if (gardenWish === 'naschgarten') result = products.filter((product) => product.id === 'beerenstraeucher')
-    else if (gardenWish === 'sichtschutz') result = products.filter((product) => product.id === (location === 'sonnig' ? 'photinia' : 'thuja') || product.id === (location === 'sonnig' ? 'thuja' : 'photinia'))
-    else result = products.filter((product) => product.id === 'thuja' || product.id === 'photinia')
-
-    if (preference === 'pflegeleicht' && gardenWish !== 'naschgarten') {
-      result = [...result].sort((a, b) => (a.id === 'thuja' ? -1 : 1) - (b.id === 'thuja' ? -1 : 1))
-    }
-    return result
-  }, [finderAnswers, finderComplete])
-  const finderSummary = finderSteps.map((step) => ({
-    label: step.progress,
-    value: step.options.find((option) => option.value === finderAnswers[step.key])?.label ?? 'Noch offen',
-  }))
-
-  const chooseFinderOption = (key: FinderKey, value: FinderValue) => {
-    setFinderAnswers((current) => ({ ...current, [key]: value }))
-    window.setTimeout(() => setFinderStepIndex((current) => Math.min(current + 1, finderSteps.length)), 120)
-  }
-
-  const resetFinder = () => {
-    setFinderAnswers({})
-    setFinderStepIndex(0)
-  }
-
-  const openFinderResults = () => {
-    const primary = finderRecommendations[0]
-    setCategory(primary?.category ?? 'Alle Pflanzen')
-    setTrait('Alle Merkmale')
-    setQuery('')
-    goTo('shop')
-  }
 
   const openPopupPreview = () => {
     setDismissedPopupKey(null)
@@ -879,6 +787,7 @@ function App() {
         <span><Leaf size={14} /> Schweizer Familienbetrieb</span>
         <span><Heart size={14} /> Für Gärten, die bleiben</span>
       </div>
+      <span className="scroll-progress" aria-hidden="true" style={{ transform: `scaleX(${scrollProgress})` }} />
       <div className="site-header__main container">
         <BrandMark onActivate={() => goTo('home')} />
         <nav id="site-navigation" className={mobileNavOpen ? 'main-nav main-nav--open' : 'main-nav'} aria-label="Hauptnavigation">
@@ -900,51 +809,9 @@ function App() {
     </header>
   )
 
-  const PlantFinder = () => {
-    const activeStep = finderSteps[finderStepIndex]
-    return (
-      <section className="plant-finder-section" aria-labelledby="plant-finder-title">
-        <div className="container plant-finder">
-          <div className="plant-finder__intro">
-            <span className="eyebrow eyebrow--light">Persönlich starten</span>
-            <h2 id="plant-finder-title">Welche Pflanze passt zu Ihrem Garten?</h2>
-            <p>Drei kurze Fragen geben Ihnen eine erste, passende Richtung – unkompliziert und ohne Daten zu speichern.</p>
-            <ol className="plant-finder__progress" aria-label="Fortschritt Pflanzenfinder">
-              {finderSteps.map((step, index) => <li key={step.key} className={index < finderStepIndex ? 'is-complete' : index === finderStepIndex ? 'is-active' : ''}><span>{index < finderStepIndex ? <Check size={14} /> : index + 1}</span><b>{step.progress}</b></li>)}
-            </ol>
-          </div>
-          <div className="plant-finder__panel">
-            {!finderComplete && activeStep ? <div className="plant-finder__question" key={activeStep.key}>
-              <span className="plant-finder__step">Schritt {finderStepIndex + 1} von {finderSteps.length}</span>
-              <h3>{activeStep.title}</h3>
-              <p>{activeStep.hint}</p>
-              <div className="plant-finder__options" role="group" aria-label={activeStep.title}>
-                {activeStep.options.map((option) => <button type="button" key={option.value} className={finderAnswers[activeStep.key] === option.value ? 'plant-finder__option is-selected' : 'plant-finder__option'} aria-pressed={finderAnswers[activeStep.key] === option.value} onClick={() => chooseFinderOption(activeStep.key, option.value)}><strong>{option.label}</strong><span>{option.description}</span><ArrowRight size={17} /></button>)}
-              </div>
-              {finderStepIndex > 0 && <button className="plant-finder__restart" type="button" onClick={resetFinder}>Neu beginnen</button>}
-            </div> : <div className="plant-finder__result" role="status" aria-live="polite">
-              <span className="plant-finder__step">Ihre Auswahl</span>
-              <h3>Das könnte gut zu Ihrem Garten passen.</h3>
-              <p>{finderAnswers.begleitung === 'fachberatung' ? 'Für die endgültige Auswahl unterstützen wir Sie gern persönlich.' : 'Diese robuste Auswahl passt zu Ihren Angaben und lässt sich gut weiter erkunden.'}</p>
-              <div className="plant-finder__recommendations">
-                {finderRecommendations.map((product) => <article key={product.id}><img src={assetUrl(product.image)} srcSet={assetSourceSet(product.imageSet)} sizes="(max-width: 760px) 38vw, 135px" loading="lazy" decoding="async" alt="" /><div><span>{product.category}</span><h4>{product.name}</h4><p>{product.description}</p><button type="button" onClick={() => openProduct(product)}>Details ansehen <ArrowRight size={15} /></button></div></article>)}
-              </div>
-              <div className="plant-finder__result-actions"><button className="button button--soft" type="button" onClick={resetFinder}>Auswahl ändern</button><button className="button button--primary" type="button" onClick={openFinderResults}>Im Shop ansehen <ArrowRight size={17} /></button></div>
-            </div>}
-          </div>
-          <aside className="plant-finder__summary" aria-label="Ihre Auswahl">
-            <span>Ihre Richtung</span>
-            <dl>{finderSummary.map((item) => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl>
-            <p><Leaf size={17} /> Beratung bleibt persönlich – der Finder ist nur Ihr erster Anhaltspunkt.</p>
-          </aside>
-        </div>
-      </section>
-    )
-  }
-
   const Home = () => (
     <main id="main-content" tabIndex={-1}>
-      <section className="hero">
+      <section className="hero" style={{ '--hero-media-offset': `${heroMediaOffset}px` } as CSSProperties}>
         <picture className="hero__poster" aria-hidden="true">
           <source type="image/avif" srcSet={assetSourceSet('/assets/pflanzfarm-hero-mitarbeitende-poster-768.avif 768w, /assets/pflanzfarm-hero-mitarbeitende-poster-1280.avif 1280w')} sizes="100vw" />
           <source type="image/webp" srcSet={assetSourceSet('/assets/pflanzfarm-hero-mitarbeitende-poster-768.webp 768w, /assets/pflanzfarm-hero-mitarbeitende-poster-1280.webp 1280w')} sizes="100vw" />
@@ -985,8 +852,6 @@ function App() {
           ))}
         </div>
       </section>
-
-      <PlantFinder />
 
       <section className="section featured-section">
         <div className="container">
