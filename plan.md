@@ -98,3 +98,7 @@ Die finale vorwärtsgerichtete Webdatei ist 12.0 Sekunden lang, 1280 × 720 px g
 ### Inline-Playback statt nativer Videoplayer
 
 Das Hero-Medium bleibt ein rein dekorativer Hintergrund und darf nie als bedienbarer Player erscheinen. Neben `autoplay`, `muted`, `loop` und `playsInline` setzt die React-Referenz beim Einhängen auch das mobile Kompatibilitätsattribut `webkit-playsinline`, erzwingt den stummen Inline-Start und deaktiviert Controls sowie Picture-in-Picture. Die Videoebene hat keine Pointer-Interaktion; die sichtbaren Hero-Buttons bleiben darüber uneingeschränkt bedienbar.
+
+## Interaktiver Pflanzenfinder
+
+Die Startseite erhält einen kompakten Pflanzenfinder mit drei klaren, tastaturbedienbaren Entscheidungen: Gartenwunsch, Standort und gewünschte Begleitung. Jede Auswahl führt ohne Seitenreload zum nächsten Schritt und zeigt einen Fortschrittsindikator sowie die aktuell getroffene Wahl. Nach dem letzten Schritt werden ausschliesslich passende Produkte aus dem vorhandenen Demo-Sortiment empfohlen; Produktdetails und ein gefilterter Shop-Einstieg bleiben direkt erreichbar. Der Finder verarbeitet keine personenbezogenen Daten, speichert Entscheidungen nicht und erweitert weder Tracking noch Browser-Speicher. Kurze Zustandswechsel dienen der Orientierung; bei `prefers-reduced-motion` bleiben alle Inhalte sofort sichtbar.
