@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Schützt eine Testumgebung mit einem gemeinsamen Passwort (HTTP-Basic-Auth)
- * und verhindert, dass Suchmaschinen sie indexieren. Aktiv nur, wenn SITE_PASSWORD gesetzt ist.
+ * Schützt eine Testumgebung optional mit einem gemeinsamen Passwort (HTTP-Basic-Auth, nur wenn SITE_PASSWORD gesetzt ist)
+ * und verhindert im Testmodus oder mit Passwort, dass Suchmaschinen sie indexieren.
  */
 class TestEnvironmentGuard
 {
@@ -16,7 +16,12 @@ class TestEnvironmentGuard
     {
         $password = (string) config('pflanzfarm.site_password');
         if ($password === '' || $request->is('stripe/webhook', 'up')) {
-            return $next($request);
+            $response = $next($request);
+            if (config('pflanzfarm.test_mode')) {
+                $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
+            }
+
+            return $response;
         }
 
         if (! hash_equals($password, (string) $request->getPassword())) {

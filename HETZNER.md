@@ -44,7 +44,7 @@ nano backend/.env
 ```
 
 - `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` – aus Schritt 1
-- `SITE_PASSWORD` – Passwort für die ganze Seite (das gibst du dem Kunden)
+- `SITE_PASSWORD` – optional: Passwort für die ganze Seite. Leer lassen = keine Passwortabfrage (Google nimmt die Testseite dank Testmodus trotzdem nicht auf)
 - `TEST_ADMIN_PASSWORD` – Passwort für `admin@pflanzfarm.test`
 
 Speichern (Ctrl+O, Enter, Ctrl+X) und das Skript erneut starten:
@@ -83,7 +83,7 @@ php ~/public_html/pflanzfarm/backend/artisan schedule:run
 
 ## 6. Testen
 
-- `https://pflanzfarm.gross-ict.ch` öffnen → der Browser fragt nach dem Passwort (`SITE_PASSWORD`, Benutzername beliebig)
+- `https://pflanzfarm.gross-ict.ch` öffnen (nur falls `SITE_PASSWORD` gesetzt ist, fragt der Browser nach dem Passwort, Benutzername beliebig)
 - Oben steht der gelbe Balken «Testumgebung»
 - Admin: `https://pflanzfarm.gross-ict.ch/admin` mit `admin@pflanzfarm.test` und deinem `TEST_ADMIN_PASSWORD`
 

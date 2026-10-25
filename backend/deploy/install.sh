@@ -39,7 +39,7 @@ $COMPOSER install --no-dev --optimize-autoloader --no-interaction
 if [ ! -f .env ]; then
   cp deploy/env.staging .env
   echo ""
-  echo ">>> backend/.env wurde angelegt. Bitte Datenbank, SITE_PASSWORD und TEST_ADMIN_PASSWORD eintragen"
+  echo ">>> backend/.env wurde angelegt. Bitte Datenbank und TEST_ADMIN_PASSWORD eintragen (SITE_PASSWORD optional)"
   echo ">>> (z. B. mit: nano backend/.env) und das Skript danach erneut ausführen."
   exit 0
 fi
