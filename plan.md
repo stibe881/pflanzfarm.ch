@@ -106,3 +106,7 @@ Der zurückgenommene Pflanzenfinder wird durch sichtbare, aber zurückhaltende I
 ### Stabilitätskorrektur der Bewegung
 
 Die experimentellen, scrollgebundenen CSS-View-Timelines werden entfernt, da sie auf einzelnen Mobilbrowsern flackernde Repaints auslösen können. Die klare visuelle Dynamik bleibt über einmalige Hero-Einblendungen, Seitenwechsel, die leichte Hero-Tiefenbewegung, den Scrollfortschritt im Header und vorhandene Hover-/Aktionsrückmeldungen erhalten. Damit bleibt jede Seite beim Scrollen stabil und vollständig lesbar.
+
+### Scroll-Stabilität mit Hero-Video
+
+Der Scroll-Handler aktualisiert keine React-Zustände mehr pro Frame und verschiebt das Hero-Video nicht. Der Header wechselt seinen Zustand weiterhin nur an der festgelegten Schwelle; die schmale Fortschrittslinie wird per `requestAnimationFrame` direkt aktualisiert. Dadurch entfallen globales Re-Rendering und eine scrollende Videokomposition, während das Hero-Video als ruhiger, statischer Hintergrund sichtbar bleibt.

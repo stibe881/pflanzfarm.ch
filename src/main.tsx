@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   AlertTriangle,
@@ -445,8 +445,6 @@ function App() {
   const [toast, setToast] = useState('')
   const [productQuantity, setProductQuantity] = useState(1)
   const [headerScrolled, setHeaderScrolled] = useState(false)
-  const [scrollProgress, setScrollProgress] = useState(0)
-  const [heroMediaOffset, setHeroMediaOffset] = useState(0)
   const [savedProducts, setSavedProducts] = useState<string[]>([])
   const [lastAddedProductId, setLastAddedProductId] = useState<string | null>(null)
   const [cartPulse, setCartPulse] = useState(false)
@@ -462,6 +460,8 @@ function App() {
   const popupDialogRef = useRef<HTMLElement | null>(null)
   const shopSearchRef = useRef<HTMLInputElement | null>(null)
   const heroVideoRef = useRef<HTMLVideoElement | null>(null)
+  const scrollProgressRef = useRef<HTMLSpanElement | null>(null)
+  const headerScrolledRef = useRef(false)
   const sessionPopupHistoryRef = useRef(new Set<string>())
   const cartFeedbackTimerRef = useRef<number | null>(null)
   const cartPulseTimerRef = useRef<number | null>(null)
@@ -544,16 +544,18 @@ function App() {
   }, [view])
 
   useEffect(() => {
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
     let frame: number | null = null
     const updateMotion = () => {
       if (frame !== null) return
       frame = window.requestAnimationFrame(() => {
         const scrollTop = window.scrollY
         const maximumScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1)
-        setHeaderScrolled(scrollTop > 24)
-        setScrollProgress(Math.min(Math.max(scrollTop / maximumScroll, 0), 1))
-        setHeroMediaOffset(reduceMotion.matches ? 0 : Math.min(scrollTop * .045, 30))
+        const nextHeaderScrolled = scrollTop > 24
+        if (headerScrolledRef.current !== nextHeaderScrolled) {
+          headerScrolledRef.current = nextHeaderScrolled
+          setHeaderScrolled(nextHeaderScrolled)
+        }
+        scrollProgressRef.current?.style.setProperty('transform', `scaleX(${Math.min(Math.max(scrollTop / maximumScroll, 0), 1)})`)
         frame = null
       })
     }
@@ -787,7 +789,7 @@ function App() {
         <span><Leaf size={14} /> Schweizer Familienbetrieb</span>
         <span><Heart size={14} /> Für Gärten, die bleiben</span>
       </div>
-      <span className="scroll-progress" aria-hidden="true" style={{ transform: `scaleX(${scrollProgress})` }} />
+      <span ref={scrollProgressRef} className="scroll-progress" aria-hidden="true" />
       <div className="site-header__main container">
         <BrandMark onActivate={() => goTo('home')} />
         <nav id="site-navigation" className={mobileNavOpen ? 'main-nav main-nav--open' : 'main-nav'} aria-label="Hauptnavigation">
@@ -811,7 +813,7 @@ function App() {
 
   const Home = () => (
     <main id="main-content" tabIndex={-1}>
-      <section className="hero" style={{ '--hero-media-offset': `${heroMediaOffset}px` } as CSSProperties}>
+      <section className="hero">
         <picture className="hero__poster" aria-hidden="true">
           <source type="image/avif" srcSet={assetSourceSet('/assets/pflanzfarm-hero-mitarbeitende-poster-768.avif 768w, /assets/pflanzfarm-hero-mitarbeitende-poster-1280.avif 1280w')} sizes="100vw" />
           <source type="image/webp" srcSet={assetSourceSet('/assets/pflanzfarm-hero-mitarbeitende-poster-768.webp 768w, /assets/pflanzfarm-hero-mitarbeitende-poster-1280.webp 1280w')} sizes="100vw" />
