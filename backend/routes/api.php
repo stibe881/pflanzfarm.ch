@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/me', [AccountController::class, 'update']);
     Route::delete('/me', [AccountController::class, 'destroy']);
     Route::get('/me/orders', [AccountController::class, 'orders']);
+    Route::post('/me/orders/{number}/cancel', [AccountController::class, 'cancelOrder'])->middleware('throttle:forms');
     Route::get('/me/export', [AccountController::class, 'export']);
     Route::post('/email/verification-notification', [AccountController::class, 'resendVerification'])->middleware('throttle:forms');
 });

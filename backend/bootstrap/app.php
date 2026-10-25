@@ -18,5 +18,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: ['stripe/webhook', 'newsletter/abmelden/*']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Fehler-Benachrichtigung per E-Mail (siehe ErrorNotifier)
+        $exceptions->report(fn (Throwable $e) => \App\Support\ErrorNotifier::report($e));
     })->create();

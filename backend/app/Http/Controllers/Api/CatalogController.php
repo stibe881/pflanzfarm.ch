@@ -37,7 +37,9 @@ class CatalogController extends Controller
             'articles' => GuideArticle::query()->where('published', true)->orderBy('sort')->orderBy('id')->with('product:id,slug')->get()->map(fn (GuideArticle $a) => [
                 'id' => $a->slug,
                 'title' => $a->title,
-                'paras' => array_values(array_filter(array_map('trim', preg_split("/\R\s*\R/", $a->body)))),
+                'excerpt' => $a->summary(),
+                'paras' => $a->paragraphs(),
+                'updated' => $a->updated_at?->toDateString(),
                 'product' => $a->product?->slug,
             ]),
             'popup' => $popup ? [
@@ -87,6 +89,9 @@ class CatalogController extends Controller
             'priceOnRequest' => $p->price_on_request,
             'image' => self::image($p->image),
             'imageSet' => self::imageSet($p->image),
+            'gallery' => collect($p->gallery ?? [])->map(fn ($g) => self::image($g))->values()->all(),
+            'discounts' => collect($p->volume_discounts ?? [])->map(fn ($t) => ['minQty' => (int) $t['min_qty'], 'percent' => min(90, (int) $t['percent'])])
+                ->filter(fn ($t) => $t['minQty'] > 1 && $t['percent'] > 0)->sortBy('minQty')->values()->all(),
             'badge' => $p->badge,
             'height' => $p->height_label ?? ($variants->first()['label'] ?? ''),
             'traits' => $p->traits ?? [],

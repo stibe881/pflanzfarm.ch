@@ -9,4 +9,7 @@ return [
 
     // Simulierte Zahlung statt Stripe (nur ausserhalb von APP_ENV=production möglich)
     'fake_payments' => (bool) env('STRIPE_FAKE', false) && env('APP_ENV') !== 'production',
+
+    // Unerwartete Fehler per E-Mail an die Benachrichtigungsadresse melden (max. 1× pro Stunde je Fehler)
+    'error_mails' => (bool) env('ERROR_MAILS', true),
 ];

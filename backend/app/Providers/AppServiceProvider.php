@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Listeners\TrackNewsletter;
 use App\Models\User;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -24,6 +27,18 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
+
+        foreach ([\App\Models\Product::class, \App\Models\ProductVariant::class, \App\Models\Order::class, \App\Models\ShippingClass::class,
+            \App\Models\Popup::class, \App\Models\Reference::class, \App\Models\GuideArticle::class, \App\Models\User::class,
+            \App\Models\Setting::class, \App\Models\NewsletterCampaign::class] as $model) {
+            $model::observe(\App\Observers\ActivityObserver::class);
+        }
+
+        Event::listen(MessageSent::class, [TrackNewsletter::class, 'sent']);
+        Event::listen(\Resend\Laravel\Events\EmailOpened::class, [TrackNewsletter::class, 'opened']);
+        Event::listen(\Resend\Laravel\Events\EmailClicked::class, [TrackNewsletter::class, 'clicked']);
+        Event::listen(\Resend\Laravel\Events\EmailBounced::class, [TrackNewsletter::class, 'bounced']);
+        Event::listen(\Resend\Laravel\Events\EmailComplained::class, [TrackNewsletter::class, 'bounced']);
 
         RateLimiter::for('forms', fn (Request $r) => Limit::perMinute(6)->by($r->ip()));
         RateLimiter::for('login', fn (Request $r) => [

@@ -3,15 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\CustomerCancelledOrder;
+use App\Mail\OrderStatusUpdate;
 use App\Models\NewsletterSubscriber;
 use App\Models\Order;
+use App\Models\Setting;
 use App\Models\User;
+use App\Services\OrderService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -133,6 +138,23 @@ class AccountController extends Controller
         return response()->json([
             'orders' => $request->user()->orders()->with('items')->latest()->get()->map(fn (Order $o) => OrderController::summary($o)),
         ]);
+    }
+
+    /** Storno durch die Kundschaft, solange die Bestellung noch nicht bestätigt ist. Bezahlte Beträge werden erstattet. */
+    public function cancelOrder(Request $request, string $number, OrderService $orders): JsonResponse
+    {
+        $order = $request->user()->orders()->where('number', $number)->firstOrFail();
+        if (! $order->isCancellableByCustomer()) {
+            return response()->json(['message' => 'Diese Bestellung ist bereits bestätigt. Bitte rufen Sie uns an: +41 79 336 14 95.'], 422);
+        }
+        $orders->cancel($order, refund: true, by: 'kunde');
+        $order->refresh();
+        $order->mailCustomer(new OrderStatusUpdate($order));
+        if ($notify = Setting::get('notify_email')) {
+            Mail::to($notify)->send(new CustomerCancelledOrder($order));
+        }
+
+        return response()->json(['order' => OrderController::summary($order->load('items'))]);
     }
 
     /** Datenauskunft nach DSG: alle zur Person gespeicherten Daten als JSON. */

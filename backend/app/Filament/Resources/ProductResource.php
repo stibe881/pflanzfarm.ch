@@ -42,12 +42,24 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('height_label')->label('Grössenangabe auf der Karte')->placeholder('leer = erste Grösse'),
                 Forms\Components\TextInput::make('plants_per_meter')->label('Pflanzen pro Laufmeter')->numeric()->step(0.5)
                     ->helperText('Für den Hecken-Rechner. Leer lassen, wenn die Pflanze nicht im Rechner erscheinen soll.'),
-                Forms\Components\FileUpload::make('image')->label('Bild')->image()->imageEditor()->disk('public')->directory('produkte')
-                    ->maxSize(5120)->columnSpanFull(),
+                Forms\Components\FileUpload::make('image')->label('Hauptbild')->image()->imageEditor()->disk('public')->directory('produkte')
+                    ->maxSize(5120),
+                Forms\Components\FileUpload::make('gallery')->label('Weitere Bilder (Galerie)')->image()->multiple()->reorderable()->appendFiles()
+                    ->maxFiles(8)->disk('public')->directory('produkte')->maxSize(5120)->panelLayout('grid')
+                    ->helperText('Bis 8 Bilder, z. B. Wuchs, Blüte, Hecke nach einem Jahr. Reihenfolge per Ziehen.'),
                 Forms\Components\Toggle::make('price_on_request')->label('Preis auf Anfrage (nicht online bestellbar)'),
                 Forms\Components\Toggle::make('active')->label('Im Shop sichtbar')->default(true),
                 Forms\Components\TextInput::make('sort')->label('Reihenfolge')->numeric()->default(0),
             ]),
+            Forms\Components\Section::make('Mengenrabatt')->collapsible()->collapsed(fn (?Product $record) => empty($record?->volume_discounts))
+                ->description('Gilt je Grösse ab der angegebenen Stückzahl, z. B. ab 50 Stück 10 %. Es zählt die höchste erreichte Stufe.')
+                ->schema([
+                    Forms\Components\Repeater::make('volume_discounts')->label('')->columns(2)->defaultItems(0)->addActionLabel('Rabattstufe hinzufügen')
+                        ->schema([
+                            Forms\Components\TextInput::make('min_qty')->label('Ab Stück')->numeric()->integer()->minValue(2)->required(),
+                            Forms\Components\TextInput::make('percent')->label('Rabatt')->numeric()->integer()->minValue(1)->maxValue(90)->suffix('%')->required(),
+                        ]),
+                ]),
             Forms\Components\Section::make('Grössen, Preise und Lager')->schema([
                 Forms\Components\Repeater::make('variants')->relationship()->label('')
                     ->orderColumn('sort')->reorderableWithButtons()

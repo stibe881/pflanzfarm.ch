@@ -13,7 +13,7 @@ const tpl = readFileSync(join(here, "..", "backend", "resources", "spa.html"), "
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
 const catalog = await (await fetch(`${base}/api/catalog`)).json();
-const routes = ["/", "/shop/", ...catalog.products.map((p) => `/produkt/${p.slug}/`), "/referenzen/", "/ueber-uns/", "/gartenservice/", "/ratgeber/", "/kontakt/", "/datenschutz/", "/impressum/", "/barrierefreiheit/", "/agb/"];
+const routes = ["/", "/shop/", ...catalog.products.map((p) => `/produkt/${p.slug}/`), "/referenzen/", "/ueber-uns/", "/gartenservice/", "/ratgeber/", ...catalog.articles.map((a) => `/ratgeber/${a.id}/`), "/kontakt/", "/datenschutz/", "/impressum/", "/barrierefreiheit/", "/agb/"];
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -42,7 +42,4 @@ for (const r of routes) {
   console.log("vorgerendert", r);
 }
 await browser.close();
-writeFileSync(
-  join(pub, "sitemap.xml"),
-  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${routes.map((r) => `  <url><loc>${SITE}${r}</loc></url>`).join("\n")}\n</urlset>\n`,
-);
+// Die Sitemap erzeugt Laravel dynamisch unter /sitemap.xml.

@@ -141,10 +141,17 @@ class OrderController extends Controller
             'subtotal' => $order->subtotal / 100,
             'shipping' => $order->shipping / 100,
             'total' => $order->total / 100,
+            'discount' => $order->discount_total / 100,
+            'preferredDate' => $order->preferred_date?->toDateString(),
+            'preferredSlot' => $order->preferred_slot,
+            'scheduledDate' => $order->scheduled_date?->toDateString(),
+            'scheduledSlot' => $order->scheduled_slot,
+            'cancellable' => $order->isCancellableByCustomer(),
             'items' => $order->items->map(fn ($i) => [
                 'name' => $i->product_name,
                 'variant' => $i->variant_label,
                 'quantity' => $i->quantity,
+                'discountPercent' => $i->discount_percent,
                 'total' => $i->line_total / 100,
             ]),
         ];

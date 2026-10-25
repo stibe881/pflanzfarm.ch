@@ -78,6 +78,12 @@ class Order extends Model
             && $this->status !== 'storniert' && $this->dueDate()->endOfDay()->isPast();
     }
 
+    /** Kundschaft darf selbst stornieren, solange wir die Bestellung noch nicht bestätigt haben. */
+    public function isCancellableByCustomer(): bool
+    {
+        return $this->status === 'neu' && in_array($this->payment_status, ['offen', 'bezahlt'], true);
+    }
+
     /** E-Mail an die Kundschaft, sofern eine Adresse erfasst ist (Telefonbestellungen evtl. ohne). */
     public function mailCustomer(\Illuminate\Contracts\Mail\Mailable $mail): bool
     {

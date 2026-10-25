@@ -10,7 +10,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class LowStock extends BaseWidget
 {
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 6;
 
     protected static ?string $heading = 'Knapper Lagerbestand (unter 10 Stück)';
 

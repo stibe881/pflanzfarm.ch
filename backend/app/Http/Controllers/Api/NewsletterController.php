@@ -43,6 +43,10 @@ class NewsletterController extends Controller
     {
         $subscriber = NewsletterSubscriber::query()->where('token', $token)->first();
         $subscriber?->update(['status' => 'abgemeldet', 'unsubscribed_at' => now()]);
+        if ($subscriber && $request->integer('s')) {
+            \App\Models\NewsletterSend::query()->whereKey($request->integer('s'))->where('email', $subscriber->email)
+                ->whereNull('unsubscribed_at')->update(['unsubscribed_at' => now()]);
+        }
 
         // One-Click-Abmeldung (RFC 8058) kommt per POST vom Mailprogramm
         if ($request->isMethod('post')) {
