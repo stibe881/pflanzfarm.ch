@@ -6,4 +6,5 @@ Website, Online-Shop und Verwaltung der Pflanzfarm Steinmann, Ebersecken.
 - `frontend/` – Quellcode der Website; `npm run build` erzeugt die Dateien in `backend/public`
 
 Alles ausprobieren vor dem Livegang: siehe [TESTEN.md](TESTEN.md).
+Testbetrieb auf Hetzner-Webhosting: siehe [HETZNER.md](HETZNER.md).
 Installation, Konfiguration und Betrieb: siehe [DEPLOY.md](DEPLOY.md).
