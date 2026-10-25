@@ -13111,18 +13111,22 @@ function a0({ product: o, onOpen: C, onAdd: _, isSaved: y, onToggleSaved: L, jus
             className: "product-card__meta",
             children: [
               i.jsx("span", { children: o.height }),
-              i.jsxs("span", {
-                className: (o.stock ?? 1) > 0 && !o.priceOnRequest ? "stock-dot" : "stock-dot stock-dot--request",
-                children: [i.jsx("i", {}), (o.stock ?? 1) > 0 && !o.priceOnRequest ? " Auf Lager" : " Auf Anfrage"],
-              }),
+              pf_ready
+                ? i.jsxs("span", {
+                    className: (o.stock ?? 1) > 0 && !o.priceOnRequest ? "stock-dot" : "stock-dot stock-dot--request",
+                    children: [i.jsx("i", {}), (o.stock ?? 1) > 0 && !o.priceOnRequest ? " Auf Lager" : " Auf Anfrage"],
+                  })
+                : h("span", { className: "skeleton skeleton--text", "aria-hidden": "true" }),
             ],
           }),
           i.jsxs("div", {
             className: "product-card__bottom",
             children: [
-              i.jsx("strong", {
-                children: o.priceOnRequest ? "Preis auf Anfrage" : (o.variants || []).length > 1 ? `ab ${Sa(o.price)}` : Sa(o.price),
-              }),
+              pf_ready
+                ? i.jsx("strong", {
+                    children: o.priceOnRequest ? "Preis auf Anfrage" : (o.variants || []).length > 1 ? `ab ${Sa(o.price)}` : Sa(o.price),
+                  })
+                : h("strong", { className: "skeleton skeleton--price", "aria-label": "Preis wird geladen" }),
               i.jsx("button", {
                 className: X ? "round-button round-button--confirmed" : "round-button",
                 onClick: o.priceOnRequest || (o.variants || []).length > 1 || (o.stock ?? 1) <= 0 ? C : _,
@@ -13243,6 +13247,7 @@ function pf_Hedge({ onAdd: o, onRequest: C, initial: _, compact: y = !1 }) {
       h("span", null, h("b", null, ge), " Pflanzen", h("small", null, `${A.perMeter} Stück pro Meter`)),
       h("span", null, h("b", null, Sa(O)), " Richtpreis", h("small", null, "Pflanzen, exkl. Lieferung & Pflanzung")),
     ),
+    h(pf_HedgePreview, { product: p, variant: p.variants[0], perMeter: A.perMeter }),
     h(
       "label",
       { className: "hedge-calc__check" },
@@ -13411,6 +13416,8 @@ let pf_catalogSettings = {
   },
   pf_refs = null,
   pf_articles = null,
+  // erst nach dem Laden des Katalogs sind Preise und Bestand aktuell (vorher Platzhalter)
+  pf_ready = !1,
   pf_prefillText = "";
 const pf_xsrf = () => decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/) || [])[1] || ""),
   pf_api = async (o, C = {}) => {
@@ -13613,6 +13620,199 @@ function pf_Search({ articles: o, onClose: C, onProduct: _, onArticle: y }) {
     ),
   );
 }
+// Zusätzliche Icons (Lucide, ISC-Lizenz) für den Steckbrief
+const pf_icon = (o, C = 18) =>
+    h(
+      "svg",
+      { xmlns: "http://www.w3.org/2000/svg", width: C, height: C, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
+      ...o.map((_, y) => (_.startsWith("c:") ? h("circle", { key: y, cx: 12, cy: 12, r: _.slice(2) }) : h("path", { key: y, d: _ }))),
+    ),
+  pf_icons = {
+    sonne: ["c:4", "M12 2v2", "M12 20v2", "m4.93 4.93 1.41 1.41", "m17.66 17.66 1.41 1.41", "M2 12h2", "M20 12h2", "m6.34 17.66-1.41 1.41", "m19.07 4.93-1.41 1.41"],
+    halbschatten: ["M12 2v2", "m4.93 4.93 1.41 1.41", "M20 12h2", "m19.07 4.93-1.41 1.41", "M15.947 12.65a4 4 0 0 0-5.925-4.128", "M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"],
+    schatten: ["M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"],
+    height: ["M12 2v20", "m8 18 4 4 4-4", "m8 6 4-4 4 4"],
+    growth: ["M22 7 13.5 15.5 8.5 10.5 2 17", "M16 7h6v6"],
+    frost: ["m10 20-1.25-2.5L6 18", "M10 4 8.75 6.5 6 6", "m14 20 1.25-2.5L18 18", "m14 4 1.25 2.5L18 6", "m17 21-3-6h-4", "m17 3-3 6 1.5 3", "M2 12h6.5L10 9", "m20 10-1.5 2 1.5 2", "M22 12h-6.5L14 15", "m4 10 1.5 2L4 14", "m7 21 3-6-1.5-3", "m7 3 3 6h4"],
+  },
+  pf_locLabels = { sonne: "Sonne", halbschatten: "Halbschatten", schatten: "Schatten" },
+  pf_useLabels = { hecke: "Hecke", sichtschutz: "Sichtschutz", naschgarten: "Naschgarten", kuebel: "Kübel / Terrasse", solitaer: "Einzelpflanze", bienen: "Bienenfreundlich" },
+  pf_m = (o) => (o >= 100 ? `${(o / 100).toLocaleString("de-CH", { maximumFractionDigits: 1 })} m` : `${o} cm`),
+  pf_heightText = (o) => (!o || (!o.heightMin && !o.heightMax) ? "" : o.heightMin && o.heightMax && o.heightMin !== o.heightMax ? `${pf_m(o.heightMin).replace(" m", "")}–${pf_m(o.heightMax)}` : pf_m(o.heightMax || o.heightMin)),
+  // Starthöhe aus der Grösse, z. B. «80–100 cm» → 90
+  pf_startHeight = (o) => {
+    const C = String(o || "").match(/(\d+)\s*[–-]\s*(\d+)\s*cm/) || String(o || "").match(/(\d+)\s*cm/);
+    return C ? (C[2] ? (+C[1] + +C[2]) / 2 : +C[1]) : null;
+  };
+function pf_Profile({ product: o }) {
+  const C = o.profile || {},
+    _ = pf_heightText(C);
+  if (!(C.locations || []).length && !_ && !C.growth && !C.hardiness && !(C.months || []).length) return null;
+  const y = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"],
+    L = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+  return h(
+    "section",
+    { className: "profile", "aria-label": "Steckbrief" },
+    h("h2", null, "Steckbrief"),
+    h(
+      "dl",
+      { className: "profile__grid" },
+      (C.locations || []).length > 0 &&
+        h(
+          "div",
+          null,
+          h("dt", null, "Standort"),
+          h("dd", { className: "profile__icons" }, ...C.locations.map((X) => h("span", { key: X, title: pf_locLabels[X] }, pf_icon(pf_icons[X] || pf_icons.sonne), " ", pf_locLabels[X] || X))),
+        ),
+      _ && h("div", null, h("dt", null, "Endhöhe"), h("dd", null, pf_icon(pf_icons.height), " ", _)),
+      C.growth && h("div", null, h("dt", null, "Zuwachs"), h("dd", null, pf_icon(pf_icons.growth), ` ca. ${C.growth} cm pro Jahr`)),
+      C.hardiness && h("div", null, h("dt", null, "Winterhärte"), h("dd", null, pf_icon(pf_icons.frost), " ", C.hardiness)),
+      h("div", null, h("dt", null, "Laub"), h("dd", null, h(il, { size: 18 }), C.evergreen ? " immergrün" : " sommergrün")),
+      (C.uses || []).length > 0 && h("div", null, h("dt", null, "Verwendung"), h("dd", null, C.uses.map((X) => pf_useLabels[X] || X).join(", "))),
+    ),
+    (C.months || []).length > 0 &&
+      h(
+        "div",
+        { className: "profile__months" },
+        h("span", null, "Pflanzzeit"),
+        h(
+          "ol",
+          { "aria-label": `Pflanzzeit: ${C.months.map((X) => L[X - 1]).join(", ")}` },
+          ...y.map((X, Se) => h("li", { key: Se, className: C.months.includes(Se + 1) ? "on" : "", title: L[Se], "aria-hidden": "true" }, X)),
+        ),
+      ),
+  );
+}
+// Hecken-Vorschau: Höhe nach 1, 3 und 5 Jahren (ohne Rückschnitt), aus Starthöhe und Zuwachs
+function pf_HedgePreview({ product: o, variant: C, perMeter: _ }) {
+  const y = o.profile || {},
+    L = pf_startHeight(C);
+  if (!L || !y.growth) return null;
+  const X = y.heightMax || L + y.growth * 6,
+    Se = [0, 1, 3, 5].map((A) => ({ year: A, cm: Math.min(X, Math.round(L + y.growth * A)) })),
+    Le = Math.max(...Se.map((A) => A.cm), 150),
+    ne = 120,
+    Ne = Math.max(2, Math.min(5, Math.round(_ || 3)));
+  return h(
+    "figure",
+    { className: "hedge-preview" },
+    h(
+      "svg",
+      { viewBox: "0 0 360 160", role: "img", "aria-label": `Höhe der Hecke: ${Se.map((A) => (A.year ? `nach ${A.year} ${A.year === 1 ? "Jahr" : "Jahren"} ca. ${pf_m(A.cm)}` : `heute ca. ${pf_m(A.cm)}`)).join(", ")}` },
+      h("line", { x1: 0, x2: 360, y1: 136, y2: 136, className: "hedge-preview__ground" }),
+      ...Se.map((A, p) => {
+        const B = 12 + p * 88,
+          ge = Math.max(8, Math.round((A.cm / Le) * ne)),
+          O = 136 - ge;
+        return h(
+          "g",
+          { key: A.year },
+          h("rect", { x: B, y: O, width: 72, height: ge, rx: Math.min(18, ge / 2), className: "hedge-preview__hedge", style: { opacity: 0.55 + p * 0.15 } }),
+          ...Array.from({ length: Ne }, (re, ve) => h("circle", { key: ve, cx: B + ((ve + 0.5) * 72) / Ne, cy: 136, r: 2.4, className: "hedge-preview__plant" })),
+          h("text", { x: B + 36, y: O - 6, textAnchor: "middle", className: "hedge-preview__value" }, pf_m(A.cm)),
+          h("text", { x: B + 36, y: 154, textAnchor: "middle", className: "hedge-preview__label" }, A.year ? `${A.year} ${A.year === 1 ? "Jahr" : "Jahre"}` : "heute"),
+        );
+      }),
+    ),
+    h("figcaption", null, `Wuchs ohne Rückschnitt bei ca. ${y.growth} cm pro Jahr${y.heightMax ? `, Endhöhe ${pf_heightText(y)}` : ""}. Die Hecke lässt sich auf jeder Höhe halten.`),
+  );
+}
+function pf_CartDrawer({ added: o, lines: C, total: _, onClose: y, onQty: L, onCheckout: X, onCart: Se }) {
+  const Le = H.useRef(null);
+  H.useEffect(() => {
+    const ne = document.body.style.overflow,
+      Ne = document.activeElement;
+    ((document.body.style.overflow = "hidden"), window.setTimeout(() => Le.current && Le.current.focus(), 0));
+    const A = (p) => p.key === "Escape" && y();
+    return (
+      window.addEventListener("keydown", A),
+      () => {
+        (window.removeEventListener("keydown", A), (document.body.style.overflow = ne), Ne && Ne.focus && Ne.focus());
+      }
+    );
+  }, []);
+  const ne = pf_shipping(C, "lieferung"),
+    Ne = pf_catalogSettings.freeDeliveryFrom > 0 ? pf_catalogSettings.freeDeliveryFrom / 100 - _ : 0;
+  return h(
+    "div",
+    { className: "drawer-backdrop", onClick: (A) => A.target === A.currentTarget && y() },
+    h(
+      "aside",
+      { className: "cart-drawer", role: "dialog", "aria-modal": "true", "aria-labelledby": "cart-drawer-title", tabIndex: -1, ref: Le },
+      h(
+        "header",
+        null,
+        h("h2", { id: "cart-drawer-title" }, "Warenkorb"),
+        h("button", { type: "button", className: "icon-button", onClick: y, "aria-label": "Warenkorb schliessen" }, h(Pm, { size: 20 })),
+      ),
+      o && h("p", { className: "cart-drawer__added", role: "status" }, h(za, { size: 16 }), ` ${o.quantity > 1 ? o.quantity + " × " : ""}${o.name} (${o.variant}) hinzugefügt`),
+      C.length
+        ? h(
+            "ul",
+            { className: "cart-drawer__lines" },
+            ...C.map((A) =>
+              h(
+                "li",
+                { key: A.key },
+                h("img", { src: He(A.product.image), srcSet: At(A.product.imageSet), sizes: "64px", alt: "", loading: "lazy" }),
+                h(
+                  "div",
+                  null,
+                  h("b", null, A.product.name),
+                  h("small", null, A.variant, pf_line(A.product, A.variant, A.quantity).percent ? ` · −${pf_line(A.product, A.variant, A.quantity).percent} % Mengenrabatt` : ""),
+                  h(
+                    "div",
+                    { className: "quantity-control quantity-control--small" },
+                    h("button", { type: "button", "aria-label": `${A.product.name}: Menge verringern`, onClick: () => L(A.key, -1) }, h(Fm, { size: 14 })),
+                    h("span", null, A.quantity),
+                    h("button", { type: "button", "aria-label": `${A.product.name}: Menge erhöhen`, onClick: () => L(A.key, 1) }, h(Uc, { size: 14 })),
+                  ),
+                ),
+                h("strong", null, Sa(pf_line(A.product, A.variant, A.quantity).total)),
+              ),
+            ),
+          )
+        : h("p", { className: "cart-drawer__empty" }, "Ihr Warenkorb ist leer."),
+      C.length > 0 &&
+        h(
+          "footer",
+          null,
+          h("div", { className: "cart-drawer__sum" }, h("span", null, "Zwischensumme"), h("strong", null, Sa(_))),
+          h(
+            "small",
+            null,
+            pf_pickupOnly(C).length
+              ? "Enthält Grössen nur zur Abholung."
+              : Ne > 0 && ne > 0
+                ? `Lieferung ${Sa(ne)} · noch ${Sa(Ne)} bis zur Gratis-Lieferung · Abholung gratis`
+                : ne > 0
+                  ? `Lieferung ${Sa(ne)} · Abholung gratis`
+                  : "Lieferung gratis",
+          ),
+          h("button", { type: "button", className: "button button--primary button--full", onClick: X }, "Zur Kasse ", h(Ve, { size: 17 })),
+          h(
+            "div",
+            { className: "cart-drawer__links" },
+            h("button", { type: "button", className: "inline-link", onClick: Se }, "Warenkorb bearbeiten"),
+            h("button", { type: "button", className: "inline-link", onClick: y }, "Weiter einkaufen"),
+          ),
+        ),
+    ),
+  );
+}
+function pf_BeforeAfter({ before: o, beforeSet: C, after: _, afterSet: y, title: L }) {
+  const [X, Se] = H.useState(50);
+  return h(
+    "div",
+    { className: "before-after", style: { "--pos": `${X}%` } },
+    h("img", { src: He(_), srcSet: y ? At(y) : void 0, sizes: "(max-width: 900px) 92vw, 50vw", alt: `${L} – nachher`, loading: "lazy" }),
+    h("div", { className: "before-after__before" }, h("img", { src: He(o), srcSet: C ? At(C) : void 0, sizes: "(max-width: 900px) 92vw, 50vw", alt: `${L} – vorher`, loading: "lazy" })),
+    h("span", { className: "before-after__tag before-after__tag--l", "aria-hidden": "true" }, "Vorher"),
+    h("span", { className: "before-after__tag before-after__tag--r", "aria-hidden": "true" }, "Nachher"),
+    h("span", { className: "before-after__handle", "aria-hidden": "true" }),
+    h("input", { type: "range", min: 0, max: 100, value: X, onChange: (Le) => Se(+Le.target.value), "aria-label": `Vorher/Nachher vergleichen: ${L}` }),
+  );
+}
 function pf_StockAlert({ variantId: o, label: C }) {
   const [_, y] = H.useState(""),
     [L, X] = H.useState(""),
@@ -13673,6 +13873,7 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
     pf_z = L.delivery_method === "lieferung" ? pf_zone(L.postal_code) : null,
     pf_plant = L.planting && L.delivery_method === "lieferung" && pf_catalogSettings.planting ? pf_planting(o) : 0,
     [pf_cp, pf_setCp] = H.useState(null),
+    [pf_step, pf_setStep] = H.useState(1),
     [pf_cin, pf_setCin] = H.useState(""),
     [pf_cbusy, pf_setCbusy] = H.useState(!1),
     pf_cd = pf_couponDiscount(pf_cp, ge, ge + O + pf_plant),
@@ -13699,8 +13900,38 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
     H.useEffect(() => {
       pf_po.length && L.delivery_method === "lieferung" && B("delivery_method", "abholung");
     }, [pf_po.length]));
+  // Schritte: 1 Angaben, 2 Lieferung, 3 Zahlung & Abschluss
+  const pf_stepOf = { name: 1, email: 1, phone: 1, delivery_method: 2, street: 2, postal_code: 2, city: 2, preferred_date: 2, preferred_slot: 2, planting: 2 },
+    pf_check = (k) => {
+      const ye = {};
+      if (k >= 1) {
+        L.name.trim().length < 2 && (ye.name = "Bitte geben Sie Ihren Namen an.");
+        /^\S+@\S+\.\S+$/.test(L.email.trim()) || (ye.email = "Bitte geben Sie eine gültige E-Mail-Adresse an.");
+        L.phone.trim().length < 6 && (ye.phone = "Bitte geben Sie eine Telefonnummer an, für Rückfragen zum Termin.");
+      }
+      if (k >= 2 && L.delivery_method === "lieferung") {
+        L.street.trim() || (ye.street = "Bitte geben Sie die Lieferadresse an.");
+        L.postal_code.trim() || (ye.postal_code = "Bitte geben Sie die PLZ an.");
+        L.city.trim() || (ye.city = "Bitte geben Sie den Ort an.");
+        pf_z && !pf_z.deliverable && (ye.postal_code = "In diese Region liefern wir nicht. Bitte wählen Sie Abholung.");
+      }
+      return ye;
+    },
+    pf_go = (k) => {
+      const ye = pf_check(k - 1),
+        Ot = Object.keys(ye);
+      if (Ot.length) {
+        (Le(ye), pf_setStep(Math.min(...Ot.map((xe) => pf_stepOf[xe] || 3))));
+        return;
+      }
+      (Le({}), pf_setStep(k), window.setTimeout(() => {
+        const xe = document.querySelector(".checkout-steps");
+        xe && xe.getBoundingClientRect().top < 0 && xe.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 0));
+    };
   const ve = async (k) => {
     if ((k.preventDefault(), ne)) return;
+    if (pf_step < 3) return pf_go(pf_step + 1);
     (Ne(!0), p(""), Le({}));
     try {
       const ye = await pf_api("/orders", {
@@ -13714,6 +13945,8 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
       y(ye.order.number, ye.token);
     } catch (ye) {
       ((ye.errors || {}).coupon_code && pf_setCp(null), Le(ye.errors || {}), p(ye.message), Ne(!1));
+      const pf_s = Object.keys(ye.errors || {}).map((xe) => pf_stepOf[xe] || 3);
+      pf_s.length && pf_setStep(Math.min(...pf_s));
       const Ot = document.querySelector(".checkout .has-error, .checkout .form-alert");
       Ot && Ot.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -13736,9 +13969,26 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
     h(
       "div",
       { className: "checkout__main" },
+      h(
+        "ol",
+        { className: "checkout-steps", "aria-label": "Schritte der Bestellung" },
+        ...["Ihre Angaben", "Lieferung", "Zahlung"].map((k, ye) =>
+          h(
+            "li",
+            { key: k, className: pf_step === ye + 1 ? "is-current" : pf_step > ye + 1 ? "is-done" : "", "aria-current": pf_step === ye + 1 ? "step" : void 0 },
+            h(
+              "button",
+              { type: "button", disabled: ye + 1 > pf_step, onClick: () => pf_setStep(ye + 1) },
+              h("span", { className: "checkout-steps__nr" }, pf_step > ye + 1 ? h(za, { size: 14 }) : ye + 1),
+              h("span", null, k),
+            ),
+          ),
+        ),
+      ),
       A && h("div", { className: "form-alert", role: "alert" }, A),
       re.length > 0 &&
         h("div", { className: "form-alert", role: "alert" }, "Einige Artikel sind nicht mehr online bestellbar. Bitte entfernen Sie sie aus dem Warenkorb."),
+      pf_step === 1 &&
       h(
         "section",
         { className: "checkout-card" },
@@ -13758,7 +14008,9 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
           h(pf_Field, { label: "E-Mail", name: "email", type: "email", form: L, set: B, errors: Se, autoComplete: "email", required: !0 }),
           h(pf_Field, { label: "Telefon", name: "phone", type: "tel", form: L, set: B, errors: Se, autoComplete: "tel", required: !0 }),
         ),
+        h("div", { className: "checkout-next" }, h("button", { type: "button", className: "button button--dark", onClick: () => pf_go(2) }, "Weiter zur Lieferung ", h(Ve, { size: 17 }))),
       ),
+      pf_step === 2 &&
       h(
         "section",
         { className: "checkout-card" },
@@ -13848,7 +14100,33 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
           "Bemerkung (optional)",
           h("textarea", { rows: 3, value: L.note, onChange: (k) => B("note", k.target.value), placeholder: "z. B. Zufahrt, Ablageort, Pflanzservice gewünscht" }),
         ),
+        h(
+          "div",
+          { className: "checkout-next" },
+          h("button", { type: "button", className: "inline-link", onClick: () => pf_setStep(1) }, "Zurück"),
+          h("button", { type: "button", className: "button button--dark", onClick: () => pf_go(3) }, "Weiter zur Zahlung ", h(Ve, { size: 17 })),
+        ),
       ),
+      pf_step === 3 &&
+        h(
+          "div",
+          { className: "checkout-recap" },
+          h("div", null, h("small", null, "Ihre Angaben"), h("span", null, `${L.name} · ${L.email} · ${L.phone}`), h("button", { type: "button", className: "inline-link", onClick: () => pf_setStep(1) }, "ändern")),
+          h(
+            "div",
+            null,
+            h("small", null, L.delivery_method === "lieferung" ? "Lieferung" : "Abholung"),
+            h(
+              "span",
+              null,
+              L.delivery_method === "lieferung" ? `${L.street}, ${L.postal_code} ${L.city}` : "Pflanzfarm, Untergretti 2, 6245 Ebersecken",
+              L.preferred_date ? ` · Wunsch: ${pf_fmtDate(L.preferred_date)}${L.preferred_slot !== "egal" ? ", " + pf_slots[L.preferred_slot] : ""}` : "",
+              pf_plant ? " · mit Pflanzservice" : "",
+            ),
+            h("button", { type: "button", className: "inline-link", onClick: () => pf_setStep(2) }, "ändern"),
+          ),
+        ),
+      pf_step === 3 &&
       h(
         "section",
         { className: "checkout-card" },
@@ -13938,8 +14216,16 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
       ),
       h(
         "button",
-        { type: "submit", className: "button button--primary button--full", disabled: ne || re.length > 0 || (pf_z && !pf_z.deliverable) },
-        ne ? "Wird gesendet …" : L.payment_method === "stripe" && pf_total > 0 ? "Weiter zur Zahlung" : "Zahlungspflichtig bestellen",
+        { type: "submit", className: "button button--primary button--full", disabled: ne || re.length > 0 || (pf_step === 3 && pf_z && !pf_z.deliverable) },
+        ne
+          ? "Wird gesendet …"
+          : pf_step === 1
+            ? "Weiter zur Lieferung"
+            : pf_step === 2
+              ? "Weiter zur Zahlung"
+              : L.payment_method === "stripe" && pf_total > 0
+                ? "Weiter zu Karte / TWINT"
+                : "Zahlungspflichtig bestellen",
         " ",
         h(Ve, { size: 18 }),
       ),
@@ -14233,6 +14519,9 @@ function O1() {
     [ne, Ne] = H.useState(""),
     [A, p] = H.useState("Alle Pflanzen"),
     [B, ge] = H.useState("Alle Merkmale"),
+    [pf_flt, pf_setFlt] = H.useState({ loc: [], evergreen: !1, use: "", height: "", price: "" }),
+    [pf_fltOpen, pf_setFltOpen] = H.useState(!1),
+    [pf_loaded, pf_setLoaded] = H.useState(!1),
     
     
     [Qe, k] = H.useState(!1),
@@ -14261,6 +14550,8 @@ function O1() {
     [pe, qt] = H.useState("pflanzung"),
     [Ie, kt] = H.useState("photo"),
     [pf_path, pf_setPath] = H.useState(Ii),
+    [pf_drawer, pf_setDrawer] = H.useState(null),
+    [pf_buyVisible, pf_setBuyVisible] = H.useState(!0),
     [pf_search, pf_setSearch] = H.useState(!1),
     [Ea, _a] = H.useState(""),
     [Al, tn] = H.useState(!1),
@@ -14375,6 +14666,15 @@ function O1() {
       return () => window.clearTimeout(v);
     }, [o, _, pf_path]),
     H.useEffect(() => {
+      if (o !== "product") return;
+      // Kaufleiste zeigen, sobald der Kaufbereich nach oben aus dem Bild gescrollt ist
+      const v = () => {
+        const T = document.getElementById("pf-buy");
+        pf_setBuyVisible(!T || T.getBoundingClientRect().bottom > 0);
+      };
+      return (v(), window.addEventListener("scroll", v, { passive: !0 }), () => (window.removeEventListener("scroll", v), pf_setBuyVisible(!0)));
+    }, [o]),
+    H.useEffect(() => {
       let v = null;
       const T = () => {
         v === null &&
@@ -14463,9 +14763,11 @@ function O1() {
               const De = jf(Ii());
               (y(De), X((Te) => (De.variants.includes(Te) ? Te : De.variants[0])));
             }
-            pf_setVer((De) => De + 1);
+            (pf_setVer((De) => De + 1), (pf_ready = !0), pf_setLoaded(!0));
           })
-          .catch(() => {}));
+          .catch(() => {
+            ((pf_ready = !0), pf_setLoaded(!0));
+          }));
     }, []),
     H.useEffect(() => {
       const v = Q || (pf_cs !== null && R.active && nu && qc());
@@ -14613,7 +14915,7 @@ function O1() {
         window.requestAnimationFrame(() => Bt(!0)),
         (Aa.current = window.setTimeout(() => q(null), 900)),
         (Oa.current = window.setTimeout(() => Bt(!1), 460)),
-        Ue(`${v.name} (${E}) wurde in den Warenkorb gelegt.`));
+        pf_setDrawer({ name: v.name, variant: E, quantity: T }));
     },
     Da = (v) => {
       fe((T) => (T.includes(v) ? T.filter((E) => E !== v) : [...T, v]));
@@ -14645,15 +14947,35 @@ function O1() {
         return { ...E, [v]: { ...K, quantity: De } };
       });
     },
+    pf_fltCount = pf_flt.loc.length + (pf_flt.evergreen ? 1 : 0) + (pf_flt.use ? 1 : 0) + (pf_flt.height ? 1 : 0) + (pf_flt.price ? 1 : 0),
+    pf_resetFilters = () => {
+      (Ne(""), p("Alle Pflanzen"), ge("Alle Merkmale"), pf_setFlt({ loc: [], evergreen: !1, use: "", height: "", price: "" }), pf_setOnlySaved(!1));
+    },
     dn = [
       ...Ql.filter((v) => {
-        const T = `${v.name} ${v.latin}`.toLowerCase().includes(ne.toLowerCase()),
+        const T = `${v.name} ${v.latin} ${(v.traits || []).join(" ")}`.toLowerCase().includes(ne.toLowerCase()),
           E = (A === "Alle Pflanzen" || v.category === A) && (!pf_onlySaved || ae.includes(v.id)),
-          K = B === "Alle Merkmale" || v.traits.includes(B);
-        return T && E && K;
+          K = B === "Alle Merkmale" || v.traits.includes(B),
+          De = v.profile || {},
+          Te = De.heightMax || De.heightMin || 0,
+          He2 =
+            (!pf_flt.loc.length || pf_flt.loc.some((Ce) => (De.locations || []).includes(Ce))) &&
+            (!pf_flt.evergreen || De.evergreen) &&
+            (!pf_flt.use || (De.uses || []).includes(pf_flt.use)) &&
+            (!pf_flt.height || (Te > 0 && (pf_flt.height === "klein" ? Te <= 150 : pf_flt.height === "mittel" ? Te > 150 && (De.heightMin || Te) <= 300 : Te > 300))) &&
+            (!pf_flt.price || (!v.priceOnRequest && v.price > 0 && v.price <= +pf_flt.price));
+        return T && E && K && He2;
       }),
     ].sort((v, T) =>
-      Ta === "price-asc" ? v.price - T.price : Ta === "price-desc" ? T.price - v.price : Ql.indexOf(v) - Ql.indexOf(T),
+      Ta === "price-asc"
+        ? v.price - T.price
+        : Ta === "price-desc"
+          ? T.price - v.price
+          : Ta === "name"
+            ? v.name.localeCompare(T.name, "de")
+            : Ta === "growth"
+              ? ((T.profile || {}).growth || 0) - ((v.profile || {}).growth || 0)
+              : Ql.indexOf(v) - Ql.indexOf(T),
     ),
     ii = () => {
       (jt(null), je(!0), Z(!1), I(R.target === "shop" ? "shop" : "home"));
@@ -14722,7 +15044,8 @@ function O1() {
                   i.jsxs("button", {
                     className: F ? "cart-button cart-button--pulse" : "cart-button",
                     "aria-label": `Warenkorb öffnen – ${Ma} Artikel`,
-                    onClick: () => I("cart"),
+                    "aria-haspopup": "dialog",
+                    onClick: () => (o === "cart" || o === "checkout" ? I("cart") : pf_setDrawer({})),
                     children: [i.jsx(Dc, { size: 21 }), i.jsx("span", { children: Ma })],
                   }),
                   i.jsx("button", {
@@ -15164,26 +15487,98 @@ function O1() {
                     onChange: (v) => p(v.target.value),
                     children: [
                       i.jsx("option", { children: "Alle Pflanzen" }),
-                      i.jsx("option", { children: "Heckenpflanzen" }),
-                      i.jsx("option", { children: "Beerensträucher" }),
+                      ...[...new Set(Ql.map((v) => v.category))].map((v) => i.jsx("option", { children: v }, v)),
                     ],
                   }),
-                  i.jsxs("select", {
-                    "aria-label": "Pflanzeneigenschaft filtern",
-                    value: B,
-                    onChange: (v) => ge(v.target.value),
-                    children: [
-                      i.jsx("option", { children: "Alle Merkmale" }),
-                      i.jsx("option", { children: "Immergrün" }),
-                      i.jsx("option", { children: "Pflegeleicht" }),
-                      i.jsx("option", { children: "Sonnig" }),
-                      i.jsx("option", { children: "Blütenreich" }),
-                    ],
-                  }),
+                  h(
+                    "button",
+                    {
+                      type: "button",
+                      className: pf_fltOpen || pf_fltCount ? "filter-toggle filter-toggle--active" : "filter-toggle",
+                      "aria-expanded": pf_fltOpen,
+                      "aria-controls": "shop-filters",
+                      onClick: () => pf_setFltOpen((v) => !v),
+                    },
+                    "Filter",
+                    pf_fltCount > 0 && h("span", { className: "filter-toggle__count" }, pf_fltCount),
+                  ),
                 ],
               }),
             ],
           }),
+          h(
+            "div",
+            { id: "shop-filters", className: "container shop-filters", hidden: !pf_fltOpen },
+            h(
+              "fieldset",
+              null,
+              h("legend", null, "Standort"),
+              ...Object.entries(pf_locLabels).map(([v, T]) =>
+                h(
+                  "button",
+                  {
+                    key: v,
+                    type: "button",
+                    className: pf_flt.loc.includes(v) ? "chip chip--active" : "chip",
+                    "aria-pressed": pf_flt.loc.includes(v),
+                    onClick: () => pf_setFlt((E) => ({ ...E, loc: E.loc.includes(v) ? E.loc.filter((K) => K !== v) : [...E.loc, v] })),
+                  },
+                  pf_icon(pf_icons[v], 16),
+                  " ",
+                  T,
+                ),
+              ),
+            ),
+            h(
+              "fieldset",
+              null,
+              h("legend", null, "Laub"),
+              h(
+                "button",
+                { type: "button", className: pf_flt.evergreen ? "chip chip--active" : "chip", "aria-pressed": pf_flt.evergreen, onClick: () => pf_setFlt((v) => ({ ...v, evergreen: !v.evergreen })) },
+                h(il, { size: 16 }),
+                " Immergrün",
+              ),
+            ),
+            h(
+              "label",
+              null,
+              "Verwendung",
+              h(
+                "select",
+                { value: pf_flt.use, onChange: (v) => pf_setFlt((T) => ({ ...T, use: v.target.value })) },
+                h("option", { value: "" }, "Alle"),
+                ...Object.entries(pf_useLabels).map(([v, T]) => h("option", { key: v, value: v }, T)),
+              ),
+            ),
+            h(
+              "label",
+              null,
+              "Endhöhe",
+              h(
+                "select",
+                { value: pf_flt.height, onChange: (v) => pf_setFlt((T) => ({ ...T, height: v.target.value })) },
+                h("option", { value: "" }, "Alle"),
+                h("option", { value: "klein" }, "bis 1.5 m"),
+                h("option", { value: "mittel" }, "1.5–3 m"),
+                h("option", { value: "gross" }, "über 3 m"),
+              ),
+            ),
+            h(
+              "label",
+              null,
+              "Preis pro Stück",
+              h(
+                "select",
+                { value: pf_flt.price, onChange: (v) => pf_setFlt((T) => ({ ...T, price: v.target.value })) },
+                h("option", { value: "" }, "Alle"),
+                h("option", { value: "20" }, "bis CHF 20"),
+                h("option", { value: "50" }, "bis CHF 50"),
+                h("option", { value: "100" }, "bis CHF 100"),
+              ),
+            ),
+            pf_fltCount > 0 && h("button", { type: "button", className: "inline-link", onClick: pf_resetFilters }, "Filter zurücksetzen"),
+          ),
           i.jsxs("div", {
             className: "container shop-results",
             children: [
@@ -15216,6 +15611,8 @@ function O1() {
                           i.jsx("option", { value: "popular", children: "Beliebtheit" }),
                           i.jsx("option", { value: "price-asc", children: "Preis aufsteigend" }),
                           i.jsx("option", { value: "price-desc", children: "Preis absteigend" }),
+                          i.jsx("option", { value: "growth", children: "Schnellwüchsig zuerst" }),
+                          i.jsx("option", { value: "name", children: "Name A–Z" }),
                         ],
                       }),
                       i.jsx(Pi, { size: 16 }),
@@ -15249,9 +15646,7 @@ function O1() {
                     i.jsx("p", { children: "Versuchen Sie eine andere Suche oder setzen Sie den Filter zurück." }),
                     i.jsx("button", {
                       className: "button button--dark",
-                      onClick: () => {
-                        (Ne(""), p("Alle Pflanzen"), ge("Alle Merkmale"));
-                      },
+                      onClick: pf_resetFilters,
                       children: "Filter zurücksetzen",
                     }),
                   ],
@@ -15364,20 +15759,9 @@ function O1() {
                   i.jsx("h1", { children: _.name }),
                   i.jsx("p", { className: "latin", children: _.latin }),
                   i.jsx("p", { className: "product-description", children: _.description }),
-                  i.jsxs("div", {
+                  i.jsx("div", {
                     className: "care-tags",
-                    children: [
-                      _.traits.map((v) => i.jsxs("span", { children: [i.jsx(il, { size: 15 }), " ", v] }, v)),
-                      i.jsxs("span", { children: [i.jsx(In, { size: 15 }), " Winterhart"] }),
-                    ],
-                  }),
-                  i.jsxs("div", {
-                    className: pf_vd(_, L).stock > 0 && !_.priceOnRequest ? "in-stock" : "in-stock in-stock--request",
-                    children: [
-                      i.jsx(za, { size: 16 }),
-                      " ",
-                      _.priceOnRequest ? "Verfügbarkeit auf Anfrage" : pf_vd(_, L).stock > 0 ? `${pf_vd(_, L).stock} Stück an Lager` : "Zurzeit ausverkauft – gern auf Anfrage",
-                    ],
+                    children: _.traits.map((v) => i.jsxs("span", { children: [i.jsx(il, { size: 15 }), " ", v] }, v)),
                   }),
                   i.jsxs("label", {
                     className: "variant-label",
@@ -15392,10 +15776,13 @@ function O1() {
                   }),
                   i.jsxs("div", {
                     className: "product-purchase",
+                    id: "pf-buy",
                     children: [
                       i.jsxs("div", {
                         children: [
-                          i.jsx("strong", { children: _.priceOnRequest ? "Preis auf Anfrage" : Sa(pf_line(_, L, d).unit) }),
+                          pf_loaded
+                            ? i.jsx("strong", { children: _.priceOnRequest ? "Preis auf Anfrage" : Sa(pf_line(_, L, d).unit) })
+                            : h("strong", { className: "skeleton skeleton--price", "aria-label": "Preis wird geladen" }),
                           i.jsx("span", {
                             children: !_.priceOnRequest && pf_line(_, L, d).percent ? `statt ${Sa(pf_vd(_, L).price)} · inkl. MwSt.` : "inkl. MwSt.",
                           }),
@@ -15455,41 +15842,36 @@ function O1() {
                       ),
                       d > 1 && h("small", null, `Total für ${d} Stück: ${Sa(pf_line(_, L, d).total)}`),
                     ),
-                  !_.priceOnRequest &&
-                    i.jsx("p", {
-                      className: pf_vd(_, L).pickupOnly ? "shipping-note shipping-note--pickup" : "shipping-note",
-                      children: pf_vd(_, L).pickupOnly
-                        ? "Diese Grösse ist nur zur Abholung in Ebersecken erhältlich (keine Lieferung)."
-                        : pf_vd(_, L).shipping
-                          ? `Lieferung: ${pf_vd(_, L).shipping.name}, ${Sa(pf_vd(_, L).shipping.price)}${pf_catalogSettings.freeDeliveryFrom > 0 ? ` · gratis ab ${Sa(pf_catalogSettings.freeDeliveryFrom / 100)}` : ""} · Abholung gratis`
-                          : "Abholung in Ebersecken gratis",
-                    }),
-                  i.jsxs("div", {
-                    className: "delivery-points",
-                    children: [
-                      i.jsxs("span", {
-                        children: [
-                          i.jsx(Rc, { size: 20 }),
-                          i.jsx("b", { children: "Schweizweit lieferbar" }),
-                          i.jsx("small", { children: "Zuverlässig zu Ihnen" }),
-                        ],
-                      }),
-                      i.jsxs("span", {
-                        children: [
-                          i.jsx(Jm, { size: 20 }),
-                          i.jsx("b", { children: "Abholung möglich" }),
-                          i.jsx("small", { children: "Direkt bei uns vor Ort" }),
-                        ],
-                      }),
-                      i.jsxs("span", {
-                        children: [
-                          i.jsx(In, { size: 20 }),
-                          i.jsx("b", { children: "Pflanzservice buchbar" }),
-                          i.jsx("small", { children: "Auf Wunsch direkt bei Ihnen" }),
-                        ],
-                      }),
-                    ],
-                  }),
+                  h(
+                    "ul",
+                    { className: "avail-box", "aria-label": "Lieferung und Verfügbarkeit" },
+                    h(
+                      "li",
+                      { className: !pf_loaded ? "" : _.priceOnRequest || pf_vd(_, L).stock <= 0 ? "avail-box--muted" : "avail-box--ok" },
+                      h(za, { size: 17 }),
+                      !pf_loaded
+                        ? h("span", { className: "skeleton skeleton--text" })
+                        : h("span", null, _.priceOnRequest ? "Verfügbarkeit auf Anfrage" : pf_vd(_, L).stock > 0 ? `An Lager: ${pf_vd(_, L).stock} Stück` : "Zurzeit ausverkauft"),
+                    ),
+                    !_.priceOnRequest &&
+                      h(
+                        "li",
+                        null,
+                        h(pf_vd(_, L).pickupOnly ? Jm : Rc, { size: 17 }),
+                        h(
+                          "span",
+                          null,
+                          pf_vd(_, L).pickupOnly
+                            ? "Diese Grösse gibt es nur zur Abholung in Ebersecken."
+                            : pf_vd(_, L).shipping
+                              ? `Lieferung schweizweit: ${Sa(pf_vd(_, L).shipping.price)}${pf_catalogSettings.freeDeliveryFrom > 0 ? `, gratis ab ${Sa(pf_catalogSettings.freeDeliveryFrom / 100)}` : ""}`
+                              : "Lieferung schweizweit",
+                        ),
+                      ),
+                    h("li", null, h(Jm, { size: 17 }), h("span", null, "Abholung in Ebersecken gratis")),
+                    pf_catalogSettings.planting !== !1 && h("li", null, h(In, { size: 17 }), h("span", null, "Pflanzservice in der Kasse dazubuchbar")),
+                  ),
+                  h(pf_Profile, { product: _ }),
                   _.category === "Heckenpflanzen" &&
                     i.jsx(pf_Hedge, { onAdd: Kl, onRequest: pf_request, initial: _.id, compact: !0 }, _.id),
                   i.jsx("div", {
@@ -15592,7 +15974,9 @@ function O1() {
                       children: [
                         i.jsx("div", {
                           className: `reference-list-card__image reference-list-card__image--${K}`,
-                          children: E.image
+                          children: E.image && E.before
+                            ? h(pf_BeforeAfter, { before: E.before, beforeSet: E.beforeSet, after: E.image, afterSet: E.imageSet, title: E.title })
+                            : E.image
                             ? i.jsx("img", {
                                 src: He(E.image),
                                 srcSet: At(E.imageSet),
@@ -16734,6 +17118,31 @@ function O1() {
             ],
           }),
         }),
+      pf_drawer &&
+        h(pf_CartDrawer, {
+          added: pf_drawer.name ? pf_drawer : null,
+          lines: et,
+          total: ai,
+          onClose: () => pf_setDrawer(null),
+          onQty: (v, T) => Jl(v, T),
+          onCheckout: () => (pf_setDrawer(null), I("checkout")),
+          onCart: () => (pf_setDrawer(null), I("cart")),
+        }),
+      o === "product" &&
+        !pf_buyVisible &&
+        !_.priceOnRequest &&
+        h(
+          "div",
+          { className: "buy-bar", role: "region", "aria-label": "Schnell kaufen" },
+          h("div", null, h("b", null, _.name), h("small", null, `${L} · ${pf_loaded ? Sa(pf_line(_, L, d).unit) : "…"}`)),
+          pf_vd(_, L).stock >= d
+            ? h("button", { type: "button", className: "button button--primary", onClick: () => Kl(_, d, L) }, h(x1, { size: 17 }), d > 1 ? ` ${d} in den Warenkorb` : " In den Warenkorb")
+            : h(
+                "button",
+                { type: "button", className: "button button--dark", onClick: () => document.getElementById("pf-buy").scrollIntoView({ behavior: "smooth", block: "center" }) },
+                "Verfügbarkeit ansehen",
+              ),
+        ),
       pf_search &&
         h(pf_Search, {
           articles: pf_articles || pf_defaultArticles,

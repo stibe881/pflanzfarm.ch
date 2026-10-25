@@ -71,6 +71,20 @@ drei Bestellungen in verschiedenen Zuständen und einen Newsletter-Abonnenten. D
       am nächsten Tag `docker compose exec app php artisan pflanzfarm:pflegemails`; saisonal: im Ratgeber-Artikel den
       aktuellen Monat ankreuzen
 - [ ] **Bilder**: Handyfoto als Produktbild hochladen → im Ordner `storage/app/public/produkte` entstehen `-400/-800/-1600.webp`
+- [ ] **Bestell-Board** (Bestellungen → «Board-Ansicht»): Karten zwischen Neu/Bestätigt/Geliefert ziehen (auf dem Handy
+      mit den Knöpfen); die gewählte Ansicht bleibt gespeichert, zurück mit «Listen-Ansicht»
+- [ ] **Sammelaktionen**: In der Liste mehrere Bestellungen ankreuzen → Bestätigen (mit Termin), Geliefert,
+      «Lieferscheine drucken» (ein PDF, mit QR-Code zur Bestellung im Admin), «Rüstliste für Auswahl»
+- [ ] **Kundenkartei**: alle Bestellungen, Umsatz und offene Rechnungen pro Person (auch ohne Konto), interne Notiz,
+      «Neue Bestellung» mit vorausgefüllten Angaben
+- [ ] **Verlauf und Notizen** in der Bestellansicht
+- [ ] **Produkte → Werkzeuge**: Preise um x % anpassen, Export nach Excel/CSV, Import geänderter Preise und Lager;
+      «Duplizieren» in der Produktliste
+- [ ] **Steckbrief** im Produkt ausfüllen (Standort, Endhöhe, Zuwachs, Winterhärte, Pflanzzeit) → Produktseite,
+      Shop-Filter («Filter»), Hecken-Vorschau im Rechner
+- [ ] **Referenz mit Vorher-Bild** → Schieberegler auf der Referenzen-Seite
+- [ ] **Shop-Design**: Mini-Warenkorb nach «In den Warenkorb», Kaufleiste beim Scrollen auf dem Handy,
+      Kasse in drei Schritten, Produktbilder in der Bestellbestätigung
 - [ ] **Lager-Warnung**: Bestand einer Grösse unter die Warngrenze (Einstellungen, Standard 10) bestellen → E-Mail ans Team
 - [ ] **Zahlungserinnerungen**: In den Einstellungen Abstand und Anzahl festlegen; manuell testen mit
       `docker compose exec app php artisan pflanzfarm:zahlungserinnerungen`
