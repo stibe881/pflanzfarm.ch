@@ -33,6 +33,10 @@ class Setting extends Model
         'iban' => '',
         'vat_number' => '',
         'notify_email' => 'info@pflanzfarm.ch',
+        'low_stock_threshold' => 10,
+        'reminders_enabled' => true,
+        'reminder_interval_days' => 10,
+        'reminder_max' => 2,
     ];
 
     public static function get(string $key): mixed

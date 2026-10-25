@@ -27,7 +27,7 @@ class StripeWebhookController extends Controller
         }
 
         match ($event->type) {
-            'checkout.session.completed', 'checkout.session.async_payment_succeeded' => ($session->payment_status ?? null) === 'paid' ? $orders->markPaid($order) : null,
+            'checkout.session.completed', 'checkout.session.async_payment_succeeded' => ($session->payment_status ?? null) === 'paid' ? $orders->markPaid($order, $session->payment_intent ?? null) : null,
             'checkout.session.expired', 'checkout.session.async_payment_failed' => $order->payment_status !== 'bezahlt' ? $orders->cancel($order, 'abgebrochen') : null,
             default => null,
         };

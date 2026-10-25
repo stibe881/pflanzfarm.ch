@@ -16,6 +16,10 @@ class Order extends Model
 
     public const PAYMENT_STATUSES = ['offen' => 'Offen', 'ausstehend' => 'Zahlung ausstehend', 'bezahlt' => 'Bezahlt', 'erstattet' => 'Erstattet', 'abgebrochen' => 'Abgebrochen'];
 
+    public const SLOTS = ['vormittag' => 'Vormittag', 'nachmittag' => 'Nachmittag', 'egal' => 'Egal'];
+
+    public const SOURCES = ['online' => 'Online-Shop', 'admin' => 'Telefon / vor Ort'];
+
     public const DELIVERY_METHODS = ['lieferung' => 'Lieferung', 'abholung' => 'Abholung in Ebersecken'];
 
     protected $guarded = ['id'];
@@ -30,6 +34,10 @@ class Order extends Model
             'delivered_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'stock_released' => 'boolean',
+            'preferred_date' => 'date',
+            'scheduled_date' => 'date',
+            'last_reminded_at' => 'datetime',
+            'refunded_at' => 'datetime',
         ];
     }
 
@@ -56,6 +64,29 @@ class Order extends Model
     public function deliveryMethodLabel(): string
     {
         return self::DELIVERY_METHODS[$this->delivery_method] ?? $this->delivery_method;
+    }
+
+    /** Fälligkeitsdatum einer Rechnung */
+    public function dueDate(): \Illuminate\Support\Carbon
+    {
+        return $this->created_at->copy()->addDays((int) Setting::get('invoice_due_days'));
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->payment_method === 'invoice' && $this->payment_status === 'offen'
+            && $this->status !== 'storniert' && $this->dueDate()->endOfDay()->isPast();
+    }
+
+    /** E-Mail an die Kundschaft, sofern eine Adresse erfasst ist (Telefonbestellungen evtl. ohne). */
+    public function mailCustomer(\Illuminate\Contracts\Mail\Mailable $mail): bool
+    {
+        if (! $this->email) {
+            return false;
+        }
+        \Illuminate\Support\Facades\Mail::to($this->email)->send($mail);
+
+        return true;
     }
 
     public function paymentStatusLabel(): string

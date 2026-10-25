@@ -2,5 +2,10 @@
 
 use Illuminate\Support\Facades\Schedule;
 
-// Versand von Newsletter-Mails aus der Warteschlange (Cron: * * * * * php artisan schedule:run)
+// Cron: * * * * * php artisan schedule:run
+// Mails aus der Warteschlange (Newsletter) verschicken
 Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();
+// Geplante Newsletter zum gewünschten Zeitpunkt starten
+Schedule::command('pflanzfarm:newsletter-planen')->everyMinute()->withoutOverlapping();
+// Zahlungserinnerungen für überfällige Rechnungen, werktags morgens
+Schedule::command('pflanzfarm:zahlungserinnerungen')->weekdays()->at('08:30');

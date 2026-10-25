@@ -7,57 +7,7 @@
 <head>
 <meta charset="utf-8">
 <style>
-    /* Farben und Schriften wie auf pflanzfarm.ch */
-    @page { margin: 0; }
-    body { margin: 0; font-family: "DejaVu Sans", sans-serif; font-size: 8.6pt; line-height: 1.5; color: #1f2523; }
-    .page { padding: 14mm 18mm 0 20mm; }
-    .serif { font-family: "DejaVu Serif", serif; }
-    .muted { color: #6b7069; }
-    .accent-bar { height: 3mm; background: #153c31; }
-    .accent-bar span { display: block; height: 3mm; width: 38mm; background: #c98164; }
-
-    table { border-collapse: collapse; }
-    .head { width: 100%; }
-    .head td { vertical-align: top; }
-    .logo { height: 22mm; }
-    .sender { text-align: right; font-size: 7.6pt; line-height: 1.55; color: #555b57; }
-    .sender strong { font-size: 9.6pt; color: #153c31; }
-
-    /* Adressfeld passend für Fensterkuverts (Fenster rechts) */
-    .address-row { width: 100%; margin-top: 9mm; }
-    .address-row td { vertical-align: top; }
-    .sender-line { font-size: 6.4pt; color: #6b7069; border-bottom: 0.3pt solid #c9cfca; padding-bottom: 1mm; margin-bottom: 2mm; }
-    .recipient { width: 85mm; font-size: 9.6pt; line-height: 1.5; color: #111; }
-
-    h1 { font-family: "DejaVu Serif", serif; font-size: 22pt; font-weight: bold; margin: 11mm 0 1mm; letter-spacing: -0.3pt; color: #153c31; }
-    .meta { width: 100%; margin: 4mm 0 7mm; border-top: 0.6pt solid #153c31; border-bottom: 0.6pt solid #d9ddd9; }
-    .meta td { padding: 2.4mm 3.2mm; vertical-align: top; width: 25%; }
-    .meta .label { display: block; font-size: 6.4pt; text-transform: uppercase; letter-spacing: 0.6pt; color: #6b7069; margin-bottom: 0.6mm; }
-    .meta .value { font-weight: bold; color: #111; }
-
-    .items { width: 100%; }
-    .items th { background: #f1f3f0; color: #153c31; border-bottom: 0.8pt solid #153c31; font-size: 7pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; padding: 2.2mm 2.4mm; text-align: left; }
-    .items td { padding: 2.6mm 2.4mm; border-bottom: 0.4pt solid #e3e6e3; vertical-align: top; color: #1f2523; }
-    .items tr.alt td { background: #fafaf8; }
-    .items .num { text-align: right; white-space: nowrap; }
-    .items .product { font-weight: bold; color: #111; }
-
-    .totals { width: 82mm; margin: 4mm 0 0 auto; }
-    .totals td { padding: 1.6mm 2.4mm; }
-    .totals .num { text-align: right; white-space: nowrap; }
-    .totals .grand td { border-top: 1pt solid #153c31; color: #153c31; font-weight: bold; font-size: 11pt; padding: 2.8mm 2.4mm; }
-
-    .terms { width: 100%; margin-top: 9mm; border-top: 0.5pt solid #c9cfca; }
-    .terms td { padding: 1.5mm 0; vertical-align: top; }
-    .terms .k { width: 34mm; color: #6b7069; }
-    .terms .v { color: #1f2523; }
-    .closing { margin-top: 8mm; color: #1f2523; line-height: 1.6; }
-
-    .footer { position: absolute; left: 20mm; width: 172mm; font-size: 6.8pt; color: #6b7069; border-top: 0.5pt solid #c9cfca; padding-top: 2mm; }
-    .footer td { vertical-align: top; padding-right: 6mm; }
-    .footer-plain { bottom: 16mm; }
-    .footer-qr { bottom: 110mm; }
-
+    @include('pdf.partials.style')
     /* Swiss-QR-Zahlteil auf Seite 2: 210 × 105 mm am unteren Rand, Masse gemäss SIX-Vorgabe */
     .qr-page { page-break-before: always; position: relative; height: 296mm; }
     .qr-intro { padding: 16mm 18mm 0 20mm; }
@@ -77,39 +27,14 @@
 <body>
 <div class="accent-bar"><span></span></div>
 <div class="page">
-    <table class="head">
-        <tr>
-            <td><img src="{{ $logo }}" class="logo" alt="Pflanzfarm"></td>
-            <td class="sender">
-                <strong class="serif">Pflanzfarm Steinmann</strong><br>
-                Thomas Steinmann · Untergretti 2 · 6245 Ebersecken<br>
-                +41 79 336 14 95 · info@pflanzfarm.ch · pflanzfarm.ch
-            </td>
-        </tr>
-    </table>
-
-    <table class="address-row">
-        <tr>
-            <td></td>
-            <td class="recipient">
-                <div class="sender-line">Pflanzfarm Steinmann, Untergretti 2, 6245 Ebersecken</div>
-                {{ $order->name }}<br>
-                @if($order->street)
-                    {{ $order->street }}<br>{{ $order->postal_code }} {{ $order->city }}
-                @else
-                    {{ $order->email }}
-                @endif
-            </td>
-        </tr>
-    </table>
-
+    @include('pdf.partials.letterhead')
     <h1>Rechnung</h1>
 
     <table class="meta">
         <tr>
             <td><span class="label">Rechnungsnummer</span><span class="value">{{ $order->number }}</span></td>
             <td><span class="label">Datum</span><span class="value">{{ $order->created_at->format('d.m.Y') }}</span></td>
-            <td><span class="label">{{ $order->delivery_method === 'lieferung' ? 'Lieferung' : 'Abholung' }}</span><span class="value">{{ $order->delivery_method === 'lieferung' ? 'an Ihre Adresse' : 'in Ebersecken' }}</span></td>
+            <td><span class="label">{{ $order->delivery_method === 'lieferung' ? 'Lieferung' : 'Abholung' }}</span><span class="value">{{ $order->scheduled_date ? $order->scheduled_date->format('d.m.Y') : ($order->delivery_method === 'lieferung' ? 'an Ihre Adresse' : 'in Ebersecken') }}</span></td>
             <td><span class="label">Zahlung</span><span class="value">{{ $order->paymentMethodLabel() }}</span></td>
         </tr>
     </table>
@@ -127,7 +52,7 @@
         <tbody>
             @foreach($order->items as $i => $item)
                 <tr class="{{ $i % 2 ? 'alt' : '' }}">
-                    <td class="product">{{ $item->product_name }}</td>
+                    <td class="product">{{ $item->product_name }}@if($item->discount_percent)<br><span class="muted" style="font-weight: normal">Mengenrabatt {{ $item->discount_percent }} % (statt {{ $chf($item->list_price) }})</span>@endif</td>
                     <td>{{ $item->variant_label }}</td>
                     <td class="num">{{ $item->quantity }}</td>
                     <td class="num">{{ $chf($item->unit_price) }}</td>
@@ -139,6 +64,9 @@
 
     <table class="totals">
         <tr><td>Zwischensumme</td><td class="num">{{ $chf($order->subtotal) }}</td></tr>
+        @if($order->discount_total)
+            <tr><td class="muted">davon Mengenrabatt</td><td class="num muted">−{{ $chf($order->discount_total) }}</td></tr>
+        @endif
         <tr><td>{{ $order->delivery_method === 'lieferung' ? 'Lieferung' : 'Abholung' }}</td><td class="num">{{ $order->shipping ? $chf($order->shipping) : 'gratis' }}</td></tr>
         <tr class="grand"><td>Total CHF inkl. MWST</td><td class="num">{{ $chf($order->total) }}</td></tr>
     </table>
@@ -164,13 +92,7 @@
     <div class="closing">Freundliche Grüsse<br>Pflanzfarm Steinmann</div>
 </div>
 
-<table class="footer footer-plain">
-    <tr>
-        <td><strong>Pflanzfarm Steinmann</strong><br>Untergretti 2, 6245 Ebersecken</td>
-        <td>+41 79 336 14 95<br>info@pflanzfarm.ch · pflanzfarm.ch</td>
-        <td>@if($iban)IBAN {{ $iban }}<br>@endif @if($vat)MWST-Nr. {{ $vat }}@endif</td>
-    </tr>
-</table>
+@include('pdf.partials.footer')
 
 @if($qrBill)
 <div class="qr-page">

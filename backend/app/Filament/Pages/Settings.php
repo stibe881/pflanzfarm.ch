@@ -77,8 +77,16 @@ class Settings extends Page implements HasForms
                     ->helperText('Mit IBAN enthält die Rechnung einen Swiss-QR-Zahlteil.'),
                 Forms\Components\TextInput::make('vat_number')->label('MWST-Nummer (falls vorhanden)')->live(debounce: 500)->placeholder('CHE-...MWST'),
             ]),
-            Forms\Components\Section::make('Benachrichtigungen')->schema([
-                Forms\Components\TextInput::make('notify_email')->label('E-Mail für neue Bestellungen und Anfragen')->email()->required()->live(debounce: 500),
+            Forms\Components\Section::make('Zahlungserinnerungen')->columns(3)->description('Für überfällige Rechnungen, werktags um 8.30 Uhr. Die Rechnung mit QR-Zahlteil wird jeweils angehängt.')->schema([
+                Forms\Components\Toggle::make('reminders_enabled')->label('Automatisch erinnern')->inline(false)->live(),
+                Forms\Components\TextInput::make('reminder_interval_days')->label('Abstand (Tage)')->numeric()->integer()->minValue(1)->maxValue(60)->required()
+                    ->helperText('nach Fälligkeit bzw. letzter Erinnerung'),
+                Forms\Components\TextInput::make('reminder_max')->label('Höchstens')->numeric()->integer()->minValue(0)->maxValue(5)->suffix('Erinnerungen')->required(),
+            ]),
+            Forms\Components\Section::make('Benachrichtigungen')->columns(2)->schema([
+                Forms\Components\TextInput::make('notify_email')->label('E-Mail für Bestellungen, Anfragen und Fehlermeldungen')->email()->required()->live(debounce: 500),
+                Forms\Components\TextInput::make('low_stock_threshold')->label('Lager-Warnung unter')->numeric()->integer()->minValue(0)->suffix('Stück')->required()
+                    ->helperText('Sinkt eine Grösse darunter, kommt eine E-Mail an diese Adresse.'),
             ]),
         ];
     }

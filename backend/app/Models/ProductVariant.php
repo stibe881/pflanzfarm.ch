@@ -11,7 +11,17 @@ class ProductVariant extends Model
 
     protected function casts(): array
     {
-        return ['active' => 'boolean', 'price' => 'integer', 'stock' => 'integer', 'pickup_only' => 'boolean'];
+        return ['active' => 'boolean', 'price' => 'integer', 'stock' => 'integer', 'pickup_only' => 'boolean', 'low_stock_notified_at' => 'datetime'];
+    }
+
+    protected static function booted(): void
+    {
+        // Lager-Warnung wieder scharf stellen, sobald der Bestand aufgefüllt ist
+        static::saving(function (self $v) {
+            if ($v->isDirty('stock') && $v->low_stock_notified_at && $v->stock >= (int) Setting::get('low_stock_threshold')) {
+                $v->low_stock_notified_at = null;
+            }
+        });
     }
 
     public function shippingClass(): BelongsTo

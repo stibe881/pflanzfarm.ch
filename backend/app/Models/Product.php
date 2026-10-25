@@ -15,10 +15,25 @@ class Product extends Model
     {
         return [
             'traits' => 'array',
+            'gallery' => 'array',
+            'volume_discounts' => 'array',
             'active' => 'boolean',
             'price_on_request' => 'boolean',
             'plants_per_meter' => 'float',
         ];
+    }
+
+    /** Mengenrabatt in Prozent für eine Stückzahl (höchste erreichte Stufe). */
+    public function discountFor(int $quantity): int
+    {
+        $best = 0;
+        foreach ((array) $this->volume_discounts as $tier) {
+            if ($quantity >= (int) ($tier['min_qty'] ?? PHP_INT_MAX)) {
+                $best = max($best, min(90, (int) ($tier['percent'] ?? 0)));
+            }
+        }
+
+        return $best;
     }
 
     public function variants(): HasMany

@@ -52,4 +52,20 @@ class StripeCheckout
 
         return $session->url;
     }
+
+    /** Erstattet eine Stripe-Zahlung vollständig (Karte oder TWINT). */
+    public function refund(Order $order): void
+    {
+        if (config('pflanzfarm.fake_payments') || str_starts_with((string) $order->stripe_session_id, 'test_')) {
+            return; // simulierte Zahlung in der Testumgebung
+        }
+        $intent = $order->stripe_payment_intent;
+        if (! $intent && $order->stripe_session_id) {
+            $intent = $this->client()->checkout->sessions->retrieve($order->stripe_session_id)->payment_intent;
+        }
+        if (! $intent) {
+            throw new \RuntimeException('Zu dieser Bestellung ist keine Stripe-Zahlung hinterlegt.');
+        }
+        $this->client()->refunds->create(['payment_intent' => $intent]);
+    }
 }

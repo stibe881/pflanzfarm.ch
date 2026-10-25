@@ -26,6 +26,40 @@ class InvoicePdf
         ])->setPaper('a4')->setOption(['isRemoteEnabled' => false, 'dpi' => 150, 'isFontSubsettingEnabled' => true])->output();
     }
 
+    private function logo(): string
+    {
+        return 'data:image/png;base64,'.base64_encode((string) file_get_contents(resource_path('pdf/logo.png')));
+    }
+
+    private function pdf(string $view, array $data): string
+    {
+        return Pdf::loadView($view, $data + ['logo' => $this->logo()])->setPaper('a4')
+            ->setOption(['isRemoteEnabled' => false, 'dpi' => 150, 'isFontSubsettingEnabled' => true])->output();
+    }
+
+    public function creditNote(Order $order): string
+    {
+        return $this->pdf('pdf.credit-note', ['order' => $order->loadMissing('items')]);
+    }
+
+    public function deliveryNote(Order $order): string
+    {
+        return $this->pdf('pdf.delivery-note', ['order' => $order->loadMissing('items')]);
+    }
+
+    /** Rüstliste: alle bestätigten Bestellungen mit Liefer-/Abholtermin an einem Tag, Mengen zusammengezählt. */
+    public function pickingList(\Illuminate\Support\Carbon $date): string
+    {
+        $orders = Order::query()->with('items')->whereDate('scheduled_date', $date)
+            ->whereIn('status', ['neu', 'bestaetigt'])->orderBy('delivery_method')->orderBy('scheduled_slot')->get();
+        $totals = $orders->flatMap->items
+            ->groupBy(fn ($i) => $i->product_name.'|'.$i->variant_label)
+            ->map(fn ($g) => ['product' => $g->first()->product_name, 'variant' => $g->first()->variant_label, 'quantity' => $g->sum('quantity')])
+            ->sortBy('product')->values();
+
+        return $this->pdf('pdf.picking-list', ['orders' => $orders, 'totals' => $totals, 'date' => $date]);
+    }
+
     public function filename(Order $order): string
     {
         return 'Rechnung-'.$order->number.'.pdf';

@@ -45,6 +45,8 @@ class OrderController extends Controller
             'city' => ['required_if:delivery_method,lieferung', 'nullable', 'string', 'max:120'],
             'payment_method' => ['required', Rule::in($methods)],
             'note' => ['nullable', 'string', 'max:2000'],
+            'preferred_date' => ['nullable', 'date', 'after_or_equal:'.today()->addDays(2)->toDateString(), 'before:'.today()->addMonths(6)->toDateString()],
+            'preferred_slot' => ['nullable', Rule::in(array_keys(Order::SLOTS))],
             'accept_terms' => ['accepted'],
             'newsletter' => ['boolean'],
         ], [
@@ -52,7 +54,13 @@ class OrderController extends Controller
             'street.required_if' => 'Bitte geben Sie die Lieferadresse an.',
             'postal_code.required_if' => 'Bitte geben Sie die PLZ an.',
             'city.required_if' => 'Bitte geben Sie den Ort an.',
+            'preferred_date.after_or_equal' => 'Der Wunschtermin muss mindestens zwei Tage in der Zukunft liegen.',
+            'preferred_date.before' => 'Der Wunschtermin darf höchstens sechs Monate in der Zukunft liegen.',
         ]);
+        // Wochenenden: kein Liefer-/Abholtermin
+        if (! empty($data['preferred_date']) && \Illuminate\Support\Carbon::parse($data['preferred_date'])->isSunday()) {
+            throw ValidationException::withMessages(['preferred_date' => 'Am Sonntag liefern wir nicht und haben geschlossen. Bitte wählen Sie einen anderen Tag.']);
+        }
 
         if ($data['payment_method'] === 'cash' && $data['delivery_method'] !== 'abholung') {
             throw ValidationException::withMessages(['payment_method' => 'Barzahlung ist nur bei Abholung möglich.']);

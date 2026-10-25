@@ -17,7 +17,7 @@ class LowStock extends BaseWidget
     public function table(Table $table): Table
     {
         return $table
-            ->query(ProductVariant::query()->with('product')->where('active', true)->where('stock', '<', 10)->whereHas('product', fn ($q) => $q->where('active', true)))
+            ->query(ProductVariant::query()->with('product')->where('active', true)->where('stock', '<', (int) \App\Models\Setting::get('low_stock_threshold'))->whereHas('product', fn ($q) => $q->where('active', true)))
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')->label('Produkt'),
                 Tables\Columns\TextColumn::make('label')->label('Grösse'),
