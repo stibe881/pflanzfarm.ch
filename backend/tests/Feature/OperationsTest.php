@@ -230,7 +230,8 @@ class OperationsTest extends TestCase
 
     public function test_server_rendered_article_and_dynamic_sitemap(): void
     {
-        $article = GuideArticle::query()->firstOrFail();
+        // neuer Artikel ohne vorgerenderte Datei
+        $article = GuideArticle::query()->create(['title' => 'Hecke düngen', 'slug' => 'hecke-duengen', 'body' => "Im Frühling düngen.\n\nNicht zu viel.", 'published' => true]);
         $this->get('/ratgeber/'.$article->slug)->assertOk()->assertSee('<h1>'.e($article->title).'</h1>', false)->assertSee('"@type":"Article"', false);
         $this->get('/ratgeber/gibt-es-nicht')->assertNotFound();
 

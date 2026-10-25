@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Mail\NewOrderNotification;
 use App\Mail\OrderConfirmation;
+use App\Models\Coupon;
+use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\Setting;
@@ -65,9 +67,38 @@ class OrderService
                 ];
             }
 
-            $shipping = array_key_exists('shipping_override', $data) && $data['shipping_override'] !== null
-                ? (int) $data['shipping_override']
-                : ($data['delivery_method'] === 'lieferung' ? self::shippingFor($subtotal, $variants) : 0);
+            $delivery = $data['delivery_method'] === 'lieferung';
+            $zone = $delivery ? DeliveryZone::forPostalCode($data['postal_code'] ?? null) : null;
+            if ($zone && ! $zone->deliverable) {
+                throw ValidationException::withMessages(['postal_code' => 'In diese Region ('.($data['postal_code'] ?? '').') liefern wir leider nicht. Bitte wählen Sie Abholung oder rufen Sie uns an: +41 79 336 14 95.']);
+            }
+            $override = array_key_exists('shipping_override', $data) && $data['shipping_override'] !== null;
+            $shipping = $override ? (int) $data['shipping_override'] : ($delivery ? self::shippingFor($subtotal, $variants, $zone) : 0);
+            $zoneSurcharge = ! $override && $shipping > 0 ? (int) $zone?->surcharge : 0;
+
+            // Pflanzservice: nur zusammen mit Lieferung
+            $plantingFee = 0;
+            if (! empty($data['planting']) && $delivery && Setting::get('planting_enabled')) {
+                $plantingFee = self::plantingFee(collect($variants)->map(fn ($v, $i) => [$v, (int) $items[$i]['quantity']])->all());
+            }
+
+            // Gutschein oder Rabattcode
+            $coupon = null;
+            $couponDiscount = 0;
+            if (filled($data['coupon_code'] ?? null)) {
+                $coupon = Coupon::query()->where('code', strtoupper(trim($data['coupon_code'])))->lockForUpdate()->first();
+                if (! $coupon) {
+                    throw ValidationException::withMessages(['coupon_code' => 'Diesen Code kennen wir nicht. Bitte prüfen Sie die Schreibweise.']);
+                }
+                if ($problem = $coupon->problem($subtotal)) {
+                    throw ValidationException::withMessages(['coupon_code' => $problem]);
+                }
+                $couponDiscount = $coupon->discountFor($subtotal, $subtotal + $shipping + $plantingFee);
+                $coupon->increment('used_count');
+                if ($coupon->type === 'gutschein') {
+                    $coupon->decrement('balance', $couponDiscount);
+                }
+            }
 
             $order = Order::query()->create([
                 'number' => self::nextNumber(),
@@ -93,7 +124,14 @@ class OrderService
                 'subtotal' => $subtotal,
                 'discount_total' => $discountTotal,
                 'shipping' => $shipping,
-                'total' => $subtotal + $shipping,
+                'delivery_zone' => $zone?->name,
+                'zone_surcharge' => $zoneSurcharge,
+                'planting' => $plantingFee > 0,
+                'planting_fee' => $plantingFee,
+                'coupon_id' => $coupon?->id,
+                'coupon_code' => $coupon?->code,
+                'coupon_discount' => $couponDiscount,
+                'total' => $subtotal + $shipping + $plantingFee - $couponDiscount,
             ]);
             $order->items()->createMany($lines);
 
@@ -109,9 +147,11 @@ class OrderService
      * Versandkosten: Es zählt die teuerste Versandklasse im Warenkorb,
      * ab dem Gratis-Bestellwert (falls gesetzt) ist die Lieferung gratis.
      *
+     * Dazu kommt der Zuschlag der Lieferzone (nach PLZ).
+     *
      * @param  iterable<ProductVariant>  $variants
      */
-    public static function shippingFor(int $subtotal, iterable $variants): int
+    public static function shippingFor(int $subtotal, iterable $variants, ?DeliveryZone $zone = null): int
     {
         $free = (int) Setting::get('free_delivery_from');
         if ($free > 0 && $subtotal >= $free) {
@@ -123,7 +163,22 @@ class OrderService
             $max = max($max, (int) $variant->effectiveShippingClass()?->price);
         }
 
-        return $max;
+        return $max + (int) $zone?->surcharge;
+    }
+
+    /**
+     * Pflanzservice: Preis pro Stück je Grösse, mindestens der Mindestbetrag.
+     *
+     * @param  array<int, array{0: ProductVariant, 1: int}>  $lines
+     */
+    public static function plantingFee(array $lines): int
+    {
+        $sum = 0;
+        foreach ($lines as [$variant, $qty]) {
+            $sum += $variant->effectivePlantingPrice() * $qty;
+        }
+
+        return $sum > 0 ? max($sum, (int) Setting::get('planting_min_fee')) : 0;
     }
 
     public static function nextNumber(): string
@@ -174,9 +229,15 @@ class OrderService
             $order->refresh();
             if (! $order->stock_released) {
                 foreach ($order->items as $item) {
-                    if ($item->product_variant_id) {
-                        ProductVariant::query()->whereKey($item->product_variant_id)->increment('stock', $item->quantity);
-                    }
+                    // über das Modell, damit die Warteliste «wieder an Lager» ausgelöst wird
+                    ProductVariant::query()->find($item->product_variant_id)?->increment('stock', $item->quantity);
+                }
+            }
+            // Gutschein-Guthaben bzw. Einlösung zurückgeben
+            if ($order->coupon_id && ! $order->stock_released && ($coupon = Coupon::query()->lockForUpdate()->find($order->coupon_id))) {
+                $coupon->decrement('used_count');
+                if ($coupon->type === 'gutschein') {
+                    $coupon->increment('balance', $order->coupon_discount);
                 }
             }
             $order->update(array_filter([

@@ -11,7 +11,7 @@ class GuideArticle extends Model
 
     protected function casts(): array
     {
-        return ['published' => 'boolean'];
+        return ['published' => 'boolean', 'remind_months' => 'array'];
     }
 
     /** @return array<int, string> Absätze */

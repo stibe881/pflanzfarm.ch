@@ -34,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
             $model::observe(\App\Observers\ActivityObserver::class);
         }
 
+        foreach ([\App\Models\Product::class, \App\Models\Reference::class, \App\Models\Popup::class] as $model) {
+            $model::observe(\App\Observers\ImageObserver::class);
+        }
+
         Event::listen(MessageSent::class, [TrackNewsletter::class, 'sent']);
         Event::listen(\Resend\Laravel\Events\EmailOpened::class, [TrackNewsletter::class, 'opened']);
         Event::listen(\Resend\Laravel\Events\EmailClicked::class, [TrackNewsletter::class, 'clicked']);

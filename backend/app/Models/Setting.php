@@ -37,6 +37,15 @@ class Setting extends Model
         'reminders_enabled' => true,
         'reminder_interval_days' => 10,
         'reminder_max' => 2,
+        // Pflanzservice (Rappen): Preis pro Pflanze, falls die Grösse keinen eigenen hat, und Mindestbetrag
+        'planting_enabled' => true,
+        'planting_price_default' => 800,
+        'planting_min_fee' => 15000,
+        // Pflege-Mails nach dem Kauf
+        'care_mails_enabled' => true,
+        'care_mail_days' => 14,
+        'seasonal_reminders_enabled' => true,
+        'google_review_url' => '',
     ];
 
     public static function get(string $key): mixed

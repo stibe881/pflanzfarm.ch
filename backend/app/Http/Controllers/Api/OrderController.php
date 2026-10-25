@@ -47,6 +47,8 @@ class OrderController extends Controller
             'note' => ['nullable', 'string', 'max:2000'],
             'preferred_date' => ['nullable', 'date', 'after_or_equal:'.today()->addDays(2)->toDateString(), 'before:'.today()->addMonths(6)->toDateString()],
             'preferred_slot' => ['nullable', Rule::in(array_keys(Order::SLOTS))],
+            'planting' => ['boolean'],
+            'coupon_code' => ['nullable', 'string', 'max:40'],
             'accept_terms' => ['accepted'],
             'newsletter' => ['boolean'],
         ], [
@@ -80,7 +82,12 @@ class OrderController extends Controller
             }
         }
 
-        if ($order->payment_method === 'stripe') {
+        // Vollständig mit Gutschein bezahlt: keine Zahlung nötig
+        if ($order->payment_method === 'stripe' && $order->total === 0) {
+            $this->orders->markPaid($order);
+
+            return response()->json(['order' => self::summary($order), 'token' => $order->access_token], 201);
+        } elseif ($order->payment_method === 'stripe') {
             try {
                 $url = $this->stripe->createSession($order);
             } catch (Throwable $e) {
@@ -142,6 +149,10 @@ class OrderController extends Controller
             'shipping' => $order->shipping / 100,
             'total' => $order->total / 100,
             'discount' => $order->discount_total / 100,
+            'couponCode' => $order->coupon_code,
+            'couponDiscount' => $order->coupon_discount / 100,
+            'planting' => $order->planting,
+            'plantingFee' => $order->planting_fee / 100,
             'preferredDate' => $order->preferred_date?->toDateString(),
             'preferredSlot' => $order->preferred_slot,
             'scheduledDate' => $order->scheduled_date?->toDateString(),

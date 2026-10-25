@@ -11,7 +11,7 @@ class ProductVariant extends Model
 
     protected function casts(): array
     {
-        return ['active' => 'boolean', 'price' => 'integer', 'stock' => 'integer', 'pickup_only' => 'boolean', 'low_stock_notified_at' => 'datetime'];
+        return ['active' => 'boolean', 'price' => 'integer', 'stock' => 'integer', 'pickup_only' => 'boolean', 'low_stock_notified_at' => 'datetime', 'planting_price' => 'integer', 'counted_at' => 'datetime'];
     }
 
     protected static function booted(): void
@@ -22,6 +22,23 @@ class ProductVariant extends Model
                 $v->low_stock_notified_at = null;
             }
         });
+        // Wieder an Lager (auch durch Storno): Warteliste benachrichtigen
+        static::updated(function (self $v) {
+            if ($v->wasChanged('stock') && (int) $v->getOriginal('stock') <= 0 && $v->stock > 0) {
+                app(\App\Services\StockAlerts::class)->notify($v);
+            }
+        });
+    }
+
+    public function stockAlerts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StockAlert::class);
+    }
+
+    /** Pflanzservice-Preis pro Stück: eigener Preis der Grösse, sonst Standard aus den Einstellungen. */
+    public function effectivePlantingPrice(): int
+    {
+        return $this->planting_price ?? (int) Setting::get('planting_price_default');
     }
 
     public function shippingClass(): BelongsTo

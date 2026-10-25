@@ -76,6 +76,9 @@ class ProductResource extends Resource
                             ->getOptionLabelFromRecordUsing(fn (\App\Models\ShippingClass $c) => $c->name.' ('.Money::format($c->price).')')
                             ->placeholder('Standard')
                             ->disabled(fn (Forms\Get $get) => (bool) $get('pickup_only')),
+                        Money::input('planting_price', 'Pflanzservice/Stk.')->placeholder('Standard')
+                            ->dehydrateStateUsing(fn ($state) => $state === null || $state === '' ? null : (int) round(((float) $state) * 100))
+                            ->helperText('Leer = Standard aus Einstellungen'),
                         Forms\Components\TextInput::make('sku')->label('Artikelnummer'),
                         Forms\Components\Toggle::make('active')->label('Bestellbar')->default(true)->inline(false),
                         Forms\Components\Toggle::make('pickup_only')->label('Nur Abholung')->live()->inline(false)

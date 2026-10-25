@@ -77,6 +77,20 @@ class Settings extends Page implements HasForms
                     ->helperText('Mit IBAN enthält die Rechnung einen Swiss-QR-Zahlteil.'),
                 Forms\Components\TextInput::make('vat_number')->label('MWST-Nummer (falls vorhanden)')->live(debounce: 500)->placeholder('CHE-...MWST'),
             ]),
+            Forms\Components\Section::make('Pflanzservice in der Kasse')->columns(3)->description('Kundschaft kann bei Lieferung «Pflanzen einpflanzen lassen» dazubuchen. Pro Grösse lässt sich im Produkt ein eigener Preis setzen.')->schema([
+                Forms\Components\Toggle::make('planting_enabled')->label('Anbieten')->inline(false),
+                Money::input('planting_price_default', 'Standardpreis pro Pflanze')->required(),
+                Money::input('planting_min_fee', 'Mindestbetrag pro Auftrag')->required(),
+            ]),
+            Forms\Components\Section::make('Pflege-Mails nach dem Kauf')->columns(2)->description('Kundschaft kann sich mit einem Klick abmelden. Gilt nur für Bestellungen mit E-Mail-Adresse.')->schema([
+                Forms\Components\Toggle::make('care_mails_enabled')->label('Pflegetipps nach der Lieferung senden')->inline(false),
+                Forms\Components\TextInput::make('care_mail_days')->label('Tage nach «geliefert»')->numeric()->integer()->minValue(1)->maxValue(90)->required(),
+                Forms\Components\TextInput::make('google_review_url')->label('Link für Google-Bewertung (optional)')->url()->columnSpanFull()
+                    ->placeholder('https://g.page/r/…/review')
+                    ->helperText('Im Google-Unternehmensprofil unter «Mehr Rezensionen erhalten» kopieren. Leer = keine Bitte um Bewertung.'),
+                Forms\Components\Toggle::make('seasonal_reminders_enabled')->label('Saisonale Erinnerungen aus dem Ratgeber senden')->inline(false)->columnSpanFull()
+                    ->helperText('Monate pro Artikel unter «Ratgeber» festlegen.'),
+            ]),
             Forms\Components\Section::make('Zahlungserinnerungen')->columns(3)->description('Für überfällige Rechnungen, werktags um 8.30 Uhr. Die Rechnung mit QR-Zahlteil wird jeweils angehängt.')->schema([
                 Forms\Components\Toggle::make('reminders_enabled')->label('Automatisch erinnern')->inline(false)->live(),
                 Forms\Components\TextInput::make('reminder_interval_days')->label('Abstand (Tage)')->numeric()->integer()->minValue(1)->maxValue(60)->required()

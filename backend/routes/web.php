@@ -16,6 +16,7 @@ Route::get('/test-zahlung/{number}', [TestPaymentController::class, 'show']);
 Route::post('/test-zahlung/{number}', [TestPaymentController::class, 'complete']);
 
 Route::get('/sitemap.xml', SitemapController::class);
+Route::get('/pflegetipps/abmelden', [\App\Http\Controllers\Api\ExtrasController::class, 'careOptOut'])->name('care.optout');
 
 // Alle übrigen Pfade liefert die Website (Single-Page-App) aus.
 Route::get('/{path?}', SpaController::class)->where('path', '^(?!admin|api|livewire|filament|storage|sanctum|up|test-zahlung).*$');

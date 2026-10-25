@@ -67,7 +67,9 @@
         @if($order->discount_total)
             <tr><td class="muted">davon Mengenrabatt</td><td class="num muted">−{{ $chf($order->discount_total) }}</td></tr>
         @endif
-        <tr><td>{{ $order->delivery_method === 'lieferung' ? 'Lieferung' : 'Abholung' }}</td><td class="num">{{ $order->shipping ? $chf($order->shipping) : 'gratis' }}</td></tr>
+        @foreach($order->summaryLines() as [$label, $amount])
+            <tr><td>{{ $label }}</td><td class="num">{{ $amount < 0 ? '−'.$chf(-$amount) : ($amount ? $chf($amount) : 'gratis') }}</td></tr>
+        @endforeach
         <tr class="grand"><td>Total CHF inkl. MWST</td><td class="num">{{ $chf($order->total) }}</td></tr>
     </table>
 

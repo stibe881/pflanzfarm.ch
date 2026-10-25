@@ -42,9 +42,11 @@
                     <td class="num">−{{ $chf($item->line_total) }}</td>
                 </tr>
             @endforeach
-            @if($order->shipping)
-                <tr><td colspan="4">Lieferung</td><td class="num">−{{ $chf($order->shipping) }}</td></tr>
-            @endif
+            @foreach($order->summaryLines() as [$label, $amount])
+                @if($amount)
+                    <tr><td colspan="4">{{ $label }}</td><td class="num">{{ $amount > 0 ? '−' : '' }}{{ $chf(abs($amount)) }}</td></tr>
+                @endif
+            @endforeach
         </tbody>
     </table>
 

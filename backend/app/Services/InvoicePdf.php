@@ -31,15 +31,21 @@ class InvoicePdf
         return 'data:image/png;base64,'.base64_encode((string) file_get_contents(resource_path('pdf/logo.png')));
     }
 
-    private function pdf(string $view, array $data): string
+    private function pdf(string $view, array $data, string $orientation = 'portrait', string $paper = 'a4'): string
     {
-        return Pdf::loadView($view, $data + ['logo' => $this->logo()])->setPaper('a4')
+        return Pdf::loadView($view, $data + ['logo' => $this->logo()])->setPaper($paper, $orientation)
             ->setOption(['isRemoteEnabled' => false, 'dpi' => 150, 'isFontSubsettingEnabled' => true])->output();
     }
 
     public function creditNote(Order $order): string
     {
         return $this->pdf('pdf.credit-note', ['order' => $order->loadMissing('items')]);
+    }
+
+    /** Geschenkgutschein im Format A5 quer zum Ausdrucken oder Versenden. */
+    public function voucher(\App\Models\Coupon $coupon): string
+    {
+        return $this->pdf('pdf.voucher', ['coupon' => $coupon], 'landscape', 'a5');
     }
 
     public function deliveryNote(Order $order): string
@@ -69,10 +75,16 @@ class InvoicePdf
      * Daten für den Swiss-QR-Zahlteil (Empfangsschein + Zahlteil), nur für offene Rechnungen mit hinterlegter IBAN.
      * Das Layout steht in resources/views/pdf/invoice.blade.php (Masse gemäss SIX-Vorgabe).
      */
+    /** QR-Referenz (27 Stellen) aus der Bestellnummer; dient auch zum Abgleich der Bankzahlungen. */
+    public static function qrReference(Order $order): string
+    {
+        return QrBill\Reference\QrPaymentReferenceGenerator::generate(null, preg_replace('/\D/', '', $order->number));
+    }
+
     private function paymentPart(Order $order): ?array
     {
         $iban = preg_replace('/\s+/', '', (string) Setting::get('iban'));
-        if ($order->payment_method !== 'invoice' || $order->payment_status === 'bezahlt' || $iban === '') {
+        if ($order->payment_method !== 'invoice' || $order->payment_status === 'bezahlt' || $iban === '' || $order->total <= 0) {
             return null;
         }
 
@@ -86,7 +98,7 @@ class InvoicePdf
             $reference = $creditor->containsQrIban()
                 ? QrBill\DataGroup\Element\PaymentReference::create(
                     QrBill\DataGroup\Element\PaymentReference::TYPE_QR,
-                    QrBill\Reference\QrPaymentReferenceGenerator::generate(null, preg_replace('/\D/', '', $order->number))
+                    self::qrReference($order)
                 )
                 : QrBill\DataGroup\Element\PaymentReference::create(QrBill\DataGroup\Element\PaymentReference::TYPE_NON);
             $bill->setPaymentReference($reference);

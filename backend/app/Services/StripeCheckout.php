@@ -33,6 +33,14 @@ class StripeCheckout
         if ($order->shipping > 0) {
             $lines[] = ['quantity' => 1, 'price_data' => ['currency' => 'chf', 'unit_amount' => $order->shipping, 'product_data' => ['name' => 'Lieferung']]];
         }
+        if ($order->planting_fee > 0) {
+            $lines[] = ['quantity' => 1, 'price_data' => ['currency' => 'chf', 'unit_amount' => $order->planting_fee, 'product_data' => ['name' => 'Pflanzservice']]];
+        }
+        // Stripe kennt keine negativen Positionen: mit Gutschein eine Sammelzeile über den Restbetrag
+        if ($order->coupon_discount > 0) {
+            $lines = [['quantity' => 1, 'price_data' => ['currency' => 'chf', 'unit_amount' => $order->total,
+                'product_data' => ['name' => 'Bestellung '.$order->number.' (abzüglich '.$order->coupon_code.')']]]];
+        }
 
         $base = rtrim(config('app.url'), '/');
         $session = $this->client()->checkout->sessions->create([

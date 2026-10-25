@@ -48,6 +48,9 @@
         </tbody>
     </table>
 
+    @if($order->planting)
+        <table class="terms"><tr><td class="k">Pflanzservice</td><td class="v"><strong>Ja – Pflanzen vor Ort einpflanzen</strong></td></tr></table>
+    @endif
     @if($order->payment_method === 'cash' && $order->payment_status !== 'bezahlt')
         <table class="terms"><tr><td class="k">Bar zu bezahlen</td><td class="v"><strong>CHF {{ $chf($order->total) }}</strong></td></tr></table>
     @endif

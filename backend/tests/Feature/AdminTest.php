@@ -37,7 +37,7 @@ class AdminTest extends TestCase
         $admin = $this->team();
         $order = Order::factory()->create();
         $pages = [
-            '/admin', '/admin/orders', '/admin/orders/create', '/admin/activity-logs', '/admin/orders/'.$order->id, '/admin/orders/'.$order->id.'/edit',
+            '/admin', '/admin/orders', '/admin/orders/create', '/admin/activity-logs', '/admin/delivery-zones', '/admin/coupons', '/admin/inventory', '/admin/zahlungen-importieren', '/admin/orders/'.$order->id, '/admin/orders/'.$order->id.'/edit',
             '/admin/products', '/admin/products/create', '/admin/products/'.Product::first()->id.'/edit',
             '/admin/users', '/admin/users/create', '/admin/users/'.$admin->id,
             '/admin/popups', '/admin/popups/create', '/admin/references', '/admin/guide-articles',

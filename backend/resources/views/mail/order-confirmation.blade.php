@@ -19,7 +19,9 @@ Wir melden uns, sobald wir Ihre Bestellung bestätigt und den {{ $order->deliver
 @foreach($order->items as $item)
 | {{ $item->product_name }} ({{ $item->variant_label }}) | {{ $item->quantity }} | CHF {{ number_format($item->line_total / 100, 2, '.', "'") }} |
 @endforeach
-| Lieferung | | CHF {{ number_format($order->shipping / 100, 2, '.', "'") }} |
+@foreach($order->summaryLines() as [$label, $amount])
+| {{ $label }} | | {{ $amount < 0 ? '−' : '' }}CHF {{ number_format(abs($amount) / 100, 2, '.', "'") }} |
+@endforeach
 | **Total inkl. MWST** | | **CHF {{ number_format($order->total / 100, 2, '.', "'") }}** |
 </x-mail::table>
 
@@ -28,6 +30,13 @@ Wir melden uns, sobald wir Ihre Bestellung bestätigt und den {{ $order->deliver
 an {{ $order->street }}, {{ $order->postal_code }} {{ $order->city }}
 @else
 bei der Pflanzfarm, Untergretti 2, 6245 Ebersecken
+@endif
+
+@if($order->planting)
+**Pflanzservice:** Wir pflanzen Ihre Pflanzen bei der Lieferung fachgerecht ein.
+@endif
+@if($order->preferred_date)
+**Ihr Wunschtermin:** {{ $order->preferred_date->locale('de_CH')->isoFormat('dddd, D. MMMM') }}{{ $order->preferred_slot && $order->preferred_slot !== 'egal' ? ', '.\App\Models\Order::SLOTS[$order->preferred_slot] : '' }}
 @endif
 
 **Zahlung:** {{ $order->paymentMethodLabel() }}

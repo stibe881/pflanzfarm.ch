@@ -38,12 +38,20 @@ class Order extends Model
             'scheduled_date' => 'date',
             'last_reminded_at' => 'datetime',
             'refunded_at' => 'datetime',
+            'planting' => 'boolean',
+            'care_mail_sent_at' => 'datetime',
+            'review_requested_at' => 'datetime',
         ];
     }
 
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function user(): BelongsTo
@@ -76,6 +84,29 @@ class Order extends Model
     {
         return $this->payment_method === 'invoice' && $this->payment_status === 'offen'
             && $this->status !== 'storniert' && $this->dueDate()->endOfDay()->isPast();
+    }
+
+    /**
+     * Zeilen zwischen Artikeln und Total (Lieferung, Pflanzservice, Gutschein) für Rechnung, Mails und Gutschrift.
+     *
+     * @return array<int, array{0: string, 1: int}>
+     */
+    public function summaryLines(): array
+    {
+        $lines = [];
+        if ($this->delivery_method === 'lieferung') {
+            $lines[] = ['Lieferung'.($this->delivery_zone && $this->zone_surcharge ? ' (inkl. Zone '.$this->delivery_zone.')' : ''), (int) $this->shipping];
+        } else {
+            $lines[] = ['Abholung', 0];
+        }
+        if ($this->planting_fee) {
+            $lines[] = ['Pflanzservice', (int) $this->planting_fee];
+        }
+        if ($this->coupon_discount) {
+            $lines[] = [($this->coupon?->type === 'gutschein' ? 'Gutschein ' : 'Rabattcode ').$this->coupon_code, -(int) $this->coupon_discount];
+        }
+
+        return $lines;
     }
 
     /** Kundschaft darf selbst stornieren, solange wir die Bestellung noch nicht bestätigt haben. */

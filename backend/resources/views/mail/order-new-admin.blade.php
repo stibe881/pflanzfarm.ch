@@ -12,6 +12,9 @@
 @foreach($order->items as $item)
 | {{ $item->product_name }} ({{ $item->variant_label }}) | {{ $item->quantity }} | CHF {{ number_format($item->line_total / 100, 2, '.', "'") }} |
 @endforeach
+@foreach($order->summaryLines() as [$label, $amount])
+| {{ $label }} | | {{ $amount < 0 ? '−' : '' }}CHF {{ number_format(abs($amount) / 100, 2, '.', "'") }} |
+@endforeach
 | **Total** | | **CHF {{ number_format($order->total / 100, 2, '.', "'") }}** |
 </x-mail::table>
 

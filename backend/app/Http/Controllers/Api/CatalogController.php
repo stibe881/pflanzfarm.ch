@@ -62,6 +62,14 @@ class CatalogController extends Controller
                 'invoiceEnabled' => (bool) Setting::get('invoice_enabled'),
                 'cashEnabled' => (bool) Setting::get('cash_enabled'),
                 'testMode' => (bool) config('pflanzfarm.test_mode'),
+                'planting' => (bool) Setting::get('planting_enabled'),
+                'plantingMinFee' => (int) Setting::get('planting_min_fee') / 100,
+                'zones' => \App\Models\DeliveryZone::query()->orderBy('sort')->orderBy('id')->get()->map(fn ($z) => [
+                    'name' => $z->name,
+                    'ranges' => collect($z->postal_ranges)->map(fn ($r) => [(int) $r['from'], (int) (($r['to'] ?? null) ?: $r['from'])])->values(),
+                    'surcharge' => $z->surcharge / 100,
+                    'deliverable' => $z->deliverable,
+                ])->values(),
             ],
         ]);
     }
@@ -75,6 +83,7 @@ class CatalogController extends Controller
             'price' => $v->price / 100,
             'stock' => max(0, $v->stock),
             'pickupOnly' => $v->pickup_only,
+            'plantingPrice' => $v->effectivePlantingPrice() / 100,
             'shipping' => ($class = $v->effectiveShippingClass()) ? ['name' => $class->name, 'price' => $class->price / 100] : null,
         ])->values();
 
@@ -89,7 +98,9 @@ class CatalogController extends Controller
             'priceOnRequest' => $p->price_on_request,
             'image' => self::image($p->image),
             'imageSet' => self::imageSet($p->image),
-            'gallery' => collect($p->gallery ?? [])->map(fn ($g) => self::image($g))->values()->all(),
+            'gallery' => collect($p->gallery ?? [])->map(fn ($g) => self::image(
+                \Illuminate\Support\Facades\Storage::disk('public')->exists($v = \App\Services\ImageOptimizer::variant($g, 1600)) ? $v : $g
+            ))->values()->all(),
             'discounts' => collect($p->volume_discounts ?? [])->map(fn ($t) => ['minQty' => (int) $t['min_qty'], 'percent' => min(90, (int) $t['percent'])])
                 ->filter(fn ($t) => $t['minQty'] > 1 && $t['percent'] > 0)->sortBy('minQty')->values()->all(),
             'badge' => $p->badge,
@@ -121,7 +132,8 @@ class CatalogController extends Controller
             $path = '/assets/'.basename($path);
         }
         if (! $path || ! str_starts_with($path, '/assets/')) {
-            return self::image($path);
+            // Hochgeladene Bilder: optimierte WebP-Fassungen, falls vorhanden
+            return ($path ? \App\Services\ImageOptimizer::srcset(ltrim($path, '/')) : null) ?? self::image($path);
         }
         // Für die mitgelieferten Bilder gibt es WebP-Varianten in zwei Breiten.
         $map = [

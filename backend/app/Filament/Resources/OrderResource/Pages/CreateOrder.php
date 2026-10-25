@@ -4,6 +4,8 @@ namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
 use App\Filament\Support\Money;
+use App\Models\Coupon;
+use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\User;
@@ -64,7 +66,7 @@ class CreateOrder extends CreateRecord
                     ->helperText('z. B. bar oder mit TWINT vor Ort kassiert'),
                 Forms\Components\TextInput::make('street')->label('Strasse')->required(fn (Get $get) => $get('delivery_method') === 'lieferung')
                     ->visible(fn (Get $get) => $get('delivery_method') === 'lieferung'),
-                Forms\Components\TextInput::make('postal_code')->label('PLZ')->required(fn (Get $get) => $get('delivery_method') === 'lieferung')
+                Forms\Components\TextInput::make('postal_code')->label('PLZ')->live(onBlur: true)->required(fn (Get $get) => $get('delivery_method') === 'lieferung')
                     ->visible(fn (Get $get) => $get('delivery_method') === 'lieferung'),
                 Forms\Components\TextInput::make('city')->label('Ort')->required(fn (Get $get) => $get('delivery_method') === 'lieferung')
                     ->visible(fn (Get $get) => $get('delivery_method') === 'lieferung'),
@@ -72,6 +74,9 @@ class CreateOrder extends CreateRecord
                     ->dehydrateStateUsing(fn ($state) => $state === null || $state === '' ? null : (int) round(((float) $state) * 100))
                     ->helperText('Leer = gemäss Versandklassen')
                     ->visible(fn (Get $get) => $get('delivery_method') === 'lieferung'),
+                Forms\Components\Toggle::make('planting')->label('Pflanzservice (einpflanzen)')->live()->inline(false)
+                    ->visible(fn (Get $get) => $get('delivery_method') === 'lieferung'),
+                Forms\Components\TextInput::make('coupon_code')->label('Gutschein / Rabattcode')->live(onBlur: true)->maxLength(40),
                 Forms\Components\Textarea::make('note')->label('Bemerkung')->columnSpanFull(),
             ]),
             Forms\Components\Section::make('Termin und Status')->columns(3)->schema([
@@ -135,10 +140,24 @@ class CreateOrder extends CreateRecord
             $discount += ($v->price - $unit) * $qty;
         }
         $override = $get('shipping_override');
-        $shipping = $get('delivery_method') !== 'lieferung' ? 0
-            : (filled($override) ? (int) round(((float) $override) * 100) : OrderService::shippingFor($subtotal, $variants->values()));
+        $delivery = $get('delivery_method') === 'lieferung';
+        $zone = $delivery ? DeliveryZone::forPostalCode($get('postal_code')) : null;
+        $shipping = ! $delivery ? 0
+            : (filled($override) ? (int) round(((float) $override) * 100) : OrderService::shippingFor($subtotal, $variants->values(), $zone));
+        $planting = $delivery && $get('planting') ? OrderService::plantingFee(collect($get('items') ?? [])
+            ->filter(fn ($i) => isset($variants[$i['variant_id'] ?? 0]))->map(fn ($i) => [$variants[$i['variant_id']], (int) ($i['quantity'] ?? 0)])->values()->all()) : 0;
+        $coupon = Coupon::findByCode($get('coupon_code'));
+        $couponNote = '';
+        $couponDiscount = 0;
+        if (filled($get('coupon_code'))) {
+            $problem = $coupon ? $coupon->problem($subtotal) : 'Code unbekannt';
+            $couponDiscount = $problem ? 0 : $coupon->discountFor($subtotal, $subtotal + $shipping + $planting);
+            $couponNote = $problem ? ' · Code: '.$problem : ' · '.$coupon->code.' −'.Money::format($couponDiscount);
+        }
 
         return 'Artikel '.Money::format($subtotal).($discount ? ' (inkl. Mengenrabatt −'.Money::format($discount).')' : '')
-            .' · Lieferung '.Money::format($shipping).' · Total '.Money::format($subtotal + $shipping);
+            .' · Lieferung '.Money::format($shipping).($zone && $zone->surcharge ? ' (Zone '.$zone->name.')' : '').($zone && ! $zone->deliverable ? ' · ACHTUNG: keine Lieferung in diese Zone' : '')
+            .($planting ? ' · Pflanzservice '.Money::format($planting) : '').$couponNote
+            .' · Total '.Money::format($subtotal + $shipping + $planting - $couponDiscount);
     }
 }

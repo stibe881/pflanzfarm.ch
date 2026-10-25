@@ -104,6 +104,14 @@ class OrderResource extends Resource
                 ]),
                 Infolists\Components\TextEntry::make('discount_total')->label('Mengenrabatt (im Total enthalten)')->visible(fn (Order $record) => $record->discount_total > 0)
                     ->formatStateUsing(fn ($state) => '−'.Money::format($state)),
+                Infolists\Components\TextEntry::make('planting_fee')->label('Pflanzservice')->visible(fn (Order $record) => $record->planting)
+                    ->formatStateUsing(fn ($state) => Money::format($state)),
+                Infolists\Components\TextEntry::make('coupon_discount')->label(fn (Order $record) => 'Gutschein / Rabattcode '.$record->coupon_code)
+                    ->visible(fn (Order $record) => $record->coupon_discount > 0)->formatStateUsing(fn ($state) => '−'.Money::format($state)),
+                Infolists\Components\TextEntry::make('delivery_zone')->label('Lieferzone')->visible(fn (Order $record) => filled($record->delivery_zone))
+                    ->formatStateUsing(fn ($state, Order $record) => $state.($record->zone_surcharge ? ' (Zuschlag '.Money::format($record->zone_surcharge).', in Lieferung enthalten)' : '')),
+                Infolists\Components\TextEntry::make('paid_reference')->label('Zahlung verbucht über')->visible(fn (Order $record) => filled($record->paid_reference))
+                    ->formatStateUsing(fn ($state) => $state === 'camt' ? 'Bankimport' : 'Bankimport, Referenz '.$state),
                 Infolists\Components\TextEntry::make('shipping')->label('Lieferung')->formatStateUsing(fn ($state) => Money::format($state)),
                 Infolists\Components\TextEntry::make('total')->label('Total')->weight('bold')->formatStateUsing(fn ($state) => Money::format($state)),
             ]),
