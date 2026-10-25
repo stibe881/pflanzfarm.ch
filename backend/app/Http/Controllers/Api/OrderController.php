@@ -1,0 +1,144 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\NewsletterSubscriber;
+use App\Models\Order;
+use App\Models\Setting;
+use App\Services\InvoicePdf;
+use App\Services\OrderService;
+use App\Services\StripeCheckout;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use App\Mail\NewsletterConfirmation;
+use Throwable;
+
+class OrderController extends Controller
+{
+    public function __construct(private OrderService $orders, private StripeCheckout $stripe) {}
+
+    public function store(Request $request): JsonResponse
+    {
+        $methods = ['stripe'];
+        if (Setting::get('invoice_enabled')) {
+            $methods[] = 'invoice';
+        }
+        if (Setting::get('cash_enabled')) {
+            $methods[] = 'cash';
+        }
+
+        $data = $request->validate([
+            'items' => ['required', 'array', 'min:1', 'max:50'],
+            'items.*.variant_id' => ['required', 'integer'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:999'],
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email:rfc', 'max:160'],
+            'phone' => ['required', 'string', 'max:40'],
+            'delivery_method' => ['required', Rule::in(['lieferung', 'abholung'])],
+            'street' => ['required_if:delivery_method,lieferung', 'nullable', 'string', 'max:160'],
+            'postal_code' => ['required_if:delivery_method,lieferung', 'nullable', 'string', 'max:12'],
+            'city' => ['required_if:delivery_method,lieferung', 'nullable', 'string', 'max:120'],
+            'payment_method' => ['required', Rule::in($methods)],
+            'note' => ['nullable', 'string', 'max:2000'],
+            'accept_terms' => ['accepted'],
+            'newsletter' => ['boolean'],
+        ], [
+            'accept_terms.accepted' => 'Bitte akzeptieren Sie die AGB.',
+            'street.required_if' => 'Bitte geben Sie die Lieferadresse an.',
+            'postal_code.required_if' => 'Bitte geben Sie die PLZ an.',
+            'city.required_if' => 'Bitte geben Sie den Ort an.',
+        ]);
+
+        if ($data['payment_method'] === 'cash' && $data['delivery_method'] !== 'abholung') {
+            throw ValidationException::withMessages(['payment_method' => 'Barzahlung ist nur bei Abholung möglich.']);
+        }
+
+        // Gleiche Variante mehrfach im Warenkorb zusammenfassen
+        $items = collect($data['items'])->groupBy('variant_id')
+            ->map(fn ($g, $id) => ['variant_id' => (int) $id, 'quantity' => (int) $g->sum('quantity')])->values()->all();
+
+        $order = $this->orders->create($data, $items, $request->user());
+
+        if ($request->boolean('newsletter')) {
+            $sub = NewsletterSubscriber::query()->firstOrNew(['email' => strtolower($data['email'])]);
+            if ($sub->status !== 'bestaetigt') {
+                $sub->fill(['status' => 'ausstehend', 'source' => 'bestellung'])->save();
+                Mail::to($sub->email)->send(new NewsletterConfirmation($sub));
+            }
+        }
+
+        if ($order->payment_method === 'stripe') {
+            try {
+                $url = $this->stripe->createSession($order);
+            } catch (Throwable $e) {
+                report($e);
+                $this->orders->cancel($order, 'abgebrochen');
+                throw ValidationException::withMessages(['payment_method' => 'Die Online-Zahlung ist im Moment nicht verfügbar. Bitte wählen Sie eine andere Zahlungsart oder versuchen Sie es später erneut.']);
+            }
+
+            return response()->json(['redirect' => $url, 'order' => self::summary($order)], 201);
+        }
+
+        $this->orders->sendPlacedMails($order);
+
+        return response()->json(['order' => self::summary($order), 'token' => $order->access_token], 201);
+    }
+
+    /** Bestellübersicht für die Danke-Seite (per Token) oder das Kundenkonto. */
+    public function show(Request $request, string $number): JsonResponse
+    {
+        $order = $this->authorized($request, $number);
+
+        return response()->json(['order' => self::summary($order->load('items'))]);
+    }
+
+    public function invoice(Request $request, string $number, InvoicePdf $pdf): Response
+    {
+        $order = $this->authorized($request, $number);
+
+        return response($pdf->render($order), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$pdf->filename($order).'"',
+        ]);
+    }
+
+    private function authorized(Request $request, string $number): Order
+    {
+        $order = Order::query()->where('number', $number)->firstOrFail();
+        $owner = $request->user() && $order->user_id === $request->user()->id;
+        $token = $request->query('t') && hash_equals($order->access_token, (string) $request->query('t'));
+        abort_unless($owner || $token, 404);
+
+        return $order;
+    }
+
+    public static function summary(Order $order): array
+    {
+        return [
+            'number' => $order->number,
+            'createdAt' => $order->created_at?->toIso8601String(),
+            'status' => $order->status,
+            'statusLabel' => $order->statusLabel(),
+            'paymentMethod' => $order->payment_method,
+            'paymentMethodLabel' => $order->paymentMethodLabel(),
+            'paymentStatus' => $order->payment_status,
+            'paymentStatusLabel' => $order->paymentStatusLabel(),
+            'deliveryMethod' => $order->delivery_method,
+            'deliveryMethodLabel' => $order->deliveryMethodLabel(),
+            'subtotal' => $order->subtotal / 100,
+            'shipping' => $order->shipping / 100,
+            'total' => $order->total / 100,
+            'items' => $order->items->map(fn ($i) => [
+                'name' => $i->product_name,
+                'variant' => $i->variant_label,
+                'quantity' => $i->quantity,
+                'total' => $i->line_total / 100,
+            ]),
+        ];
+    }
+}

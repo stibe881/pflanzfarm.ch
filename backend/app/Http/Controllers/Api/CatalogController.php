@@ -1,0 +1,131 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\GuideArticle;
+use App\Models\Popup;
+use App\Models\Product;
+use App\Models\Reference;
+use App\Models\Setting;
+use Illuminate\Http\JsonResponse;
+
+class CatalogController extends Controller
+{
+    public function __invoke(): JsonResponse
+    {
+        $products = Product::query()->where('active', true)->orderBy('sort')->orderBy('id')
+            ->with('activeVariants')->get()
+            ->map(fn (Product $p) => self::product($p));
+
+        $popup = Popup::query()->current()->latest('starts_at')->first();
+
+        return response()->json([
+            'products' => $products,
+            'references' => Reference::query()->where('active', true)->orderBy('sort')->orderBy('id')->get()->map(fn (Reference $r) => [
+                'id' => $r->id,
+                'title' => $r->title,
+                'category' => $r->category,
+                'description' => $r->description,
+                'image' => self::image($r->image),
+                'imageSet' => self::imageSet($r->image),
+                'location' => $r->location,
+                'year' => $r->year,
+                'tags' => $r->tags ?? [],
+                'onHomepage' => $r->on_homepage,
+            ]),
+            'articles' => GuideArticle::query()->where('published', true)->orderBy('sort')->orderBy('id')->with('product:id,slug')->get()->map(fn (GuideArticle $a) => [
+                'id' => $a->slug,
+                'title' => $a->title,
+                'paras' => array_values(array_filter(array_map('trim', preg_split("/\R\s*\R/", $a->body)))),
+                'product' => $a->product?->slug,
+            ]),
+            'popup' => $popup ? [
+                'id' => $popup->id,
+                'title' => $popup->title,
+                'text' => $popup->text,
+                'cta' => $popup->cta_label,
+                'ctaTarget' => $popup->cta_target,
+                'image' => self::image($popup->image),
+                'imageSet' => self::imageSet($popup->image),
+                'target' => $popup->pages,
+                'delay' => $popup->delay,
+                'startsAt' => $popup->starts_at?->toDateString(),
+                'endsAt' => $popup->ends_at?->toDateString(),
+            ] : null,
+            'settings' => [
+                'openingHours' => Setting::get('opening_hours'),
+                'openingNote' => Setting::get('opening_note'),
+                'deliveryFee' => (int) Setting::get('delivery_fee'),
+                'freeDeliveryFrom' => (int) Setting::get('free_delivery_from'),
+                'invoiceEnabled' => (bool) Setting::get('invoice_enabled'),
+                'cashEnabled' => (bool) Setting::get('cash_enabled'),
+            ],
+        ]);
+    }
+
+    public static function product(Product $p): array
+    {
+        // Grössen ohne Preis sind nicht bestellbar (ausser «Preis auf Anfrage»)
+        $variants = $p->activeVariants->filter(fn ($v) => $p->price_on_request || $v->price > 0)->map(fn ($v) => [
+            'id' => $v->id,
+            'label' => $v->label,
+            'price' => $v->price / 100,
+            'stock' => max(0, $v->stock),
+        ])->values();
+
+        return [
+            'id' => $p->slug,
+            'dbId' => $p->id,
+            'slug' => $p->slug,
+            'name' => $p->name,
+            'latin' => $p->latin,
+            'category' => $p->category,
+            'price' => $variants->min('price') ?? 0,
+            'priceOnRequest' => $p->price_on_request,
+            'image' => self::image($p->image),
+            'imageSet' => self::imageSet($p->image),
+            'badge' => $p->badge,
+            'height' => $p->height_label ?? ($variants->first()['label'] ?? ''),
+            'traits' => $p->traits ?? [],
+            'description' => $p->description,
+            'perMeter' => $p->plants_per_meter,
+            'variants' => $variants->pluck('label')->all(),
+            'variantData' => $variants->all(),
+            'stock' => $variants->sum('stock'),
+        ];
+    }
+
+    /** Bildpfade: mitgelieferte Bilder liegen unter /assets, hochgeladene unter /storage. */
+    public static function image(?string $path): string
+    {
+        if (! $path) {
+            return '';
+        }
+
+        // Relativ, damit die Bilder unabhängig von der Domain funktionieren
+        return str_starts_with($path, '/assets/') ? $path : '/storage/'.ltrim($path, '/');
+    }
+
+    public static function imageSet(?string $path): string
+    {
+        // Aus den mitgelieferten Bildern übernommene Uploads nutzen weiterhin die optimierten WebP-Dateien
+        if ($path && str_starts_with($path, 'bilder/')) {
+            $path = '/assets/'.basename($path);
+        }
+        if (! $path || ! str_starts_with($path, '/assets/')) {
+            return self::image($path);
+        }
+        // Für die mitgelieferten Bilder gibt es WebP-Varianten in zwei Breiten.
+        $map = [
+            '/assets/thuja-smaragd.jpg' => '/assets/thuja-smaragd-400.webp 400w, /assets/thuja-smaragd-800.webp 800w',
+            '/assets/photinia-red-robin.jpg' => '/assets/photinia-red-robin-400.webp 400w, /assets/photinia-red-robin-800.webp 800w',
+            '/assets/diverse-beerenstraeucher.jpg' => '/assets/diverse-beerenstraeucher-400.webp 400w, /assets/diverse-beerenstraeucher-800.webp 800w',
+            '/assets/pflanzfarm-garten-1.jpg' => '/assets/pflanzfarm-garten-1-640.webp 640w, /assets/pflanzfarm-garten-1-1280.webp 1280w',
+            '/assets/pflanzfarm-garten-2.jpg' => '/assets/pflanzfarm-garten-2-640.webp 640w, /assets/pflanzfarm-garten-2-1280.webp 1280w',
+            '/assets/pflanzfarm-garten-3.jpg' => '/assets/pflanzfarm-garten-3-640.webp 640w, /assets/pflanzfarm-garten-3-1280.webp 1280w',
+        ];
+
+        return $map[$path] ?? $path;
+    }
+}
