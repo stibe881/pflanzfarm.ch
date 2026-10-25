@@ -14533,55 +14533,6 @@ function O1() {
               }),
             ],
           }),
-          i.jsxs("section", {
-            className: "section category-section container",
-            children: [
-              i.jsxs("div", {
-                className: "section-heading section-heading--split",
-                children: [
-                  i.jsx("div", {
-                    children: i.jsxs("h2", {
-                      children: ["Für jeden Garten", i.jsx("br", {}), "die richtige Pflanze."],
-                    }),
-                  }),
-                  i.jsxs("a", {
-                    className: "text-link",
-                    ...Lk("shop"),
-                    children: ["Alle Kategorien ansehen ", i.jsx(Ve, { size: 16 })],
-                  }),
-                ],
-              }),
-              i.jsx("div", {
-                className: "category-grid",
-                children: j1.map((v) =>
-                  i.jsxs(
-                    "a",
-                    {
-                      className: "category-card",
-                      ...Lk("shop", () => p(v.filter)),
-                      children: [
-                        i.jsx("img", {
-                          className: "category-card__image",
-                          src: He(v.image),
-                          srcSet: At(v.imageSet),
-                          sizes: "(max-width: 760px) 92vw, (max-width: 1000px) 46vw, 32vw",
-                          loading: "lazy",
-                          decoding: "async",
-                          alt: v.imageAlt,
-                        }),
-                        i.jsxs("span", {
-                          className: "category-card__body",
-                          children: [i.jsx("strong", { children: v.name }), i.jsx("span", { children: v.text })],
-                        }),
-                        i.jsx("span", { className: "circle-arrow", children: i.jsx(Ve, { size: 18 }) }),
-                      ],
-                    },
-                    v.name,
-                  ),
-                ),
-              }),
-            ],
-          }),
           i.jsx("section", {
             className: "section featured-section",
             children: i.jsxs("div", {
@@ -14615,32 +14566,6 @@ function O1() {
                     ),
                   ),
                 }),
-              ],
-            }),
-          }),
-          i.jsx("section", {
-            className: "section hedge-cta",
-            "aria-labelledby": "hedge-cta-title",
-            children: i.jsxs("div", {
-              className: "container hedge-cta__inner",
-              children: [
-                i.jsxs("div", {
-                  className: "hedge-cta__copy",
-                  children: [
-                    i.jsx("span", { className: "eyebrow", children: "Offerte für Ihre Hecke" }),
-                    i.jsx("h2", { id: "hedge-cta-title", children: "Wie viele Pflanzen braucht Ihre Hecke?" }),
-                    i.jsx("p", {
-                      children:
-                        "Geben Sie die Länge Ihrer Hecke ein und erhalten Sie sofort Stückzahl und Richtpreis. Für Lieferung, Pflanzung oder grössere Projekte erstellen wir Ihnen gern eine persönliche Offerte.",
-                    }),
-                    i.jsxs("a", {
-                      className: "button button--dark",
-                      ...Lk("contact"),
-                      children: ["Beratung anfragen ", i.jsx(Ve, { size: 18 })],
-                    }),
-                  ],
-                }),
-                i.jsx(pf_Hedge, { onAdd: Kl, onRequest: pf_request }),
               ],
             }),
           }),
@@ -14754,6 +14679,81 @@ function O1() {
                     ),
                   ),
                 }),
+              ],
+            }),
+          }),
+          i.jsxs("section", {
+            className: "section category-section container",
+            children: [
+              i.jsxs("div", {
+                className: "section-heading section-heading--split",
+                children: [
+                  i.jsx("div", {
+                    children: i.jsxs("h2", {
+                      children: ["Für jeden Garten", i.jsx("br", {}), "die richtige Pflanze."],
+                    }),
+                  }),
+                  i.jsxs("a", {
+                    className: "text-link",
+                    ...Lk("shop"),
+                    children: ["Alle Kategorien ansehen ", i.jsx(Ve, { size: 16 })],
+                  }),
+                ],
+              }),
+              i.jsx("div", {
+                className: "category-grid",
+                children: j1.map((v) =>
+                  i.jsxs(
+                    "a",
+                    {
+                      className: "category-card",
+                      ...Lk("shop", () => p(v.filter)),
+                      children: [
+                        i.jsx("img", {
+                          className: "category-card__image",
+                          src: He(v.image),
+                          srcSet: At(v.imageSet),
+                          sizes: "(max-width: 760px) 92vw, (max-width: 1000px) 46vw, 32vw",
+                          loading: "lazy",
+                          decoding: "async",
+                          alt: v.imageAlt,
+                        }),
+                        i.jsxs("span", {
+                          className: "category-card__body",
+                          children: [i.jsx("strong", { children: v.name }), i.jsx("span", { children: v.text })],
+                        }),
+                        i.jsx("span", { className: "circle-arrow", children: i.jsx(Ve, { size: 18 }) }),
+                      ],
+                    },
+                    v.name,
+                  ),
+                ),
+              }),
+            ],
+          }),
+          i.jsx("section", {
+            className: "section hedge-cta",
+            "aria-labelledby": "hedge-cta-title",
+            children: i.jsxs("div", {
+              className: "container hedge-cta__inner",
+              children: [
+                i.jsxs("div", {
+                  className: "hedge-cta__copy",
+                  children: [
+                    i.jsx("span", { className: "eyebrow", children: "Offerte für Ihre Hecke" }),
+                    i.jsx("h2", { id: "hedge-cta-title", children: "Wie viele Pflanzen braucht Ihre Hecke?" }),
+                    i.jsx("p", {
+                      children:
+                        "Geben Sie die Länge Ihrer Hecke ein und erhalten Sie sofort Stückzahl und Richtpreis. Für Lieferung, Pflanzung oder grössere Projekte erstellen wir Ihnen gern eine persönliche Offerte.",
+                    }),
+                    i.jsxs("a", {
+                      className: "button button--dark",
+                      ...Lk("contact"),
+                      children: ["Beratung anfragen ", i.jsx(Ve, { size: 18 })],
+                    }),
+                  ],
+                }),
+                i.jsx(pf_Hedge, { onAdd: Kl, onRequest: pf_request }),
               ],
             }),
           }),
