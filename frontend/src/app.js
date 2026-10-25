@@ -14324,7 +14324,7 @@ function pf_Account({ user: o, setUser: C, toast: _, onNavigate: y }) {
       X === "login" &&
         h(
           "form",
-          { className: "account-card", onSubmit: (Z) => (Z.preventDefault(), ye("/login", { method: "POST", body: { email: Le.email, password: Le.password, remember: !0 } }, (Q) => (C(Q.user), _("Willkommen zurück!")))) },
+          { className: "account-card", onSubmit: (Z) => (Z.preventDefault(), ye("/login", { method: "POST", body: { email: Le.email, password: Le.password, remember: !0 } }, (Q) => (Q.redirect ? window.location.assign(Q.redirect) : (C(Q.user), _("Willkommen zurück!"))))) },
           h(pf_Field, { label: "E-Mail", name: "email", type: "email", form: Le, set: k, errors: Ne, autoComplete: "email" }),
           h(pf_Field, { label: "Passwort", name: "password", type: "password", form: Le, set: k, errors: Ne, autoComplete: "current-password" }),
           h("button", { type: "submit", className: "button button--primary", disabled: ge }, "Anmelden"),

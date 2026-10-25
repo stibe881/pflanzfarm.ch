@@ -212,6 +212,18 @@ class ShopTest extends TestCase
         $this->postJson('/api/logout')->assertOk();
     }
 
+    public function test_team_login_on_website_redirects_to_admin(): void
+    {
+        User::factory()->create(['email' => 'kunde@example.ch', 'password' => 'geheimes-passwort']);
+        $this->postJson('/api/login', ['email' => 'kunde@example.ch', 'password' => 'geheimes-passwort'])->assertOk()->assertJsonMissingPath('redirect');
+        $this->postJson('/api/logout');
+
+        $admin = User::factory()->create(['email' => 'chef@example.ch', 'password' => 'geheimes-passwort', 'role' => 'admin']);
+        $admin->forceFill(['email_verified_at' => now()])->save();
+        $this->postJson('/api/login', ['email' => 'chef@example.ch', 'password' => 'geheimes-passwort'])->assertOk()->assertJsonPath('redirect', '/admin');
+        $this->get('/admin')->assertOk();
+    }
+
     public function test_login_works_through_demo_tunnel_domain(): void
     {
         config(['sanctum.stateful' => ['localhost:8080', '*.trycloudflare.com']]);

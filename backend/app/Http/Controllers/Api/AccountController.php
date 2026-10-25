@@ -50,12 +50,18 @@ class AccountController extends Controller
     {
         $data = $request->validate(['email' => ['required', 'email'], 'password' => ['required', 'string']]);
 
-        if (! Auth::attempt(['email' => Str::lower($data['email']), 'password' => $data['password']], $request->boolean('remember'))) {
+        if (! Auth::guard('web')->attempt(['email' => Str::lower($data['email']), 'password' => $data['password']], $request->boolean('remember'))) {
             throw ValidationException::withMessages(['email' => 'E-Mail-Adresse oder Passwort ist falsch.']);
         }
         $request->session()->regenerate();
 
-        return response()->json(['user' => self::user($request->user())]);
+        // Team-Konten (Admin/Team) landen direkt im Adminbereich
+        $user = Auth::guard('web')->user();
+
+        return response()->json(array_filter([
+            'user' => self::user($user),
+            'redirect' => $user->isTeam() ? '/admin' : null,
+        ]));
     }
 
     public function logout(Request $request): JsonResponse
