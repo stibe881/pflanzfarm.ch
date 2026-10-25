@@ -45,10 +45,22 @@ drei Bestellungen in verschiedenen Zuständen und einen Newsletter-Abonnenten. D
 - [ ] **Barzahlung** bei Abholung
 - [ ] **Kundenkonto**: registrieren → Bestätigungsmail im Test-Postfach öffnen → Link klicken; anmelden, Bestellungen ansehen,
       Angaben ändern, Passwort vergessen, Daten herunterladen, Konto löschen
+- [ ] **Mengenrabatt**: Im Admin bei Thuja «ab 25 Stück 5 %, ab 50 Stück 10 %» eintragen → Produktseite, Warenkorb, Kasse, Rechnung
+- [ ] **Wunschtermin** in der Kasse (Datum + Vormittag/Nachmittag) → erscheint im Admin und wird beim Bestätigen vorgeschlagen
+- [ ] **Suche** (Lupe oben): z. B. «hecke», «immergrün», «giessen»
+- [ ] **Ratgeber**: Übersicht → eigene Seite pro Artikel (`/ratgeber/thuja-hecke-pflanzen/`)
+- [ ] **Storno im Konto**: neue Bestellung als Kundin → unter «Meine Bestellungen» stornieren (nur solange nicht bestätigt)
 - [ ] **Kontaktformular** und **Newsletter** (Bestätigungsmail im Test-Postfach)
 - [ ] **Admin**: Bestellung bestätigen / als geliefert markieren / stornieren (Mails prüfen), Produkt mit neuer Grösse anlegen,
       Lager ändern, Popup mit Zeitraum anlegen, Referenz und Ratgeber-Artikel bearbeiten, Öffnungszeiten und Lieferkosten
       unter «Einstellungen» ändern, Newsletter schreiben und senden, Kundendaten exportieren und löschen
+- [ ] **Admin, neu**: «Bestellung erfassen» (Telefon/vor Ort, auch ohne E-Mail) · beim Bestätigen Liefertermin setzen ·
+      Filter «Termin: heute/morgen» · «Rüstliste» (PDF mit Gesamtmengen für einen Tag) · unter «Mehr»: Lieferschein,
+      Zahlungserinnerung, Gutschrift · Stornieren mit «Betrag erstatten» · mehrere Bilder pro Produkt (Galerie) ·
+      Newsletter mit Bild und «Versand planen», danach Statistik · Dashboard-Grafiken · «Änderungsprotokoll»
+- [ ] **Lager-Warnung**: Bestand einer Grösse unter die Warngrenze (Einstellungen, Standard 10) bestellen → E-Mail ans Team
+- [ ] **Zahlungserinnerungen**: In den Einstellungen Abstand und Anzahl festlegen; manuell testen mit
+      `docker compose exec app php artisan pflanzfarm:zahlungserinnerungen`
 
 ## Echte Stripe-Testzahlung (optional)
 

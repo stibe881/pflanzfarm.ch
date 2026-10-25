@@ -47,6 +47,7 @@ class ActivityLogResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->emptyStateHeading('Noch keine Änderungen')->emptyStateDescription('Hier erscheint, wer im Admin Preise, Lager, Bestellungen oder Einstellungen geändert hat.')
             ->modifyQueryUsing(fn ($query) => $query->with('user'))
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')->label('Zeit')->dateTime('d.m.Y H:i')->sortable(),

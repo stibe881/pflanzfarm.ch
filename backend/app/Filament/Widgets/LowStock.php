@@ -12,11 +12,10 @@ class LowStock extends BaseWidget
 {
     protected static ?int $sort = 6;
 
-    protected static ?string $heading = 'Knapper Lagerbestand (unter 10 Stück)';
-
     public function table(Table $table): Table
     {
         return $table
+            ->heading('Knapper Lagerbestand (unter '.(int) \App\Models\Setting::get('low_stock_threshold').' Stück)')
             ->query(ProductVariant::query()->with('product')->where('active', true)->where('stock', '<', (int) \App\Models\Setting::get('low_stock_threshold'))->whereHas('product', fn ($q) => $q->where('active', true)))
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')->label('Produkt'),

@@ -13444,10 +13444,25 @@ const pf_xsrf = () => decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TO
     const _ = (o.variantData || []).find((y) => y.label === C) || (o.variantData || [])[0];
     return _ || { id: null, label: C, price: o.price, stock: o.stock ?? 0, shipping: null, pickupOnly: !1 };
   },
+  // Mengenrabatt je Position (gleiche Rundung auf 5 Rappen wie auf dem Server)
+  pf_line = (o, C, q) => {
+    const v = pf_vd(o, C),
+      pct = Math.min(90, Math.max(0, ...(o.discounts || []).filter((t) => q >= t.minQty).map((t) => t.percent))),
+      unit = pct ? (Math.round((Math.round(v.price * 100) * (100 - pct)) / 100 / 5) * 5) / 100 : v.price;
+    return { unit, total: Math.round(unit * q * 100) / 100, percent: pct, list: v.price, saved: Math.round((v.price - unit) * q * 100) / 100 };
+  },
+  pf_nextTier = (o, q) => (o.discounts || []).find((t) => q < t.minQty),
+  pf_slots = { vormittag: "Vormittag", nachmittag: "Nachmittag", egal: "egal" },
+  pf_fmtDate = (d) => (d ? new Date(d + "T12:00:00").toLocaleDateString("de-CH", { weekday: "short", day: "numeric", month: "long" }) : ""),
+  pf_minDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 2);
+    return d.toISOString().slice(0, 10);
+  },
   // Versandkosten: teuerste Versandklasse im Warenkorb, ab Gratis-Bestellwert gratis
   pf_shipping = (o, C) => {
     if (C !== "lieferung" || !o.length) return 0;
-    const _ = o.reduce((y, L) => y + pf_vd(L.product, L.variant).price * L.quantity, 0);
+    const _ = o.reduce((y, L) => y + pf_line(L.product, L.variant, L.quantity).total, 0);
     return pf_catalogSettings.freeDeliveryFrom > 0 && _ * 100 >= pf_catalogSettings.freeDeliveryFrom
       ? 0
       : Math.max(0, ...o.map((y) => (pf_vd(y.product, y.variant).shipping || { price: 0 }).price));
@@ -13481,6 +13496,108 @@ function pf_Field({ label: o, name: C, form: _, set: y, errors: L, type: X = "te
     pf_err(L, C),
   );
 }
+const pf_norm = (o) =>
+  String(o || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+function pf_Search({ articles: o, onClose: C, onProduct: _, onArticle: y }) {
+  const [L, X] = H.useState(""),
+    Se = H.useRef(null),
+    Le = pf_norm(L).split(/\s+/).filter(Boolean),
+    ne = (A) => Le.length > 0 && Le.every((p) => A.includes(p)),
+    Ne = Le.length
+      ? {
+          products: Ql.filter((A) => ne(pf_norm([A.name, A.latin, A.category, A.description, ...(A.traits || []), ...(A.variants || [])].join(" ")))).slice(0, 8),
+          articles: o.filter((A) => ne(pf_norm([A.title, A.excerpt, ...A.paras].join(" ")))).slice(0, 5),
+        }
+      : { products: [], articles: [] };
+  H.useEffect(() => {
+    const A = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.setTimeout(() => Se.current && Se.current.focus(), 0);
+    const p = (B) => B.key === "Escape" && C();
+    return (
+      window.addEventListener("keydown", p),
+      () => {
+        (window.removeEventListener("keydown", p), (document.body.style.overflow = A));
+      }
+    );
+  }, []);
+  const A = Ne.products.length + Ne.articles.length;
+  return h(
+    "div",
+    { className: "search-overlay", role: "dialog", "aria-modal": "true", "aria-label": "Suche", onClick: (p) => p.target === p.currentTarget && C() },
+    h(
+      "div",
+      { className: "search-panel" },
+      h(
+        "form",
+        { className: "search-panel__field", role: "search", onSubmit: (p) => (p.preventDefault(), Ne.products[0] ? _(Ne.products[0]) : Ne.articles[0] && y(Ne.articles[0].id)) },
+        h(eu, { size: 20, "aria-hidden": "true" }),
+        h("input", {
+          ref: Se,
+          autoFocus: !0,
+          type: "search",
+          value: L,
+          onChange: (p) => X(p.target.value),
+          placeholder: "Pflanzen und Ratgeber durchsuchen, z. B. Thuja, Sichtschutz, giessen",
+          "aria-label": "Suchbegriff",
+          autoComplete: "off",
+        }),
+        h("button", { type: "button", className: "search-panel__close", onClick: C, "aria-label": "Suche schliessen" }, "Esc"),
+      ),
+      h(
+        "div",
+        { className: "search-panel__results", "aria-live": "polite" },
+        !Le.length && h("p", { className: "search-panel__hint" }, "Suchen Sie nach Pflanzennamen, Eigenschaften wie «immergrün» oder Themen wie «Hecke schneiden»."),
+        Le.length > 0 && !A && h("p", { className: "search-panel__hint" }, `Nichts gefunden zu «${L}». Rufen Sie uns an – vieles haben wir auch ausserhalb des Shops: +41 79 336 14 95.`),
+        Ne.products.length > 0 &&
+          h(
+            "section",
+            null,
+            h("h2", null, "Pflanzen"),
+            ...Ne.products.map((p) =>
+              h(
+                "a",
+                {
+                  key: p.id,
+                  className: "search-hit",
+                  href: e0(`/produkt/${p.slug}/`),
+                  onClick: (B) => {
+                    pf_isPlainClick(B) && (B.preventDefault(), _(p));
+                  },
+                },
+                h("img", { src: He(p.image), srcSet: At(p.imageSet), sizes: "56px", alt: "", loading: "lazy" }),
+                h("span", null, h("b", null, p.name), h("small", null, [p.latin, p.priceOnRequest ? "Preis auf Anfrage" : `ab ${Sa(p.price)}`].filter(Boolean).join(" · "))),
+              ),
+            ),
+          ),
+        Ne.articles.length > 0 &&
+          h(
+            "section",
+            null,
+            h("h2", null, "Ratgeber"),
+            ...Ne.articles.map((p) =>
+              h(
+                "a",
+                {
+                  key: p.id,
+                  className: "search-hit search-hit--article",
+                  href: e0(`/ratgeber/${p.id}/`),
+                  onClick: (B) => {
+                    pf_isPlainClick(B) && (B.preventDefault(), y(p.id));
+                  },
+                },
+                h("span", { className: "search-hit__icon", "aria-hidden": "true" }, h(In, { size: 18 })),
+                h("span", null, h("b", null, p.title), h("small", null, (p.excerpt || p.paras[0] || "").slice(0, 110) + " …")),
+              ),
+            ),
+          ),
+      ),
+    ),
+  );
+}
 function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
   const [L, X] = H.useState(() => ({
       name: (C == null ? void 0 : C.name) || "",
@@ -13492,6 +13609,8 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
       delivery_method: pf_pickupOnly(o).length ? "abholung" : "lieferung",
       payment_method: "stripe",
       note: "",
+      preferred_date: "",
+      preferred_slot: "egal",
       accept_terms: !1,
       newsletter: !1,
     })),
@@ -13499,7 +13618,8 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
     [ne, Ne] = H.useState(!1),
     [A, p] = H.useState(""),
     B = (k, ye) => X((Ot) => ({ ...Ot, [k]: ye })),
-    ge = o.reduce((k, ye) => k + pf_vd(ye.product, ye.variant).price * ye.quantity, 0),
+    ge = o.reduce((k, ye) => k + pf_line(ye.product, ye.variant, ye.quantity).total, 0),
+    pf_saved = o.reduce((k, ye) => k + pf_line(ye.product, ye.variant, ye.quantity).saved, 0),
     O = pf_shipping(o, L.delivery_method),
     pf_po = pf_pickupOnly(o),
     re = o.filter((k) => !pf_vd(k.product, k.variant).id || k.product.priceOnRequest);
@@ -13518,7 +13638,7 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
     try {
       const ye = await pf_api("/orders", {
         method: "POST",
-        body: { ...L, items: o.map((Ot) => ({ variant_id: pf_vd(Ot.product, Ot.variant).id, quantity: Ot.quantity })) },
+        body: { ...L, preferred_date: L.preferred_date || null, preferred_slot: L.preferred_date ? L.preferred_slot : null, items: o.map((Ot) => ({ variant_id: pf_vd(Ot.product, Ot.variant).id, quantity: Ot.quantity })) },
       });
       if (ye.redirect) {
         window.location.href = ye.redirect;
@@ -13610,10 +13730,39 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
             h(pf_Field, { label: "Ort", name: "city", form: L, set: B, errors: Se, autoComplete: "address-level2" }),
           ),
         h(
+          "fieldset",
+          { className: "wish-date" },
+          h("legend", null, L.delivery_method === "lieferung" ? "Wunschtermin für die Lieferung (optional)" : "Wunschtermin für die Abholung (optional)"),
+          h(
+            "div",
+            { className: "wish-date__row" },
+            h(
+              "label",
+              { className: Se.preferred_date ? "has-error" : "" },
+              "Datum",
+              h("input", { type: "date", min: pf_minDate(), value: L.preferred_date, onChange: (k) => B("preferred_date", k.target.value) }),
+            ),
+            h(
+              "div",
+              { className: "wish-date__slots", role: "radiogroup", "aria-label": "Tageszeit" },
+              ...Object.entries(pf_slots).map(([k, ye]) =>
+                h(
+                  "label",
+                  { key: k, className: L.preferred_slot === k ? "slot slot--active" : "slot" },
+                  h("input", { type: "radio", name: "preferred_slot", checked: L.preferred_slot === k, disabled: !L.preferred_date, onChange: () => B("preferred_slot", k) }),
+                  k === "egal" ? "Egal" : ye,
+                ),
+              ),
+            ),
+          ),
+          pf_err(Se, "preferred_date"),
+          h("small", null, "Frühestens in zwei Tagen, nicht am Sonntag. Wir bestätigen den Termin persönlich."),
+        ),
+        h(
           "label",
           null,
           "Bemerkung (optional)",
-          h("textarea", { rows: 3, value: L.note, onChange: (k) => B("note", k.target.value), placeholder: "z. B. Wunschtermin, Zufahrt, Pflanzservice gewünscht" }),
+          h("textarea", { rows: 3, value: L.note, onChange: (k) => B("note", k.target.value), placeholder: "z. B. Zufahrt, Ablageort, Pflanzservice gewünscht" }),
         ),
       ),
       h(
@@ -13646,12 +13795,18 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
           h(
             "li",
             { key: `${k.product.id}::${k.variant}` },
-            h("span", null, `${k.quantity} × ${k.product.name}`, h("small", null, k.variant)),
-            h("b", null, Sa(pf_vd(k.product, k.variant).price * k.quantity)),
+            h(
+              "span",
+              null,
+              `${k.quantity} × ${k.product.name}`,
+              h("small", null, k.variant, pf_line(k.product, k.variant, k.quantity).percent ? ` · Mengenrabatt ${pf_line(k.product, k.variant, k.quantity).percent} %` : ""),
+            ),
+            h("b", null, Sa(pf_line(k.product, k.variant, k.quantity).total)),
           ),
         ),
       ),
       h("div", null, h("span", null, "Zwischensumme"), h("strong", null, Sa(ge))),
+      pf_saved > 0 && h("div", { className: "order-summary__saving" }, h("span", null, "Sie sparen (Mengenrabatt)"), h("span", null, "−" + Sa(pf_saved))),
       h("div", null, h("span", null, "Lieferung"), h("span", null, O ? Sa(O) : "gratis")),
       h("hr", null),
       h("div", { className: "order-summary__total" }, h("strong", null, "Total inkl. MWST"), h("strong", null, Sa(ge + O))),
@@ -13676,7 +13831,7 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
         " ",
         h(Ve, { size: 18 }),
       ),
-      h("small", null, "Sie erhalten sofort eine Bestellbestätigung per E-Mail. Den Liefer- oder Abholtermin vereinbaren wir persönlich mit Ihnen."),
+      h("small", null, "Sie erhalten sofort eine Bestellbestätigung per E-Mail. Den Liefer- oder Abholtermin bestätigen wir persönlich – gern nach Ihrem Wunsch."),
     ),
   );
 }
@@ -13846,8 +14001,38 @@ function pf_Account({ user: o, setUser: C, toast: _, onNavigate: y }) {
                   { key: Z.number, className: "order-row" },
                   h("div", null, h("b", null, Z.number), h("small", null, new Date(Z.createdAt).toLocaleDateString("de-CH"))),
                   h("div", null, Z.items.map((Q) => `${Q.quantity} × ${Q.name}`).join(", ")),
-                  h("div", null, h("span", { className: `status-badge status-badge--${Z.status}` }, Z.statusLabel), h("small", null, Z.paymentStatusLabel)),
-                  h("div", null, h("b", null, Sa(Z.total)), h("a", { href: `/api/orders/${encodeURIComponent(Z.number)}/rechnung`, target: "_blank" }, "Rechnung")),
+                  h(
+                    "div",
+                    null,
+                    h("span", { className: `status-badge status-badge--${Z.status}` }, Z.statusLabel),
+                    h("small", null, Z.paymentStatusLabel),
+                    Z.scheduledDate
+                      ? h("small", null, `Termin: ${pf_fmtDate(Z.scheduledDate)}${Z.scheduledSlot && Z.scheduledSlot !== "egal" ? ", " + pf_slots[Z.scheduledSlot] : ""}`)
+                      : Z.preferredDate && Z.status !== "storniert" && h("small", null, `Wunsch: ${pf_fmtDate(Z.preferredDate)}`),
+                  ),
+                  h(
+                    "div",
+                    null,
+                    h("b", null, Sa(Z.total)),
+                    h("a", { href: `/api/orders/${encodeURIComponent(Z.number)}/rechnung`, target: "_blank" }, "Rechnung"),
+                    Z.cancellable &&
+                      h(
+                        "button",
+                        {
+                          type: "button",
+                          className: "inline-link inline-link--danger",
+                          disabled: ge,
+                          onClick: () =>
+                            window.confirm(
+                              `Bestellung ${Z.number} wirklich stornieren?${Z.paymentStatus === "bezahlt" ? " Der bezahlte Betrag wird Ihnen zurückerstattet." : ""}`,
+                            ) &&
+                            ye(`/me/orders/${encodeURIComponent(Z.number)}/cancel`, { method: "POST" }, (Q) => {
+                              (Qe((je) => je.map((xe) => (xe.number === Z.number ? Q.order : xe))), _("Die Bestellung wurde storniert. Sie erhalten eine Bestätigung per E-Mail."));
+                            }),
+                        },
+                        "Stornieren",
+                      ),
+                  ),
                 ),
               ),
             ),
@@ -13963,6 +14148,8 @@ function O1() {
     [pt, Xe] = H.useState("Alle"),
     [pe, qt] = H.useState("pflanzung"),
     [Ie, kt] = H.useState("photo"),
+    [pf_path, pf_setPath] = H.useState(Ii),
+    [pf_search, pf_setSearch] = H.useState(!1),
     [Ea, _a] = H.useState(""),
     [Al, tn] = H.useState(!1),
     [ln, li] = H.useState(!1),
@@ -13978,7 +14165,7 @@ function O1() {
     Oa = H.useRef(null),
     et = H.useMemo(() => Object.entries(Se).map(([v, T]) => ({ key: v, ...T })), [Se]),
     Ma = et.reduce((v, T) => v + T.quantity, 0),
-    ai = et.reduce((v, T) => v + pf_vd(T.product, T.variant).price * T.quantity, 0),
+    ai = et.reduce((v, T) => v + pf_line(T.product, T.variant, T.quantity).total, 0),
     rn = R.target === "alle" || (R.target === "startseite" && o === "home") || (R.target === "shop" && o === "shop"),
     Ol = new Date().toISOString().slice(0, 10),
     nu = (!R.startsAt || R.startsAt <= Ol) && (!R.endsAt || R.endsAt >= Ol),
@@ -14049,14 +14236,15 @@ function O1() {
           const E = jf(Ii());
           (y(E), X(E.variants[0]), N(1));
         }
-        C(T);
+        (pf_setPath(Ii()), C(T));
       };
       return (window.addEventListener("popstate", v), () => window.removeEventListener("popstate", v));
     }, []),
     H.useEffect(() => {
-      const pf_t = o === "product" ? `${_.name} kaufen | Pflanzfarm` : _1[o],
-        pf_d = o === "product" ? `${_.name} (${_.latin}): ${_.description} Lieferung schweizweit oder Abholung in Ebersecken.` : pf_desc[o],
-        pf_p = o === "product" ? `/produkt/${_.slug}/` : A1[o],
+      const pf_a = o === "guide" ? pf_article(pf_path) : null,
+        pf_t = o === "product" ? `${_.name} kaufen | Pflanzfarm` : pf_a ? `${pf_a.title} | Ratgeber Pflanzfarm` : _1[o],
+        pf_d = o === "product" ? `${_.name} (${_.latin}): ${_.description} Lieferung schweizweit oder Abholung in Ebersecken.` : pf_a ? pf_a.excerpt || pf_a.paras[0] : pf_desc[o],
+        pf_p = o === "product" ? `/produkt/${_.slug}/` : pf_a ? `/ratgeber/${pf_a.id}/` : A1[o],
         pf_set = (sel, attr, val, mk) => {
           let el = document.head.querySelector(sel);
           (el || ((el = document.createElement(mk[0])), el.setAttribute(mk[1], mk[2]), document.head.appendChild(el)),
@@ -14073,7 +14261,7 @@ function O1() {
         return (T = document.getElementById("main-content")) == null ? void 0 : T.focus({ preventScroll: !0 });
       }, 0);
       return () => window.clearTimeout(v);
-    }, [o, _]),
+    }, [o, _, pf_path]),
     H.useEffect(() => {
       let v = null;
       const T = () => {
@@ -14248,8 +14436,9 @@ function O1() {
     );
   }, [D, zt]);
   const I = (v) => {
-      const T = v === o;
+      const T = v === o && pf_path === A1[v];
       (window.history.pushState({}, "", e0(A1[v])),
+        pf_setPath(A1[v]),
         C(v),
         T &&
           (k(!1),
@@ -14273,8 +14462,12 @@ function O1() {
         pf_isPlainClick(E) && (E.preventDefault(), T && T(), I(v));
       },
     }),
+    pf_openArticle = (v) => {
+      (window.history.pushState({}, "", e0(`/ratgeber/${v}/`)), pf_setPath(`/ratgeber/${v}/`), C("guide"), ni());
+    },
     kc = (v) => {
       (window.history.pushState({}, "", e0(`/produkt/${v.slug}/`)),
+        pf_setPath(`/produkt/${v.slug}/`),
         y(v),
         X(v.variants[0]),
         N(1),
@@ -14400,9 +14593,10 @@ function O1() {
                 className: "header-actions",
                 children: [
                   i.jsx("button", {
-                    className: "icon-button hide-mobile",
-                    "aria-label": "Pflanzensuche öffnen",
-                    onClick: fn,
+                    className: "icon-button",
+                    "aria-label": "Suche öffnen",
+                    "aria-haspopup": "dialog",
+                    onClick: () => pf_setSearch(!0),
                     children: i.jsx(eu, { size: 21 }),
                   }),
                   i.jsx("a", {
@@ -14980,6 +15174,19 @@ function O1() {
                         onClick: () => kt("photo"),
                         children: i.jsx("img", { src: He(_.image), srcSet: At(_.imageSet), sizes: "96px", alt: "" }),
                       }),
+                      ...(_.gallery || []).map((v, T) =>
+                        h(
+                          "button",
+                          {
+                            key: v,
+                            className: Ie === `g${T}` ? "selected" : "",
+                            "aria-label": `Bild ${T + 2} anzeigen`,
+                            "aria-pressed": Ie === `g${T}`,
+                            onClick: () => kt(`g${T}`),
+                          },
+                          h("img", { src: He(v), sizes: "96px", alt: "", loading: "lazy" }),
+                        ),
+                      ),
                       i.jsx("button", {
                         className: Ie === "traits" ? "selected placeholder-thumb" : "placeholder-thumb",
                         "aria-label": "Pflanzeigenschaften anzeigen",
@@ -14999,7 +15206,9 @@ function O1() {
                   i.jsxs("div", {
                     className: "product-gallery__main",
                     children: [
-                      Ie === "photo"
+                      Ie.startsWith("g") && (_.gallery || [])[+Ie.slice(1)]
+                        ? h("img", { src: He(_.gallery[+Ie.slice(1)]), decoding: "async", alt: `${_.name}, Bild ${+Ie.slice(1) + 2}` })
+                        : Ie === "photo" || Ie.startsWith("g")
                         ? i.jsx("img", {
                             src: He(_.image),
                             srcSet: At(_.imageSet),
@@ -15028,7 +15237,7 @@ function O1() {
                         children: [
                           i.jsx(Hc, { size: 15 }),
                           " ",
-                          Ie === "photo" ? "Produktansicht" : Ie === "traits" ? "Eigenschaften" : "Pflanzberatung",
+                          Ie === "photo" || Ie.startsWith("g") ? "Produktansicht" : Ie === "traits" ? "Eigenschaften" : "Pflanzberatung",
                         ],
                       }),
                     ],
@@ -15073,8 +15282,10 @@ function O1() {
                     children: [
                       i.jsxs("div", {
                         children: [
-                          i.jsx("strong", { children: _.priceOnRequest ? "Preis auf Anfrage" : Sa(pf_vd(_, L).price) }),
-                          i.jsx("span", { children: "inkl. MwSt." }),
+                          i.jsx("strong", { children: _.priceOnRequest ? "Preis auf Anfrage" : Sa(pf_line(_, L, d).unit) }),
+                          i.jsx("span", {
+                            children: !_.priceOnRequest && pf_line(_, L, d).percent ? `statt ${Sa(pf_vd(_, L).price)} · inkl. MwSt.` : "inkl. MwSt.",
+                          }),
                         ],
                       }),
                       i.jsxs("div", {
@@ -15106,6 +15317,27 @@ function O1() {
                           }),
                     ],
                   }),
+                  !_.priceOnRequest &&
+                    (_.discounts || []).length > 0 &&
+                    h(
+                      "div",
+                      { className: "volume-tiers", "aria-label": "Mengenrabatt" },
+                      h("b", null, "Mengenrabatt"),
+                      ...(_.discounts || []).map((v) =>
+                        h(
+                          "button",
+                          {
+                            key: v.minQty,
+                            type: "button",
+                            className: pf_line(_, L, d).percent === v.percent ? "volume-tier volume-tier--active" : "volume-tier",
+                            onClick: () => N(v.minQty),
+                            title: `${v.minQty} Stück wählen`,
+                          },
+                          `ab ${v.minQty} Stk. −${v.percent} %`,
+                        ),
+                      ),
+                      d > 1 && h("small", null, `Total für ${d} Stück: ${Sa(pf_line(_, L, d).total)}`),
+                    ),
                   !_.priceOnRequest &&
                     i.jsx("p", {
                       className: pf_vd(_, L).pickupOnly ? "shipping-note shipping-note--pickup" : "shipping-note",
@@ -15638,7 +15870,12 @@ function O1() {
                             i.jsxs("div", {
                               className: "cart-line__right",
                               children: [
-                                i.jsx("strong", { children: Sa(pf_vd(T, E).price * K) }),
+                                i.jsx("strong", { children: Sa(pf_line(T, E, K).total) }),
+                                pf_line(T, E, K).percent > 0 &&
+                                  h("small", { className: "cart-line__discount" }, `inkl. ${pf_line(T, E, K).percent} % Mengenrabatt`),
+                                !pf_line(T, E, K).percent &&
+                                  pf_nextTier(T, K) &&
+                                  h("small", { className: "cart-line__hint" }, `Ab ${pf_nextTier(T, K).minQty} Stück ${pf_nextTier(T, K).percent} % Rabatt`),
                                 i.jsxs("div", {
                                   className: "quantity-control quantity-control--small",
                                   children: [
@@ -15975,8 +16212,72 @@ function O1() {
           ),
         ),
       ),
+    pf_article = (v) => {
+      const T = (v.match(/^\/ratgeber\/([a-z0-9-]+)/) || [])[1];
+      return T ? (pf_articles || pf_defaultArticles).find((E) => E.id === T) || null : null;
+    },
+    pf_articlePage = (v, T) => {
+      const E = v.product && Ql.find((De) => De.slug === v.product),
+        K = T.filter((De) => De.id !== v.id).slice(0, 3);
+      return h(
+        "main",
+        { id: "main-content", tabIndex: -1, className: "legal-page container info-page article-page" },
+        h("a", { className: "breadcrumb", ...Lk("guide") }, "Ratgeber ", h(u0, { size: 14 }), " ", v.title),
+        h(
+          "article",
+          { className: "guide-article guide-article--full" },
+          h("span", { className: "eyebrow" }, "Ratgeber"),
+          h("h1", null, v.title),
+          ...v.paras.map((De, Te) => h("p", { key: Te }, De)),
+          E &&
+            h(
+              "a",
+              {
+                className: "guide-product",
+                href: e0(`/produkt/${E.slug}/`),
+                "data-nav": "",
+                onClick: (De) => {
+                  pf_isPlainClick(De) && (De.preventDefault(), iu(E));
+                },
+              },
+              h("img", { src: He(E.image), srcSet: At(E.imageSet), sizes: "120px", alt: "", loading: "lazy" }),
+              h("span", null, h("small", null, "Passend dazu"), h("b", null, E.name), h("span", null, E.priceOnRequest ? "Preis auf Anfrage" : `ab ${Sa(E.price)}`)),
+              h(Ve, { size: 18 }),
+            ),
+        ),
+        K.length > 0 &&
+          h(
+            "section",
+            { className: "guide-more" },
+            h("h2", null, "Weitere Tipps"),
+            h(
+              "div",
+              { className: "guide-cards" },
+              ...K.map((De) =>
+                h(
+                  "a",
+                  {
+                    key: De.id,
+                    className: "guide-card",
+                    href: e0(`/ratgeber/${De.id}/`),
+                    "data-nav": "",
+                    onClick: (Te) => {
+                      pf_isPlainClick(Te) && (Te.preventDefault(), pf_openArticle(De.id));
+                    },
+                  },
+                  h("h3", null, De.title),
+                  h("span", { className: "text-link" }, "Lesen ", h(Ve, { size: 16 })),
+                ),
+              ),
+            ),
+          ),
+      );
+    },
     pf_guide = () => {
-      const v = pf_articles || [
+      const v = pf_articles || pf_defaultArticles;
+      return pf_guideView(v);
+    },
+    pf_defaultArticles = [
         {
           id: "thuja-hecke-pflanzen",
           title: "Thuja-Hecke pflanzen: Zeitpunkt, Abstand und Pflege",
@@ -16022,7 +16323,10 @@ function O1() {
             "Prüfen Sie vor jedem Schnitt, ob Vögel in der Hecke brüten – während der Brutzeit von etwa März bis August sind stärkere Rückschnitte zu vermeiden.",
           ],
         },
-      ];
+      ],
+    pf_guideView = (v) => {
+      const pf_a = pf_article(pf_path);
+      if (pf_a) return pf_articlePage(pf_a, v);
       return h(
         "main",
         { id: "main-content", tabIndex: -1, className: "legal-page container info-page" },
@@ -16032,36 +16336,25 @@ function O1() {
           "Praktisches Wissen rund um Hecken, Beerensträucher und Pflege – damit Ihre Pflanzen gut anwachsen und lange Freude machen.",
         ),
         h(
-          "nav",
-          { className: "guide-toc", "aria-label": "Ratgeber-Themen" },
-          ...v.map((T) => h("a", { key: T.id, href: `#${T.id}` }, T.title)),
-        ),
-        h(
           "div",
-          { className: "guide-list" },
-          ...v.map((T) => {
-            const E = T.product && Ql.find((K) => K.slug === T.product);
-            return h(
-              "article",
-              { key: T.id, id: T.id, className: "guide-article" },
+          { className: "guide-cards" },
+          ...v.map((T) =>
+            h(
+              "a",
+              {
+                key: T.id,
+                className: "guide-card",
+                href: e0(`/ratgeber/${T.id}/`),
+                "data-nav": "",
+                onClick: (K) => {
+                  pf_isPlainClick(K) && (K.preventDefault(), pf_openArticle(T.id));
+                },
+              },
               h("h2", null, T.title),
-              ...T.paras.map((K, De) => h("p", { key: De }, K)),
-              E &&
-                h(
-                  "a",
-                  {
-                    className: "text-link",
-                    href: e0(`/produkt/${E.slug}/`),
-                    "data-nav": "",
-                    onClick: (K) => {
-                      pf_isPlainClick(K) && (K.preventDefault(), iu(E));
-                    },
-                  },
-                  `${E.name} ansehen `,
-                  h(Ve, { size: 16 }),
-                ),
-            );
-          }),
+              h("p", null, T.excerpt || (T.paras[0] || "").slice(0, 170) + ((T.paras[0] || "").length > 170 ? " …" : "")),
+              h("span", { className: "text-link" }, "Weiterlesen ", h(Ve, { size: 16 })),
+            ),
+          ),
         ),
         h(
           "section",
@@ -16321,6 +16614,13 @@ function O1() {
               }),
             ],
           }),
+        }),
+      pf_search &&
+        h(pf_Search, {
+          articles: pf_articles || pf_defaultArticles,
+          onClose: () => pf_setSearch(!1),
+          onProduct: (v) => (pf_setSearch(!1), iu(v)),
+          onArticle: (v) => (pf_setSearch(!1), pf_openArticle(v)),
         }),
       pf_bo &&
         i.jsxs("section", {

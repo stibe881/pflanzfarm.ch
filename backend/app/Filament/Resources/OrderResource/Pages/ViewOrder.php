@@ -17,6 +17,6 @@ class ViewOrder extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return [...OrderResource::statusActions(Actions\Action::class), Actions\EditAction::make()->color('gray')];
+        return [...OrderResource::headerActions(), Actions\EditAction::make()->color('gray')];
     }
 }

@@ -79,7 +79,7 @@ In konsoleH unter «Cronjobs» einen Eintrag anlegen, der jede Minute (oder so o
 php ~/public_html/pflanzfarm/backend/artisan schedule:run
 ```
 
-(Wie beim Skript ggf. `php83` statt `php`.) Er verschickt Newsletter-Mails aus der Warteschlange.
+(Wie beim Skript ggf. die PHP-8.5-Variante, z. B. `php85` statt `php`.) Er verschickt Newsletter-Mails aus der Warteschlange, startet geplante Newsletter und verschickt werktags um 8.30 Uhr fällige Zahlungserinnerungen.
 
 ## 6. Testen
 

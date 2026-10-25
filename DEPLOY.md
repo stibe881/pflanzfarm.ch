@@ -34,7 +34,7 @@ php artisan pflanzfarm:team-user thomas@pflanzfarm.ch "Thomas Steinmann" --role=
 
 Der letzte Befehl fragt ein Passwort ab (mind. 12 Zeichen, Gross-/Kleinbuchstaben und Zahl) und legt das erste Admin-Konto an. Weitere Team-Konten legt ein Admin danach im Adminbereich unter «Kunden & Team» an (Rolle «Team»).
 
-Cron-Eintrag für den Newsletter-Versand (Warteschlange):
+Cron-Eintrag für die Hintergrundaufgaben (Newsletter-Warteschlange und geplanter Versand jede Minute, Zahlungserinnerungen werktags 8.30 Uhr):
 
 ```
 * * * * * cd /pfad/zu/pflanzfarm.ch/backend && php artisan schedule:run >> /dev/null 2>&1
@@ -78,8 +78,13 @@ server {
 
 1. Konto auf resend.com erstellen, Domain `pflanzfarm.ch` hinzufügen und die angezeigten DNS-Einträge (SPF, DKIM) beim Domain-Anbieter eintragen.
 2. API-Schlüssel erstellen und als `RESEND_API_KEY` eintragen.
+3. Für die Newsletter-Statistik unter *Webhooks* einen Endpunkt `https://pflanzfarm.ch/resend/webhook` mit den Ereignissen
+   `email.opened`, `email.clicked`, `email.bounced` und `email.complained` anlegen und das Signatur-Geheimnis als
+   `RESEND_WEBHOOK_SECRET` eintragen. Unter *Domains → Konfiguration* «Open Tracking» und «Click Tracking» einschalten.
 
-Über Resend laufen: Bestellbestätigung (mit Rechnung als PDF), Statusmails (bestätigt, geliefert, storniert), Hinweis an das Team bei neuen Bestellungen und Anfragen, Kontobestätigung, Passwort zurücksetzen, Newsletter-Bestätigung (Double-Opt-in) und Newsletter mit Abmeldelink.
+Über Resend laufen: Bestellbestätigung (mit Rechnung als PDF), Statusmails (bestätigt mit Termin, geliefert, storniert), Gutschrift bei Erstattung, Zahlungserinnerungen, Hinweis an das Team bei neuen oder von Kundschaft stornierten Bestellungen und Anfragen, Lager-Warnung, Fehlermeldungen der Website, Kontobestätigung, Passwort zurücksetzen, Newsletter-Bestätigung (Double-Opt-in) und Newsletter mit Abmeldelink.
+
+**Fehlermeldungen:** Unerwartete Fehler (Serverfehler, nicht 404) gehen an die Benachrichtigungsadresse aus den Einstellungen, gleiche Fehler höchstens einmal pro Stunde. Abschalten mit `ERROR_MAILS=false`.
 
 ### Stripe (Karte und TWINT)
 
@@ -88,7 +93,7 @@ server {
    `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`.
 3. Das Signatur-Geheimnis (`whsec_…`) als `STRIPE_WEBHOOK_SECRET` eintragen.
 
-Ablauf: Bei «Karte oder TWINT» wird die Bestellung angelegt, der Bestand reserviert und die Kundschaft zu Stripe weitergeleitet. Erst nach bestätigter Zahlung gehen die Bestellmails raus. Bricht die Zahlung ab oder läuft sie nach 60 Minuten ab, wird die Bestellung storniert und der Bestand freigegeben. Erstattungen werden im Stripe-Dashboard ausgelöst.
+Ablauf: Bei «Karte oder TWINT» wird die Bestellung angelegt, der Bestand reserviert und die Kundschaft zu Stripe weitergeleitet. Erst nach bestätigter Zahlung gehen die Bestellmails raus. Bricht die Zahlung ab oder läuft sie nach 60 Minuten ab, wird die Bestellung storniert und der Bestand freigegeben. Beim Stornieren im Admin (oder durch die Kundschaft im Konto, solange die Bestellung nicht bestätigt ist) erstattet die Website bezahlte Karten-/TWINT-Beträge automatisch über Stripe und schickt eine Gutschrift als PDF. Bei Rechnung oder Barzahlung entsteht nur die Gutschrift; das Geld überweisen Sie selbst zurück.
 
 ## Website bauen und vorrendern
 
@@ -99,10 +104,10 @@ cd frontend
 npm install
 npx playwright install chromium   # einmalig, für das Vorrendern
 npm run build                     # schreibt backend/public/assets/index-*.js|css und backend/resources/spa.html
-npm run prerender -- https://pflanzfarm.ch   # optional: aktualisiert die vorgerenderten Seiten und sitemap.xml
+npm run prerender -- https://pflanzfarm.ch   # optional: aktualisiert die vorgerenderten Seiten
 ```
 
-Die vorgerenderten Seiten dienen Suchmaschinen und dem schnellen ersten Seitenaufbau. Die aktuellen Preise, Lagerbestände und Inhalte lädt die Website beim Aufruf immer live aus der API – Änderungen im Adminbereich sind also sofort sichtbar. Nach grösseren inhaltlichen Änderungen (neue Produkte, Ratgeber-Artikel) lohnt sich ein erneutes Vorrendern, damit Google die neuen Inhalte direkt sieht.
+Die vorgerenderten Seiten dienen Suchmaschinen und dem schnellen ersten Seitenaufbau. Die aktuellen Preise, Lagerbestände und Inhalte lädt die Website beim Aufruf immer live aus der API – Änderungen im Adminbereich sind also sofort sichtbar. Neue Produkte und Ratgeber-Artikel liefert Laravel auch ohne Vorrendern mit Titel, Beschreibung, Inhalt und strukturierten Daten (schema.org) aus, und die Sitemap unter `/sitemap.xml` wird immer live erzeugt. Erneutes Vorrendern lohnt sich vor allem nach Design-Änderungen oder wenn Adressen (Slugs) geändert wurden.
 
 ## Vor dem Livegang prüfen
 

@@ -124,7 +124,7 @@ class OrderResource extends Resource
                     ->description(fn (Order $record) => $record->paymentMethodLabel()),
                 Tables\Columns\TextColumn::make('scheduled_date')->label('Termin')->formatStateUsing(fn ($state) => $state?->locale('de_CH')->isoFormat('dd D.M.'))->sortable()->placeholder('offen')
                     ->description(fn (Order $record) => $record->scheduled_date ? (Order::SLOTS[$record->scheduled_slot] ?? $record->scheduled_slot) : ($record->preferred_date ? 'Wunsch: '.$record->preferred_date->format('d.m.') : null)),
-                Tables\Columns\TextColumn::make('delivery_method')->label('Lieferart')->formatStateUsing(fn ($state) => Order::DELIVERY_METHODS[$state] ?? $state)->toggleable()
+                Tables\Columns\TextColumn::make('delivery_method')->label('Lieferart')->formatStateUsing(fn ($state) => Order::DELIVERY_METHODS[$state] ?? $state)->toggleable(isToggledHiddenByDefault: true)
                     ->description(fn (Order $record) => $record->source === 'admin' ? 'Telefon / vor Ort' : null),
             ])
             ->filters([
@@ -144,7 +144,7 @@ class OrderResource extends Resource
                     ->query(fn ($query) => $query->whereKey(app(PaymentReminders::class)->overdue()->pluck('id'))),
                 Tables\Filters\SelectFilter::make('source')->label('Herkunft')->options(Order::SOURCES),
             ])
-            ->actions([Tables\Actions\ViewAction::make(), ...self::statusActions()]);
+            ->actions([Tables\Actions\ViewAction::make(), Tables\Actions\ActionGroup::make(self::statusActions())]);
     }
 
     /** Aktionen mit automatischer E-Mail an die Kundschaft. Werden auch in der Detailansicht verwendet. */
@@ -266,6 +266,19 @@ class OrderResource extends Resource
                         Notification::make()->title('Rückerstattung fehlgeschlagen')->body($e->getMessage())->danger()->persistent()->send();
                     }
                 }),
+        ];
+    }
+
+    /** Wichtige Schritte als Knöpfe, Dokumente und Seltenes im «Mehr»-Menü. */
+    public static function headerActions(): array
+    {
+        $all = collect(self::statusActions(\Filament\Actions\Action::class))->keyBy(fn ($a) => $a->getName());
+        $primary = ['confirm', 'deliver', 'paid', 'refund'];
+
+        return [
+            ...$all->only($primary)->values()->all(),
+            \Filament\Actions\ActionGroup::make($all->except($primary)->values()->all())
+                ->label('Mehr')->icon('heroicon-m-ellipsis-vertical')->button()->color('gray'),
         ];
     }
 
