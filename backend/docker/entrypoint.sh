@@ -10,7 +10,7 @@ if [ -z "$APP_KEY" ] && ! grep -q '^APP_KEY=base64' .env; then
   php artisan key:generate --force
 fi
 
-echo "Warte auf die Datenbank …"
+echo "Warte auf die Datenbank … (beim ersten Start bis zu 1–2 Minuten)"
 i=0
 until php artisan db:show >/dev/null 2>&1; do
   i=$((i+1)); [ $i -gt 60 ] && echo "Datenbank nicht erreichbar" && exit 1; sleep 2
@@ -20,7 +20,8 @@ php artisan migrate --force
 if [ "$(php artisan tinker --execute 'echo App\Models\Product::count();' 2>/dev/null | tail -n1)" = "0" ]; then
   php artisan db:seed --force
   if [ "$PFLANZFARM_TEST_MODE" = "true" ]; then
-    php artisan db:seed --class=TestDataSeeder --force
+    # Testdaten dürfen den Start nicht verhindern
+    php artisan db:seed --class=TestDataSeeder --force || echo "Hinweis: Testdaten konnten nicht vollständig angelegt werden."
   fi
 fi
 php artisan storage:link >/dev/null 2>&1 || true

@@ -47,9 +47,11 @@
     .totals .num { text-align: right; white-space: nowrap; }
     .totals .grand td { border-top: 1pt solid #153c31; color: #153c31; font-weight: bold; font-size: 11pt; padding: 2.8mm 2.4mm; }
 
-    .note { margin-top: 8mm; padding: 3.4mm 4mm; border-left: 1.2mm solid #c98164; background: #f7f5f0; color: #1f2523; }
-    .note strong { display: block; margin-bottom: 0.8mm; color: #111; }
-    .thanks { margin-top: 6mm; font-family: "DejaVu Serif", serif; font-size: 10.5pt; color: #153c31; }
+    .terms { width: 100%; margin-top: 9mm; border-top: 0.5pt solid #c9cfca; }
+    .terms td { padding: 1.5mm 0; vertical-align: top; }
+    .terms .k { width: 34mm; color: #6b7069; }
+    .terms .v { color: #1f2523; }
+    .closing { margin-top: 8mm; color: #1f2523; line-height: 1.6; }
 
     .footer { position: absolute; left: 20mm; width: 172mm; font-size: 6.8pt; color: #6b7069; border-top: 0.5pt solid #c9cfca; padding-top: 2mm; }
     .footer td { vertical-align: top; padding-right: 6mm; }
@@ -102,7 +104,6 @@
     </table>
 
     <h1>Rechnung</h1>
-    <div class="muted">Vielen Dank für Ihre Bestellung bei der Pflanzfarm.</div>
 
     <table class="meta">
         <tr>
@@ -142,27 +143,25 @@
         <tr class="grand"><td>Total CHF inkl. MWST</td><td class="num">{{ $chf($order->total) }}</td></tr>
     </table>
 
-    <div class="note">
+    <table class="terms">
         @if($paid)
-            <strong>Bezahlt – vielen Dank</strong>
-            Betrag dankend erhalten am {{ ($order->paid_at ?? $order->created_at)->format('d.m.Y') }} ({{ $order->paymentMethodLabel() }}).
+            <tr><td class="k">Zahlung</td><td class="v">Erhalten am {{ ($order->paid_at ?? $order->created_at)->format('d.m.Y') }}, {{ $order->paymentMethodLabel() }}</td></tr>
         @elseif($order->payment_method === 'invoice')
-            <strong>Zahlbar bis {{ $dueDate->format('d.m.Y') }}</strong>
-            Bitte überweisen Sie den Betrag innert {{ $dueDays }} Tagen{{ $qrBill ? ' mit dem QR-Zahlteil auf Seite 2' : ($iban ? ' auf IBAN '.$iban : '') }}, Vermerk «{{ $order->number }}».
+            <tr><td class="k">Zahlbar bis</td><td class="v"><strong>{{ $dueDate->format('d.m.Y') }}</strong> ({{ $dueDays }} Tage netto)</td></tr>
+            <tr><td class="k">Zahlungsart</td><td class="v">{{ $qrBill ? 'Einzahlung mit QR-Zahlteil (Seite 2)' : ($iban ? 'Überweisung auf IBAN '.$iban : 'Überweisung') }}</td></tr>
+            <tr><td class="k">Vermerk</td><td class="v">{{ $order->number }}</td></tr>
         @elseif($order->payment_method === 'cash')
-            <strong>Barzahlung bei Abholung</strong>
-            Bitte bezahlen Sie den Betrag bei der Abholung in Ebersecken.
+            <tr><td class="k">Zahlung</td><td class="v">Bar bei Abholung in Ebersecken</td></tr>
         @else
-            <strong>Zahlung ausstehend</strong>
-            Die Zahlung mit {{ $order->paymentMethodLabel() }} ist noch nicht bestätigt.
+            <tr><td class="k">Zahlung</td><td class="v">{{ $order->paymentMethodLabel() }}, noch nicht bestätigt</td></tr>
         @endif
-    </div>
+    </table>
 
     @if($order->note)
         <p class="muted" style="margin-top: 4mm">Ihre Bemerkung: {{ $order->note }}</p>
     @endif
 
-    <div class="thanks">Wir wünschen Ihnen viel Freude mit Ihren Pflanzen.</div>
+    <div class="closing">Freundliche Grüsse<br>Pflanzfarm Steinmann</div>
 </div>
 
 <table class="footer footer-plain">

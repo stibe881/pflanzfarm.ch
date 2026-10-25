@@ -54,10 +54,11 @@
     <div>
         <p style="{{ $label }}">Rechnung</p>
         <div style="{{ $card }}">
-            <div style="padding:10px 12px; border-left:5px solid #c98164; background:#f3f0e8; margin-bottom:12px;">
-                <strong>Zahlbar bis {{ $dueDate }}</strong><br>
-                Bitte überweisen Sie den Betrag innert {{ $dueDays }} Tagen{{ $ibanStatus === 'ok' || $ibanStatus === 'qr' ? ' mit dem QR-Zahlteil auf Seite 2' : '' }}.
-            </div>
+            <table style="width:100%; border-collapse:collapse; border-top:1px solid #d9ddd9; margin-bottom:12px; color:#1f2523;">
+                <tr><td style="padding:6px 0; width:110px; color:#6b7069;">Zahlbar bis</td><td style="padding:6px 0;"><strong>{{ $dueDate }}</strong> ({{ $dueDays }} Tage netto)</td></tr>
+                <tr><td style="padding:6px 0; color:#6b7069;">Zahlungsart</td><td style="padding:6px 0;">{{ in_array($ibanStatus, ['ok', 'qr']) ? 'Einzahlung mit QR-Zahlteil (Seite 2)' : 'Überweisung' }}</td></tr>
+                <tr><td style="padding:6px 0; color:#6b7069;">Vermerk</td><td style="padding:6px 0;">PF-2026-0001</td></tr>
+            </table>
             <div style="font-size:11px; color:#4b6a5d; border-top:1px solid #b9cbb3; padding-top:6px;">
                 <strong>Pflanzfarm Steinmann</strong> · Untergretti 2, 6245 Ebersecken
                 @if($iban) · IBAN {{ $iban }}@endif

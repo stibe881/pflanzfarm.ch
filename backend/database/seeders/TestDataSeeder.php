@@ -30,6 +30,9 @@ class TestDataSeeder extends Seeder
             $u->forceFill(['email_verified_at' => now()])->save();
         }
 
+        // Grösserer Testbestand, damit Beispielbestellungen und eigene Tests genug Ware haben
+        ProductVariant::query()->where('label', '80–100 cm')->update(['stock' => 200]);
+
         // Beispielpreise für weitere Thuja-Grössen, damit die Grössenwahl getestet werden kann
         foreach (['100–120 cm' => [2200, 30], '120–140 cm' => [2900, 20], '140–160 cm' => [3900, 8]] as $label => [$price, $stock]) {
             ProductVariant::query()->where('label', $label)->update(['price' => $price, 'stock' => $stock, 'active' => true]);
