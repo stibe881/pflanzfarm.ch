@@ -11,12 +11,12 @@ Laravel liefert alles unter einer Domain aus: die Website, die API unter `/api` 
 
 ## Voraussetzungen auf dem Server
 
-- PHP 8.3 mit den Erweiterungen `intl`, `gd`, `zip`, `pdo_mysql`, `mbstring`, `xml`, `bcmath`
+- PHP 8.5 mit den Erweiterungen `intl`, `gd`, `zip`, `pdo_mysql`, `mbstring`, `xml`, `bcmath`
 - MySQL 8 oder MariaDB 10.6+
 - Composer 2, Node.js 20+ (nur zum Bauen und Vorrendern)
 - nginx oder Apache mit HTTPS (z. B. Let's Encrypt)
 
-Geplant ist das Hosting bei Hetzner. Ein kleiner Cloud-Server (z. B. CX22) mit Ubuntu reicht; Shared Hosting mit SSH-Zugang und PHP 8.3 funktioniert ebenfalls.
+Geplant ist das Hosting bei Hetzner. Ein kleiner Cloud-Server (z. B. CX22) mit Ubuntu reicht; Shared Hosting mit SSH-Zugang und PHP 8.5 funktioniert ebenfalls (siehe HETZNER.md).
 
 ## Erstinstallation
 
@@ -56,7 +56,7 @@ server {
     location ~ \.php$ {
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_pass unix:/run/php/php8.5-fpm.sock;
     }
     location /assets/ { expires 30d; access_log off; }
 }

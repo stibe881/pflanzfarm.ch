@@ -1,20 +1,24 @@
 #!/bin/sh
 # Installation bzw. Aktualisierung auf Hetzner-Webhosting (per SSH ausführen).
 # Aufruf aus dem Repository-Ordner:  sh backend/deploy/install.sh
-# PHP-Version wählbar, z. B.:          PHP=php8.3 sh backend/deploy/install.sh
+# PHP-Version wählbar, z. B.:          PHP=php85 sh backend/deploy/install.sh
 set -e
 cd "$(dirname "$0")/.."
-# Neueste verfügbare PHP-Version suchen (Hetzner hat je nach Server z. B. php83 oder php8.3 zusätzlich zu php)
+# PHP 8.5 suchen (Hetzner hat je nach Server z. B. php85 oder php8.5 zusätzlich zu php)
 if [ -z "$PHP" ]; then
   PHP=php
-  for c in php8.4 php84 php8.3 php83 /usr/bin/php8.4 /usr/bin/php8.3; do
+  for c in php8.5 php85 /usr/bin/php8.5 /usr/bin/php85 /usr/local/bin/php85 /opt/php85/bin/php; do
     if command -v "$c" >/dev/null 2>&1; then PHP="$c"; break; fi
   done
 fi
 
 echo "PHP: $($PHP -r 'echo PHP_VERSION;') ($PHP)"
-$PHP -r 'exit(version_compare(PHP_VERSION, "8.2.0", ">=") ? 0 : 1);' || {
-  echo "Es wird PHP 8.2 oder neuer benötigt. Versuche z. B.: PHP=php82 sh backend/deploy/install.sh"; exit 1; }
+$PHP -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);' || {
+  echo "Es wird PHP 8.5 oder neuer benötigt."
+  echo "Verfügbare PHP-Versionen auf diesem Server:"
+  ls /usr/bin/php* /usr/local/bin/php* /opt/php*/bin/php 2>/dev/null | sed 's/^/  /'
+  echo "Dann z. B.: PHP=/pfad/zu/php85 sh backend/deploy/install.sh"
+  exit 1; }
 
 MISSING=$($PHP -r 'echo implode(" ", array_filter(["intl","gd","zip","pdo_mysql","mbstring","dom","fileinfo","openssl"], fn($e) => !extension_loaded($e)));')
 if [ -n "$MISSING" ]; then
