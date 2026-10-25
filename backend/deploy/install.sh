@@ -47,6 +47,8 @@ if grep -q '=ÄNDERN' .env; then
   echo "In backend/.env stehen noch Platzhalter «ÄNDERN». Bitte zuerst ausfüllen."; exit 1
 fi
 grep -q '^APP_KEY=base64' .env || $PHP artisan key:generate --force
+# Alte Zwischenspeicher verwerfen, damit Änderungen an .env sicher gelten
+$PHP artisan optimize:clear >/dev/null 2>&1 || true
 
 $PHP artisan migrate --force
 if [ "$($PHP artisan tinker --execute 'echo App\Models\Product::count();' 2>/dev/null | tail -n1)" = "0" ]; then
