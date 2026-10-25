@@ -9,6 +9,7 @@ use App\Mail\OrderStatusUpdate;
 use App\Models\Order;
 use App\Services\InvoicePdf;
 use App\Services\OrderService;
+use App\Services\OrderWorkflow;
 use App\Services\PaymentReminders;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -19,6 +20,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class OrderResource extends Resource
 {
@@ -92,8 +94,21 @@ class OrderResource extends Resource
                 Infolists\Components\TextEntry::make('delivery_method')->label('Lieferart')->formatStateUsing(fn ($state) => Order::DELIVERY_METHODS[$state] ?? $state),
                 Infolists\Components\TextEntry::make('address')->label('Adresse')->state(fn (Order $record) => $record->street ? "{$record->street}, {$record->postal_code} {$record->city}" : '–'),
                 Infolists\Components\TextEntry::make('user.email')->label('Kundenkonto')->placeholder('Gastbestellung'),
+                Infolists\Components\TextEntry::make('customer.name')->label('Kundenkartei')->placeholder('–')
+                    ->url(fn (Order $record) => $record->customer_id ? CustomerResource::getUrl('view', ['record' => $record->customer_id]) : null)
+                    ->formatStateUsing(fn ($state, Order $record) => $state.' ('.$record->customer?->orders()->count().' Bestellungen)')->color('primary'),
+                Infolists\Components\TextEntry::make('customer.notes')->label('Notiz zur Person')->placeholder('–')->columnSpanFull()
+                    ->visible(fn (Order $record) => filled($record->customer?->notes)),
                 Infolists\Components\TextEntry::make('note')->label('Bemerkung')->placeholder('–')->columnSpanFull(),
             ]),
+            Infolists\Components\Section::make('Verlauf und interne Notizen')->collapsible()
+                ->headerActions([
+                    Infolists\Components\Actions\Action::make('addNote')->label('Notiz hinzufügen')->icon('heroicon-m-plus')
+                        ->form([Forms\Components\Textarea::make('body')->label('Notiz (nur intern sichtbar)')->required()->rows(3)
+                            ->placeholder('z. B. Kundin ruft am Montag wegen Termin zurück')])
+                        ->action(fn (Order $record, array $data) => $record->notes()->create(['user_id' => auth()->id(), 'body' => $data['body']])),
+                ])
+                ->schema([Infolists\Components\ViewEntry::make('timeline')->hiddenLabel()->view('filament.infolists.order-timeline')]),
             Infolists\Components\Section::make('Artikel')->schema([
                 Infolists\Components\RepeatableEntry::make('items')->label('')->columns(4)->schema([
                     Infolists\Components\TextEntry::make('product_name')->label('Artikel')
@@ -152,7 +167,46 @@ class OrderResource extends Resource
                     ->query(fn ($query) => $query->whereKey(app(PaymentReminders::class)->overdue()->pluck('id'))),
                 Tables\Filters\SelectFilter::make('source')->label('Herkunft')->options(Order::SOURCES),
             ])
-            ->actions([Tables\Actions\ViewAction::make(), Tables\Actions\ActionGroup::make(self::statusActions())]);
+            ->actions([Tables\Actions\ViewAction::make(), Tables\Actions\ActionGroup::make(self::statusActions())])
+            ->bulkActions(self::bulkActions());
+    }
+
+    /** Sammelaktionen für mehrere markierte Bestellungen. */
+    public static function bulkActions(): array
+    {
+        $notify = Forms\Components\Toggle::make('notify')->label('Kundschaft per E-Mail informieren')->default(true);
+        $report = fn (int $done, int $total, string $what) => Notification::make()
+            ->title("{$done} von {$total} Bestellungen {$what}")
+            ->body($done < $total ? 'Die übrigen hatten bereits einen anderen Status oder warten noch auf die Online-Zahlung.' : null)
+            ->{$done ? 'success' : 'warning'}()->send();
+
+        return [
+            Tables\Actions\BulkAction::make('confirmMany')->label('Bestätigen')->icon('heroicon-o-check-circle')->color('success')
+                ->form([...self::scheduleFields(), $notify])
+                ->modalDescription('Termin und Zeitfenster sind optional und gelten für alle markierten Bestellungen.')
+                ->action(function (Collection $records, array $data) use ($report) {
+                    $wf = app(OrderWorkflow::class);
+                    $done = $records->filter(fn (Order $o) => $wf->confirm($o, array_filter(['scheduled_date' => $data['scheduled_date'] ?? null, 'scheduled_slot' => $data['scheduled_slot'] ?? null]), null, (bool) ($data['notify'] ?? false)))->count();
+                    $report($done, $records->count(), 'bestätigt');
+                })->deselectRecordsAfterCompletion(),
+            Tables\Actions\BulkAction::make('deliverMany')->label('Geliefert / abgeholt')->icon('heroicon-o-truck')
+                ->form([$notify])
+                ->action(function (Collection $records, array $data) use ($report) {
+                    $wf = app(OrderWorkflow::class);
+                    $done = $records->filter(fn (Order $o) => $wf->deliver($o, null, (bool) ($data['notify'] ?? false)))->count();
+                    $report($done, $records->count(), 'als geliefert markiert');
+                })->deselectRecordsAfterCompletion(),
+            Tables\Actions\BulkAction::make('deliveryNotes')->label('Lieferscheine drucken')->icon('heroicon-o-clipboard-document-list')->color('gray')
+                ->action(fn (Collection $records) => response()->streamDownload(
+                    fn () => print(app(InvoicePdf::class)->deliveryNotes($records->reject(fn ($o) => $o->status === 'storniert')->values())),
+                    'Lieferscheine-'.now()->format('Y-m-d').'.pdf'
+                )),
+            Tables\Actions\BulkAction::make('pickingList')->label('Rüstliste für Auswahl')->icon('heroicon-o-clipboard-document-check')->color('gray')
+                ->action(fn (Collection $records) => response()->streamDownload(
+                    fn () => print(app(InvoicePdf::class)->pickingList(null, $records->reject(fn ($o) => $o->status === 'storniert')->values())),
+                    'Ruestliste-Auswahl-'.now()->format('Y-m-d').'.pdf'
+                )),
+        ];
     }
 
     /** Aktionen mit automatischer E-Mail an die Kundschaft. Werden auch in der Detailansicht verwendet. */
@@ -175,10 +229,8 @@ class OrderResource extends Resource
                     $note,
                 ])
                 ->action(function (Order $record, array $data) {
-                    $record->update(['status' => 'bestaetigt', 'confirmed_at' => now(),
-                        'scheduled_date' => $data['scheduled_date'] ?? null, 'scheduled_slot' => $data['scheduled_slot'] ?? null]);
-                    $sent = $record->mailCustomer(new OrderStatusUpdate($record, $data['message'] ?? null));
-                    Notification::make()->title($sent ? 'Bestellung bestätigt, E-Mail gesendet' : 'Bestellung bestätigt (keine E-Mail-Adresse)')->success()->send();
+                    app(OrderWorkflow::class)->confirm($record, ['scheduled_date' => $data['scheduled_date'] ?? null, 'scheduled_slot' => $data['scheduled_slot'] ?? null], $data['message'] ?? null);
+                    Notification::make()->title($record->email ? 'Bestellung bestätigt, E-Mail gesendet' : 'Bestellung bestätigt (keine E-Mail-Adresse)')->success()->send();
                 }),
             $class::make('schedule')->label('Termin ändern')->icon('heroicon-o-calendar-days')->color('gray')
                 ->visible(fn (Order $record) => $record->status === 'bestaetigt')
@@ -199,13 +251,8 @@ class OrderResource extends Resource
                 ->visible(fn (Order $record) => in_array($record->status, ['neu', 'bestaetigt'], true) && $record->payment_status !== 'ausstehend')
                 ->form([$note])
                 ->action(function (Order $record, array $data) {
-                    $update = ['status' => 'geliefert', 'delivered_at' => now()];
-                    if ($record->payment_method === 'cash') {
-                        $update += ['payment_status' => 'bezahlt', 'paid_at' => now()];
-                    }
-                    $record->update($update);
-                    $record->mailCustomer(new OrderStatusUpdate($record, $data['message'] ?? null));
-                    Notification::make()->title('Als geliefert markiert, E-Mail gesendet')->success()->send();
+                    app(OrderWorkflow::class)->deliver($record, $data['message'] ?? null);
+                    Notification::make()->title('Als geliefert markiert'.($record->email ? ', E-Mail gesendet' : ''))->success()->send();
                 }),
             $class::make('paid')->label('Zahlung erhalten')->icon('heroicon-o-banknotes')->color('success')
                 ->visible(fn (Order $record) => in_array($record->payment_status, ['offen'], true) && $record->status !== 'storniert')
@@ -327,6 +374,7 @@ class OrderResource extends Resource
         return [
             'index' => Pages\ListOrders::route('/'),
             'create' => Pages\CreateOrder::route('/create'),
+            'board' => Pages\OrderBoard::route('/board'),
             'view' => Pages\ViewOrder::route('/{record}'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];

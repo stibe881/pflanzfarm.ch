@@ -14,15 +14,15 @@ Sie bezahlen bar bei der Abholung.
 Wir melden uns, sobald wir Ihre Bestellung bestätigt und den {{ $order->delivery_method === 'lieferung' ? 'Liefertermin' : 'Abholtermin' }} festgelegt haben.
 
 <x-mail::table>
-| Artikel | Menge | Betrag |
-|:--|:--:|--:|
-@foreach($order->items as $item)
-| {{ $item->product_name }} ({{ $item->variant_label }}) | {{ $item->quantity }} | CHF {{ number_format($item->line_total / 100, 2, '.', "'") }} |
+| | Artikel | Menge | Betrag |
+|:--|:--|:--:|--:|
+@foreach($order->items->loadMissing('variant.product') as $item)
+| @if($item->imageUrl())<img src="{{ $item->imageUrl() }}" alt="" width="48" height="48" style="width:48px;height:48px;object-fit:cover;border-radius:6px;display:block">@endif | {{ $item->product_name }}<br><span style="color:#6b7069;font-size:13px">{{ $item->variant_label }}</span> | {{ $item->quantity }} | CHF {{ number_format($item->line_total / 100, 2, '.', "'") }} |
 @endforeach
 @foreach($order->summaryLines() as [$label, $amount])
-| {{ $label }} | | {{ $amount < 0 ? '−' : '' }}CHF {{ number_format(abs($amount) / 100, 2, '.', "'") }} |
+| | {{ $label }} | | {{ $amount < 0 ? '−' : '' }}CHF {{ number_format(abs($amount) / 100, 2, '.', "'") }} |
 @endforeach
-| **Total inkl. MWST** | | **CHF {{ number_format($order->total / 100, 2, '.', "'") }}** |
+| | **Total inkl. MWST** | | **CHF {{ number_format($order->total / 100, 2, '.', "'") }}** |
 </x-mail::table>
 
 **{{ $order->deliveryMethodLabel() }}**

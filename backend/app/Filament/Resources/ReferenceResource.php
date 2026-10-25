@@ -32,7 +32,9 @@ class ReferenceResource extends Resource
                 Forms\Components\TextInput::make('location')->label('Ort')->placeholder('z. B. Sursee LU'),
                 Forms\Components\TextInput::make('year')->label('Jahr')->numeric()->minValue(2000)->maxValue(2100),
                 Forms\Components\CheckboxList::make('tags')->label('Projektart (Filter)')->options(Reference::TAGS)->columns(4)->columnSpanFull(),
-                Forms\Components\FileUpload::make('image')->label('Bild')->image()->imageEditor()->disk('public')->directory('referenzen')->maxSize(5120)->columnSpanFull(),
+                Forms\Components\FileUpload::make('image')->label('Bild (nachher)')->image()->imageEditor()->disk('public')->directory('referenzen')->maxSize(5120),
+                Forms\Components\FileUpload::make('before_image')->label('Vorher-Bild (optional)')->image()->imageEditor()->disk('public')->directory('referenzen')->maxSize(5120)
+                    ->helperText('Mit Vorher-Bild erscheint auf der Website ein Schieberegler «vorher / nachher». Beide Fotos am besten aus dem gleichen Blickwinkel.'),
                 Forms\Components\Toggle::make('on_homepage')->label('Auf der Startseite zeigen')->default(true),
                 Forms\Components\Toggle::make('active')->label('Veröffentlicht')->default(true),
             ]),

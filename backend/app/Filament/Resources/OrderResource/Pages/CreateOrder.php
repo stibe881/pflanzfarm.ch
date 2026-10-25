@@ -91,6 +91,15 @@ class CreateOrder extends CreateRecord
         ]);
     }
 
+    public function mount(): void
+    {
+        parent::mount();
+        // Aus der Kundenkartei «Neue Bestellung»: Angaben vorausfüllen
+        if ($customer = \App\Models\Customer::query()->find(request()->integer('customer'))) {
+            $this->data = array_merge($this->data ?? [], $customer->only(['name', 'email', 'phone', 'street', 'postal_code', 'city']), ['user_id' => $customer->user_id]);
+        }
+    }
+
     protected function handleRecordCreation(array $data): Model
     {
         $items = collect($data['items'] ?? [])->filter(fn ($i) => ! empty($i['variant_id']))->groupBy('variant_id')

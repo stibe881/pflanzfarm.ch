@@ -13,10 +13,17 @@
 </style>
 </head>
 <body>
+@foreach($orders as $order)
+{{-- jede Seite eigener Rahmen, damit Fusszeile und QR-Code (absolut positioniert) auf der richtigen Seite landen --}}
+<div style="position: relative; height: 296mm; overflow: hidden;{{ $loop->last ? '' : ' page-break-after: always;' }}">
 <div class="accent-bar"><span></span></div>
 <div class="page">
     @include('pdf.partials.letterhead')
 
+    @if(! empty($qr[$order->id]))
+        <img src="{{ $qr[$order->id] }}" alt="" style="position: absolute; right: 18mm; top: 62mm; width: 20mm; height: 20mm">
+        <div style="position: absolute; right: 14mm; top: 83mm; width: 28mm; text-align: center; font-size: 5.6pt; color: #6b7069">Im Admin öffnen</div>
+    @endif
     <h1>{{ $order->delivery_method === 'lieferung' ? 'Lieferschein' : 'Abholschein' }}</h1>
     <table class="meta">
         <tr>
@@ -66,5 +73,7 @@
     </table>
 </div>
 @include('pdf.partials.footer')
+</div>
+@endforeach
 </body>
 </html>

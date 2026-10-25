@@ -17,11 +17,11 @@
     <table class="head">
         <tr>
             <td><img src="{{ $logo }}" class="logo" alt="Pflanzfarm"></td>
-            <td class="sender"><strong class="serif">Rüstliste</strong><br>{{ $date->translatedFormat('l, d.m.Y') }}<br>{{ $orders->count() }} {{ $orders->count() === 1 ? 'Bestellung' : 'Bestellungen' }}</td>
+            <td class="sender"><strong class="serif">Rüstliste</strong><br>{{ $date ? $date->translatedFormat('l, d.m.Y') : 'Auswahl vom '.now()->format('d.m.Y') }}<br>{{ $orders->count() }} {{ $orders->count() === 1 ? 'Bestellung' : 'Bestellungen' }}</td>
         </tr>
     </table>
 
-    <h1 style="margin-top: 6mm">Rüstliste {{ $date->format('d.m.Y') }}</h1>
+    <h1 style="margin-top: 6mm">Rüstliste {{ $date ? $date->format('d.m.Y') : '(Auswahl)' }}</h1>
 
     <h2>Gesamtmenge</h2>
     <table class="items">

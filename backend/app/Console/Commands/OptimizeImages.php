@@ -17,7 +17,7 @@ class OptimizeImages extends Command
     public function handle(ImageOptimizer $optimizer): int
     {
         $paths = Product::query()->get(['image', 'gallery'])->flatMap(fn ($p) => [$p->image, ...(array) $p->gallery])
-            ->merge(Reference::query()->pluck('image'))->merge(Popup::query()->pluck('image'))
+            ->merge(Reference::query()->pluck('image'))->merge(Reference::query()->pluck('before_image'))->merge(Popup::query()->pluck('image'))
             ->filter()->unique();
         $done = $paths->filter(fn ($p) => $optimizer->optimize($p))->count();
         $this->info("{$done} Bild(er) optimiert, ".($paths->count() - $done).' übersprungen (schon erledigt oder mitgeliefert).');

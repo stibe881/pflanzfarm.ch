@@ -11,7 +11,7 @@ class ImageObserver
     public function saved(Model $model): void
     {
         $optimizer = app(ImageOptimizer::class);
-        foreach (['image', 'gallery'] as $attr) {
+        foreach (['image', 'gallery', 'before_image'] as $attr) {
             if ($model->wasChanged($attr) || $model->wasRecentlyCreated) {
                 foreach ((array) $model->getAttribute($attr) as $path) {
                     $optimizer->optimize(is_string($path) ? $path : null);

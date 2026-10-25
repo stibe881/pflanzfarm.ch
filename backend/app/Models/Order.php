@@ -49,6 +49,16 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(OrderNote::class)->latest();
+    }
+
     public function coupon(): BelongsTo
     {
         return $this->belongsTo(Coupon::class);
@@ -107,6 +117,38 @@ class Order extends Model
         }
 
         return $lines;
+    }
+
+    /**
+     * Verlauf: Systemereignisse, Änderungen im Admin und interne Notizen, neueste zuerst.
+     *
+     * @return \Illuminate\Support\Collection<int, array{at: \Illuminate\Support\Carbon, title: string, by: ?string, text: ?string, type: string}>
+     */
+    public function timeline(): \Illuminate\Support\Collection
+    {
+        $events = collect([
+            [$this->created_at, 'Bestellung eingegangen ('.(self::SOURCES[$this->source] ?? $this->source).')', 'system'],
+            [$this->paid_at, 'Zahlung erhalten'.($this->paid_reference ? ' (Bankimport)' : ''), 'pay'],
+            [$this->confirmed_at, 'Bestätigt', 'status'],
+            [$this->delivered_at, $this->delivery_method === 'lieferung' ? 'Geliefert' : 'Abgeholt', 'status'],
+            [$this->last_reminded_at, $this->reminder_count.'. Zahlungserinnerung gesendet', 'mail'],
+            [$this->cancelled_at, 'Storniert'.($this->cancelled_by === 'kunde' ? ' durch die Kundschaft' : ''), 'cancel'],
+            [$this->refunded_at, 'Erstattet: CHF '.number_format($this->refund_amount / 100, 2, '.', "'"), 'pay'],
+            [$this->care_mail_sent_at, 'Pflegetipps gesendet', 'mail'],
+        ])->filter(fn ($e) => $e[0])->map(fn ($e) => ['at' => $e[0], 'title' => $e[1], 'by' => null, 'text' => null, 'type' => $e[2]]);
+
+        $labels = ['status' => 'Status', 'payment_status' => 'Zahlung', 'scheduled_date' => 'Termin', 'scheduled_slot' => 'Zeitfenster', 'name' => 'Name', 'email' => 'E-Mail', 'phone' => 'Telefon', 'street' => 'Strasse', 'postal_code' => 'PLZ', 'city' => 'Ort', 'note' => 'Bemerkung', 'delivery_method' => 'Lieferart'];
+        $changes = ActivityLog::query()->with('user')->where('subject_type', 'Order')->where('subject_id', $this->id)->where('event', 'geändert')->get()
+            ->map(function (ActivityLog $l) use ($labels) {
+                $keys = collect(array_keys((array) $l->getAttribute('changes')))->map(fn ($k) => $labels[$k] ?? null)->filter()->unique();
+
+                return $keys->isEmpty() ? null : ['at' => $l->created_at, 'title' => 'Geändert: '.$keys->join(', '), 'by' => $l->user?->name, 'text' => null, 'type' => 'edit'];
+            })->filter();
+
+        $notes = $this->notes()->with('user')->get()
+            ->map(fn (OrderNote $n) => ['at' => $n->created_at, 'title' => 'Notiz', 'by' => $n->user?->name, 'text' => $n->body, 'type' => 'note']);
+
+        return $events->concat($changes)->concat($notes)->sortByDesc(fn ($e) => $e['at']->timestamp)->values();
     }
 
     /** Kundschaft darf selbst stornieren, solange wir die Bestellung noch nicht bestätigt haben. */

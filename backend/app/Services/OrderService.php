@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Mail\NewOrderNotification;
 use App\Mail\OrderConfirmation;
 use App\Models\Coupon;
+use App\Models\Customer;
 use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\ProductVariant;
@@ -134,6 +135,7 @@ class OrderService
                 'total' => $subtotal + $shipping + $plantingFee - $couponDiscount,
             ]);
             $order->items()->createMany($lines);
+            $order->update(['customer_id' => Customer::forOrder($order)->id]);
 
             return $order->load('items');
         });

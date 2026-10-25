@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             'traits' => ['Immergrün', 'Pflegeleicht'], 'plants_per_meter' => 3, 'sort' => 1,
             'description' => 'Der bewährte Klassiker für dichte, formschöne Hecken und natürlichen Sichtschutz.',
         ]);
+        $thuja->update(['evergreen' => true, 'locations' => ['sonne', 'halbschatten'], 'uses' => ['hecke', 'sichtschutz'], 'height_min_cm' => 300, 'height_max_cm' => 500, 'growth_cm' => 25, 'hardiness' => 'bis −30 °C', 'planting_months' => [3, 4, 5, 9, 10, 11]]);
         // Nur für 80–100 cm ist ein Preis bekannt; die übrigen Grössen sind inaktiv, bis im Admin Preis und Bestand erfasst sind.
         foreach (['80–100 cm', '100–120 cm', '120–140 cm', '140–160 cm', '160–180 cm', '180–200 cm', '200–225 cm', '225–250 cm'] as $i => $label) {
             $thuja->variants()->create(['label' => $label, 'price' => $i === 0 ? 1500 : 0, 'stock' => $i === 0 ? 48 : 0, 'active' => $i === 0, 'sort' => $i]);
@@ -46,6 +47,7 @@ class DatabaseSeeder extends Seeder
             'description' => 'Glanzmispel mit attraktivem rotem Austrieb für strukturierte, immergrüne Pflanzungen.',
         ]);
         $photinia->variants()->create(['label' => 'Liefergrösse auf Anfrage', 'price' => 4500, 'stock' => 17]);
+        $photinia->update(['evergreen' => true, 'locations' => ['sonne', 'halbschatten'], 'uses' => ['hecke', 'sichtschutz', 'solitaer'], 'height_min_cm' => 200, 'height_max_cm' => 400, 'growth_cm' => 35, 'hardiness' => 'bis −15 °C', 'planting_months' => [3, 4, 5, 9, 10]]);
 
         $berries = Product::query()->create([
             'name' => 'Diverse Beerensträucher', 'slug' => 'diverse-beerenstraeucher', 'latin' => 'Ribes – verschiedene Sorten',
@@ -54,6 +56,7 @@ class DatabaseSeeder extends Seeder
             'description' => 'Verschiedene Beerensträucher für einen vielfältigen Naschgarten. Preis und Verfügbarkeit auf Anfrage.',
         ]);
         $berries->variants()->create(['label' => 'Sorten und Grössen auf Anfrage', 'price' => 0, 'stock' => 6]);
+        $berries->update(['locations' => ['sonne', 'halbschatten'], 'uses' => ['naschgarten', 'kuebel', 'bienen'], 'height_min_cm' => 100, 'height_max_cm' => 150, 'growth_cm' => 30, 'hardiness' => 'bis −25 °C', 'planting_months' => [3, 4, 10, 11]]);
 
         foreach ([
             ['Formgehölze & Taxus', 'Baumschule', 'Auswahl an Formgehölzen und Taxus aus der Pflanzfarm.', '/assets/pflanzfarm-garten-1.jpg', ['Neubau']],

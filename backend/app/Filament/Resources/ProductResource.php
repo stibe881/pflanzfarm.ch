@@ -51,6 +51,20 @@ class ProductResource extends Resource
                 Forms\Components\Toggle::make('active')->label('Im Shop sichtbar')->default(true),
                 Forms\Components\TextInput::make('sort')->label('Reihenfolge')->numeric()->default(0),
             ]),
+            Forms\Components\Section::make('Steckbrief und Shop-Filter')->collapsible()->columns(3)
+                ->description('Erscheint auf der Produktseite als Steckbrief, wird für die Filter im Shop und für die Hecken-Vorschau im Rechner verwendet.')
+                ->schema([
+                    Forms\Components\CheckboxList::make('locations')->label('Standort')->options(Product::LOCATIONS)->columns(3)->columnSpan(2),
+                    Forms\Components\Toggle::make('evergreen')->label('Immergrün')->inline(false),
+                    Forms\Components\CheckboxList::make('uses')->label('Verwendung')->options(Product::USES)->columns(3)->columnSpanFull(),
+                    Forms\Components\TextInput::make('height_min_cm')->label('Endhöhe von')->numeric()->integer()->suffix('cm')->minValue(10)->maxValue(5000),
+                    Forms\Components\TextInput::make('height_max_cm')->label('Endhöhe bis')->numeric()->integer()->suffix('cm')->minValue(10)->maxValue(5000)->gte('height_min_cm'),
+                    Forms\Components\TextInput::make('growth_cm')->label('Zuwachs pro Jahr')->numeric()->integer()->suffix('cm')->minValue(1)->maxValue(300)
+                        ->helperText('Durchschnitt, für die Hecken-Vorschau'),
+                    Forms\Components\TextInput::make('hardiness')->label('Winterhärte')->placeholder('z. B. bis −25 °C')->maxLength(40),
+                    Forms\Components\CheckboxList::make('planting_months')->label('Pflanzzeit')->columnSpan(2)->columns(6)
+                        ->options(collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => \Illuminate\Support\Carbon::create(2026, $m, 1)->locale('de_CH')->isoFormat('MMM')])->all()),
+                ]),
             Forms\Components\Section::make('Mengenrabatt')->collapsible()->collapsed(fn (?Product $record) => empty($record?->volume_discounts))
                 ->description('Gilt je Grösse ab der angegebenen Stückzahl, z. B. ab 50 Stück 10 %. Es zählt die höchste erreichte Stufe.')
                 ->schema([
@@ -114,8 +128,33 @@ class ProductResource extends Resource
                 Tables\Filters\SelectFilter::make('category')->label('Kategorie')->options(Product::CATEGORIES),
                 Tables\Filters\TernaryFilter::make('active')->label('Sichtbar'),
             ])
-            ->actions([Tables\Actions\EditAction::make()])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('duplicate')->label('Duplizieren')->icon('heroicon-o-document-duplicate')->color('gray')
+                    ->requiresConfirmation()->modalDescription('Legt eine Kopie mit allen Grössen und Preisen an (Lager 0, nicht sichtbar), z. B. für eine neue Sorte.')
+                    ->action(function (Product $record) {
+                        $copy = self::duplicate($record);
+                        \Filament\Notifications\Notification::make()->title('Kopie angelegt')->success()->send();
+
+                        return redirect(self::getUrl('edit', ['record' => $copy]));
+                    }),
+            ])
             ->bulkActions([Tables\Actions\DeleteBulkAction::make()]);
+    }
+
+    public static function duplicate(Product $product): Product
+    {
+        $slug = $product->slug.'-kopie';
+        for ($i = 2; Product::query()->where('slug', $slug)->exists(); $i++) {
+            $slug = $product->slug.'-kopie-'.$i;
+        }
+        $copy = $product->replicate(['slug', 'name', 'active']);
+        $copy->fill(['slug' => $slug, 'name' => $product->name.' (Kopie)', 'active' => false])->save();
+        foreach ($product->variants as $v) {
+            $copy->variants()->create($v->replicate(['product_id', 'stock', 'low_stock_notified_at', 'counted_at'])->fill(['stock' => 0])->toArray());
+        }
+
+        return $copy;
     }
 
     public static function getPages(): array

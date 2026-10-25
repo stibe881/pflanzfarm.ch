@@ -9,12 +9,20 @@ class Product extends Model
 {
     public const CATEGORIES = ['Heckenpflanzen' => 'Heckenpflanzen', 'Beerensträucher' => 'Beerensträucher', 'Baumschule' => 'Baumschule'];
 
+    public const LOCATIONS = ['sonne' => 'Sonne', 'halbschatten' => 'Halbschatten', 'schatten' => 'Schatten'];
+
+    public const USES = ['hecke' => 'Hecke', 'sichtschutz' => 'Sichtschutz', 'naschgarten' => 'Naschgarten', 'kuebel' => 'Kübel / Terrasse', 'solitaer' => 'Einzelpflanze', 'bienen' => 'Bienenfreundlich'];
+
     protected $guarded = ['id'];
 
     protected function casts(): array
     {
         return [
             'traits' => 'array',
+            'evergreen' => 'boolean',
+            'locations' => 'array',
+            'uses' => 'array',
+            'planting_months' => 'array',
             'gallery' => 'array',
             'volume_discounts' => 'array',
             'active' => 'boolean',

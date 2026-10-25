@@ -50,14 +50,38 @@ class InvoicePdf
 
     public function deliveryNote(Order $order): string
     {
-        return $this->pdf('pdf.delivery-note', ['order' => $order->loadMissing('items')]);
+        return $this->deliveryNotes(collect([$order]));
+    }
+
+    /** Mehrere Liefer-/Abholscheine in einem PDF (Sammelaktion), je mit QR-Code zur Bestellung im Admin. */
+    public function deliveryNotes(\Illuminate\Support\Collection $orders): string
+    {
+        $orders = $orders->each->loadMissing('items');
+        $qr = $orders->mapWithKeys(fn (Order $o) => [$o->id => self::qr(url('/admin/orders/'.$o->id))])->all();
+
+        return $this->pdf('pdf.delivery-note', ['orders' => $orders, 'qr' => $qr]);
+    }
+
+    /** QR-Code als Daten-URI (PNG). */
+    public static function qr(string $data): ?string
+    {
+        try {
+            return \Endroid\QrCode\Builder\Builder::create()->writer(new \Endroid\QrCode\Writer\PngWriter)
+                ->data($data)->size(240)->margin(0)->build()->getDataUri();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
     }
 
     /** Rüstliste: alle bestätigten Bestellungen mit Liefer-/Abholtermin an einem Tag, Mengen zusammengezählt. */
-    public function pickingList(\Illuminate\Support\Carbon $date): string
+    public function pickingList(?\Illuminate\Support\Carbon $date, ?\Illuminate\Support\Collection $selection = null): string
     {
-        $orders = Order::query()->with('items')->whereDate('scheduled_date', $date)
-            ->whereIn('status', ['neu', 'bestaetigt'])->orderBy('delivery_method')->orderBy('scheduled_slot')->get();
+        $orders = $selection
+            ? $selection->each->loadMissing('items')->sortBy(fn ($o) => [$o->scheduled_date?->timestamp ?? PHP_INT_MAX, $o->delivery_method])->values()
+            : Order::query()->with('items')->whereDate('scheduled_date', $date)
+                ->whereIn('status', ['neu', 'bestaetigt'])->orderBy('delivery_method')->orderBy('scheduled_slot')->get();
         $totals = $orders->flatMap->items
             ->groupBy(fn ($i) => $i->product_name.'|'.$i->variant_label)
             ->map(fn ($g) => ['product' => $g->first()->product_name, 'variant' => $g->first()->variant_label, 'quantity' => $g->sum('quantity')])

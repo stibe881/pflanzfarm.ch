@@ -18,4 +18,12 @@ class OrderItem extends Model
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
+
+    /** Absolute Bild-URL des Produkts für E-Mails. */
+    public function imageUrl(): ?string
+    {
+        $image = $this->variant?->product?->image;
+
+        return $image ? url(\App\Http\Controllers\Api\CatalogController::image($image)) : null;
+    }
 }
