@@ -81,3 +81,28 @@ TEST_ADMIN_PASSWORD=ein-eigenes-passwort
 ```
 
 Davor einen Webserver mit HTTPS (z. B. Caddy oder nginx) auf Port 8080 bzw. 8025 weiterleiten.
+
+## Dem Kunden zeigen (öffentliche Adresse über deinen Computer)
+
+Damit der Kunde die Testumgebung über das Internet sieht, gibt es einen eingebauten Tunnel (Cloudflare, kostenlos,
+ohne Konto). Er funktioniert, solange dein Computer läuft und Docker gestartet ist.
+
+1. Neben `docker-compose.yml` eine Datei `.env` anlegen (oder ergänzen) mit einem Passwort für die ganze Seite:
+   ```
+   SITE_PASSWORD=Gartentest-2026
+   ```
+2. Starten:
+   ```
+   docker compose --profile demo up -d --build
+   docker compose logs tunnel
+   ```
+3. Im Log steht eine Adresse wie `https://irgendwas.trycloudflare.com`. Diese Adresse und das Passwort dem Kunden
+   schicken. Beim Öffnen fragt der Browser nach Benutzername und Passwort – der Benutzername ist beliebig.
+
+Die Adresse ändert sich bei jedem Neustart des Tunnels. Beenden: `docker compose --profile demo down`.
+
+Gut zu wissen:
+- Der Kunde kann alles ausprobieren: Shop, Kasse (Zahlung simuliert), Konto, Kontaktformular. Für den Admin gibst du
+  ihm die Test-Zugänge von oben.
+- E-Mails landen weiterhin nur in deinem Test-Postfach (http://localhost:8025), nicht beim Kunden.
+- Für eine dauerhafte Testadresse ohne laufenden Computer: siehe «Testumgebung im Internet» oben.

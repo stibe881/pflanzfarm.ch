@@ -16,7 +16,7 @@ services:
       DB_PASSWORD: pflanzfarm-test
       SESSION_DRIVER: database
       SESSION_SECURE_COOKIE: "false"
-      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost:8080,127.0.0.1:8080}
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost:8080,127.0.0.1:8080,*.trycloudflare.com}
       QUEUE_CONNECTION: database
       # Alle E-Mails landen im Test-Postfach (Mailpit), nicht bei echten Empfängern
       MAIL_MAILER: smtp
@@ -38,6 +38,16 @@ services:
     depends_on:
       - db
       - mailpit
+    restart: unless-stopped
+
+  # Öffentliche Adresse für Präsentationen: docker compose --profile demo up -d
+  # Die Adresse steht danach in: docker compose logs tunnel
+  tunnel:
+    image: cloudflare/cloudflared:2025.8.1
+    command: tunnel --no-autoupdate --url http://app:80
+    profiles: ["demo"]
+    depends_on:
+      - app
     restart: unless-stopped
 
   db:

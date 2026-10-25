@@ -212,6 +212,14 @@ class ShopTest extends TestCase
         $this->postJson('/api/logout')->assertOk();
     }
 
+    public function test_login_works_through_demo_tunnel_domain(): void
+    {
+        config(['sanctum.stateful' => ['localhost:8080', '*.trycloudflare.com']]);
+        User::factory()->create(['email' => 'demo@example.ch', 'password' => 'geheimes-passwort']);
+        $this->withHeader('Referer', 'https://blau-garten-test.trycloudflare.com/konto/')
+            ->postJson('/api/login', ['email' => 'demo@example.ch', 'password' => 'geheimes-passwort'])->assertOk();
+    }
+
     public function test_newsletter_double_opt_in_and_unsubscribe(): void
     {
         $this->postJson('/api/newsletter', ['email' => 'leser@example.ch'])->assertOk()->assertJsonPath('status', 'ausstehend');
