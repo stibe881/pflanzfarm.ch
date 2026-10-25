@@ -30,11 +30,14 @@ php artisan db:seed --force     # übernimmt Produkte, Referenzen, Ratgeber und 
 php artisan storage:link
 php artisan filament:optimize && php artisan optimize
 php artisan pflanzfarm:team-user thomas@pflanzfarm.ch "Thomas Steinmann" --role=admin
+php artisan pflanzfarm:bilder-optimieren   # einmalig: WebP-Fassungen für bereits hochgeladene Bilder
 ```
+
+PHP braucht die Erweiterung GD **mit WebP** (für die automatische Bildoptimierung). Prüfen mit `php -r 'var_dump(function_exists("imagewebp"));'`. Ohne WebP funktioniert alles, die Bilder werden dann einfach nicht optimiert.
 
 Der letzte Befehl fragt ein Passwort ab (mind. 12 Zeichen, Gross-/Kleinbuchstaben und Zahl) und legt das erste Admin-Konto an. Weitere Team-Konten legt ein Admin danach im Adminbereich unter «Kunden & Team» an (Rolle «Team»).
 
-Cron-Eintrag für die Hintergrundaufgaben (Newsletter-Warteschlange und geplanter Versand jede Minute, Zahlungserinnerungen werktags 8.30 Uhr):
+Cron-Eintrag für die Hintergrundaufgaben (Newsletter-Warteschlange und geplanter Versand jede Minute, Zahlungserinnerungen werktags 8.30 Uhr, Pflege-Mails täglich 9.15 Uhr):
 
 ```
 * * * * * cd /pfad/zu/pflanzfarm.ch/backend && php artisan schedule:run >> /dev/null 2>&1

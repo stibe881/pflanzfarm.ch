@@ -13460,13 +13460,28 @@ const pf_xsrf = () => decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TO
     return d.toISOString().slice(0, 10);
   },
   // Versandkosten: teuerste Versandklasse im Warenkorb, ab Gratis-Bestellwert gratis
-  pf_shipping = (o, C) => {
+  // Lieferzone nach PLZ (Zuschlag oder keine Lieferung)
+  pf_zone = (o) => {
+    const C = parseInt(String(o || "").replace(/\D/g, ""), 10);
+    return C >= 1e3 && C <= 9999 ? (pf_catalogSettings.zones || []).find((_) => _.ranges.some(([y, L]) => C >= y && C <= L)) || null : null;
+  },
+  pf_shipping = (o, C, plz) => {
     if (C !== "lieferung" || !o.length) return 0;
     const _ = o.reduce((y, L) => y + pf_line(L.product, L.variant, L.quantity).total, 0);
     return pf_catalogSettings.freeDeliveryFrom > 0 && _ * 100 >= pf_catalogSettings.freeDeliveryFrom
       ? 0
-      : Math.max(0, ...o.map((y) => (pf_vd(y.product, y.variant).shipping || { price: 0 }).price));
+      : Math.max(0, ...o.map((y) => (pf_vd(y.product, y.variant).shipping || { price: 0 }).price)) + ((pf_zone(plz) || {}).surcharge || 0);
   },
+  // Pflanzservice: Preis pro Pflanze je Grösse, mindestens der Mindestbetrag
+  pf_planting = (o) => {
+    const C = o.reduce((_, y) => _ + (pf_vd(y.product, y.variant).plantingPrice || 0) * y.quantity, 0);
+    return C > 0 ? Math.max(C, pf_catalogSettings.plantingMinFee || 0) : 0;
+  },
+  // Gutschein/Rabattcode, gleiche Rechnung wie auf dem Server
+  pf_couponDiscount = (o, C, _) =>
+    o
+      ? Math.max(0, Math.min(o.type === "prozent" ? (Math.round((Math.round(C * 100) * o.value) / 100 / 5) * 5) / 100 : o.type === "betrag" ? o.value : o.balance || 0, _))
+      : 0,
   pf_pickupOnly = (o) => o.filter((C) => pf_vd(C.product, C.variant).pickupOnly),
   pf_store = {
     get(o, C) {
@@ -13598,6 +13613,39 @@ function pf_Search({ articles: o, onClose: C, onProduct: _, onArticle: y }) {
     ),
   );
 }
+function pf_StockAlert({ variantId: o, label: C }) {
+  const [_, y] = H.useState(""),
+    [L, X] = H.useState(""),
+    [Se, Le] = H.useState(!1),
+    [ne, Ne] = H.useState(!1);
+  return ne
+    ? h("p", { className: "stock-alert stock-alert--done", role: "status" }, `Danke! Wir melden uns per E-Mail, sobald ${C} wieder an Lager ist.`)
+    : h(
+        "form",
+        {
+          className: "stock-alert",
+          onSubmit: async (A) => {
+            if ((A.preventDefault(), Se)) return;
+            (Le(!0), X(""));
+            try {
+              (await pf_api("/stock-alerts", { method: "POST", body: { variant_id: o, email: _ } }), Ne(!0));
+            } catch (p) {
+              X((p.errors && p.errors.email && p.errors.email[0]) || p.message);
+            }
+            Le(!1);
+          },
+        },
+        h("b", null, "Benachrichtigen, wenn wieder da"),
+        h(
+          "div",
+          null,
+          h("input", { type: "email", required: !0, value: _, onChange: (A) => y(A.target.value), placeholder: "Ihre E-Mail-Adresse", "aria-label": "E-Mail-Adresse", autoComplete: "email" }),
+          h("button", { type: "submit", className: "button button--dark", disabled: Se }, Se ? "…" : "Eintragen"),
+        ),
+        L && h("span", { className: "field-error" }, L),
+        h("small", null, "Einmalige E-Mail, sobald die Grösse wieder verfügbar ist. Keine Werbung."),
+      );
+}
 function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
   const [L, X] = H.useState(() => ({
       name: (C == null ? void 0 : C.name) || "",
@@ -13611,6 +13659,7 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
       note: "",
       preferred_date: "",
       preferred_slot: "egal",
+      planting: !1,
       accept_terms: !1,
       newsletter: !1,
     })),
@@ -13620,7 +13669,25 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
     B = (k, ye) => X((Ot) => ({ ...Ot, [k]: ye })),
     ge = o.reduce((k, ye) => k + pf_line(ye.product, ye.variant, ye.quantity).total, 0),
     pf_saved = o.reduce((k, ye) => k + pf_line(ye.product, ye.variant, ye.quantity).saved, 0),
-    O = pf_shipping(o, L.delivery_method),
+    O = pf_shipping(o, L.delivery_method, L.postal_code),
+    pf_z = L.delivery_method === "lieferung" ? pf_zone(L.postal_code) : null,
+    pf_plant = L.planting && L.delivery_method === "lieferung" && pf_catalogSettings.planting ? pf_planting(o) : 0,
+    [pf_cp, pf_setCp] = H.useState(null),
+    [pf_cin, pf_setCin] = H.useState(""),
+    [pf_cbusy, pf_setCbusy] = H.useState(!1),
+    pf_cd = pf_couponDiscount(pf_cp, ge, ge + O + pf_plant),
+    pf_total = Math.round((ge + O + pf_plant - pf_cd) * 100) / 100,
+    pf_applyCoupon = async () => {
+      if (!pf_cin.trim() || pf_cbusy) return;
+      (pf_setCbusy(!0), Le((k) => ({ ...k, coupon_code: void 0 })));
+      try {
+        const k = await pf_api("/coupons/check", { method: "POST", body: { code: pf_cin.trim(), subtotal: ge } });
+        (pf_setCp(k.coupon), pf_setCin(""));
+      } catch (k) {
+        Le((ye) => ({ ...ye, coupon_code: [k.message] }));
+      }
+      pf_setCbusy(!1);
+    },
     pf_po = pf_pickupOnly(o),
     re = o.filter((k) => !pf_vd(k.product, k.variant).id || k.product.priceOnRequest);
   H.useEffect(() => {
@@ -13638,7 +13705,7 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
     try {
       const ye = await pf_api("/orders", {
         method: "POST",
-        body: { ...L, preferred_date: L.preferred_date || null, preferred_slot: L.preferred_date ? L.preferred_slot : null, items: o.map((Ot) => ({ variant_id: pf_vd(Ot.product, Ot.variant).id, quantity: Ot.quantity })) },
+        body: { ...L, planting: !!pf_plant, coupon_code: pf_cp ? pf_cp.code : null, preferred_date: L.preferred_date || null, preferred_slot: L.preferred_date ? L.preferred_slot : null, items: o.map((Ot) => ({ variant_id: pf_vd(Ot.product, Ot.variant).id, quantity: Ot.quantity })) },
       });
       if (ye.redirect) {
         window.location.href = ye.redirect;
@@ -13646,7 +13713,7 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
       }
       y(ye.order.number, ye.token);
     } catch (ye) {
-      (Le(ye.errors || {}), p(ye.message), Ne(!1));
+      ((ye.errors || {}).coupon_code && pf_setCp(null), Le(ye.errors || {}), p(ye.message), Ne(!1));
       const Ot = document.querySelector(".checkout .has-error, .checkout .form-alert");
       Ot && Ot.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -13729,6 +13796,23 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
             h(pf_Field, { label: "PLZ", name: "postal_code", form: L, set: B, errors: Se, autoComplete: "postal-code", inputMode: "numeric" }),
             h(pf_Field, { label: "Ort", name: "city", form: L, set: B, errors: Se, autoComplete: "address-level2" }),
           ),
+        pf_z &&
+          !pf_z.deliverable &&
+          h("div", { className: "form-alert", role: "alert" }, "In diese Region liefern wir leider nicht. Bitte wählen Sie Abholung in Ebersecken oder rufen Sie uns an: 079 336 14 95."),
+        pf_z && pf_z.deliverable && pf_z.surcharge > 0 && O > 0 && h("p", { className: "form-note" }, `Lieferzone ${pf_z.name}: Zuschlag ${Sa(pf_z.surcharge)} (in den Lieferkosten enthalten).`),
+        L.delivery_method === "lieferung" &&
+          pf_catalogSettings.planting &&
+          h(
+            "label",
+            { className: L.planting ? "choice choice--active planting-choice" : "choice planting-choice" },
+            h("input", { type: "checkbox", checked: L.planting, onChange: (k) => B("planting", k.target.checked) }),
+            h(
+              "span",
+              null,
+              h("b", null, `Pflanzservice dazubuchen – ${Sa(pf_planting(o))}`),
+              h("small", null, `Wir pflanzen Ihre Pflanzen bei der Lieferung fachgerecht ein. Preis pro Pflanze je nach Grösse, mindestens ${Sa(pf_catalogSettings.plantingMinFee || 0)}.`),
+            ),
+          ),
         h(
           "fieldset",
           { className: "wish-date" },
@@ -13808,8 +13892,36 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
       h("div", null, h("span", null, "Zwischensumme"), h("strong", null, Sa(ge))),
       pf_saved > 0 && h("div", { className: "order-summary__saving" }, h("span", null, "Sie sparen (Mengenrabatt)"), h("span", null, "−" + Sa(pf_saved))),
       h("div", null, h("span", null, "Lieferung"), h("span", null, O ? Sa(O) : "gratis")),
+      pf_plant > 0 && h("div", null, h("span", null, "Pflanzservice"), h("span", null, Sa(pf_plant))),
+      pf_cp &&
+        h(
+          "div",
+          { className: "order-summary__saving" },
+          h(
+            "span",
+            null,
+            `${pf_cp.type === "gutschein" ? "Gutschein" : "Rabattcode"} ${pf_cp.code} `,
+            h("button", { type: "button", className: "coupon-remove", onClick: () => pf_setCp(null), "aria-label": "Code entfernen" }, "×"),
+          ),
+          h("span", null, "−" + Sa(pf_cd)),
+        ),
+      !pf_cp &&
+        h(
+          "div",
+          { className: Se.coupon_code ? "coupon-field has-error" : "coupon-field" },
+          h("input", {
+            value: pf_cin,
+            onChange: (k) => pf_setCin(k.target.value),
+            onKeyDown: (k) => k.key === "Enter" && (k.preventDefault(), pf_applyCoupon()),
+            placeholder: "Gutschein- oder Rabattcode",
+            "aria-label": "Gutschein- oder Rabattcode",
+            autoComplete: "off",
+          }),
+          h("button", { type: "button", className: "button button--soft", onClick: pf_applyCoupon, disabled: pf_cbusy || !pf_cin.trim() }, "Einlösen"),
+        ),
+      pf_err(Se, "coupon_code"),
       h("hr", null),
-      h("div", { className: "order-summary__total" }, h("strong", null, "Total inkl. MWST"), h("strong", null, Sa(ge + O))),
+      h("div", { className: "order-summary__total" }, h("strong", null, "Total inkl. MWST"), h("strong", null, Sa(pf_total))),
       pf_err(Se, "items"),
       h(
         "label",
@@ -13826,8 +13938,8 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
       ),
       h(
         "button",
-        { type: "submit", className: "button button--primary button--full", disabled: ne || re.length > 0 },
-        ne ? "Wird gesendet …" : L.payment_method === "stripe" ? "Weiter zur Zahlung" : "Zahlungspflichtig bestellen",
+        { type: "submit", className: "button button--primary button--full", disabled: ne || re.length > 0 || (pf_z && !pf_z.deliverable) },
+        ne ? "Wird gesendet …" : L.payment_method === "stripe" && pf_total > 0 ? "Weiter zur Zahlung" : "Zahlungspflichtig bestellen",
         " ",
         h(Ve, { size: 18 }),
       ),
@@ -14322,6 +14434,7 @@ function O1() {
         T = { bestaetigt: "Danke – Ihre Newsletter-Anmeldung ist bestätigt.", abgemeldet: "Sie sind vom Newsletter abgemeldet.", ungueltig: "Der Link ist ungültig oder abgelaufen." }[v.get("newsletter")];
       (T && (Ue(T), window.history.replaceState({}, "", window.location.pathname)),
         v.get("zahlung") === "abgebrochen" && Ue("Die Zahlung wurde abgebrochen. Ihr Warenkorb ist noch da."),
+        v.get("pflegetipps") === "abgemeldet" && (Ue("Sie erhalten keine Pflegetipps mehr von uns."), window.history.replaceState({}, "", window.location.pathname)),
         pf_api("/me")
           .then((E) => pf_setUser(E.user))
           .catch(() => {}),
@@ -15318,6 +15431,10 @@ function O1() {
                     ],
                   }),
                   !_.priceOnRequest &&
+                    pf_vd(_, L).id &&
+                    pf_vd(_, L).stock <= 0 &&
+                    h(pf_StockAlert, { key: pf_vd(_, L).id, variantId: pf_vd(_, L).id, label: `${_.name} (${L})` }),
+                  !_.priceOnRequest &&
                     (_.discounts || []).length > 0 &&
                     h(
                       "div",
@@ -16002,6 +16119,8 @@ function O1() {
                 "Bestellbestätigungen, Kontobestätigungen, Antworten auf Anfragen und den Newsletter versenden wir über den Dienst Resend (Resend, Inc., USA). Dabei werden Ihre E-Mail-Adresse und der Inhalt der Nachricht an Resend übermittelt und in die USA übertragen; Resend ist dafür vertraglich zum Datenschutz verpflichtet."],
               ["Newsletter",
                 "Unseren Newsletter erhalten Sie nur, wenn Sie sich anmelden und die Anmeldung über den Link in unserer Bestätigungs-E-Mail bestätigen (Double-Opt-in). Wir speichern Ihre E-Mail-Adresse sowie Zeitpunkt von Anmeldung und Bestätigung. Jede Ausgabe enthält einen Abmeldelink; danach erhalten Sie keine Newsletter mehr."],
+              ["Pflegetipps und Warteliste",
+                "Nach einer Lieferung senden wir Ihnen einmalig Pflegetipps zu den gekauften Pflanzen, gegebenenfalls mit der Bitte um eine Bewertung, sowie gelegentlich saisonale Hinweise (z. B. zum Schnitt) zu Pflanzen, die Sie bei uns gekauft haben. Jede dieser E-Mails enthält einen Abmeldelink. Wenn Sie sich für «Benachrichtigen, wenn wieder da» eintragen, speichern wir Ihre E-Mail-Adresse und die gewünschte Grösse und schreiben Ihnen einmalig, sobald sie wieder verfügbar ist."],
               ["Cookies und lokale Speicherung", [
                 "Für Anmeldung und Bestellung verwenden wir technisch notwendige Cookies (Sitzung und Schutz vor Missbrauch), die beim Schliessen des Browsers bzw. nach spätestens 2 Stunden ablaufen. Im lokalen Speicher Ihres Browsers merken wir uns Ihren Warenkorb, Ihre Merkliste und Ihre Entscheidung im Cookie-Hinweis; diese Daten verlassen Ihr Gerät nicht. Im Sitzungsspeicher steht zudem, ob ein saisonaler Hinweis bereits angezeigt wurde. Weitere Cookies setzen wir nur mit Ihrer Einwilligung (siehe Google Analytics). ",
                 i.jsx("button", { type: "button", className: "inline-link", onClick: () => pf_setBo(!0), children: "Cookie-Einstellungen öffnen" }, "c"),

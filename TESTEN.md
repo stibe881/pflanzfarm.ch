@@ -58,6 +58,19 @@ drei Bestellungen in verschiedenen Zuständen und einen Newsletter-Abonnenten. D
       Filter «Termin: heute/morgen» · «Rüstliste» (PDF mit Gesamtmengen für einen Tag) · unter «Mehr»: Lieferschein,
       Zahlungserinnerung, Gutschrift · Stornieren mit «Betrag erstatten» · mehrere Bilder pro Produkt (Galerie) ·
       Newsletter mit Bild und «Versand planen», danach Statistik · Dashboard-Grafiken · «Änderungsprotokoll»
+- [ ] **Lieferzonen** (Admin → Lieferzonen): z. B. «Tessin 6500–6999, Zuschlag CHF 60» → in der Kasse PLZ 6600 eingeben;
+      Zone «keine Lieferung» → Bestellen nur mit Abholung
+- [ ] **Pflanzservice** in der Kasse (nur bei Lieferung), Preis pro Grösse im Produkt, Standard/Minimum unter Einstellungen
+- [ ] **Gutscheine & Rabattcodes**: Rabattcode (z. B. HERBST10) und Wertgutschein anlegen → «Gutschein-PDF» → in der Kasse
+      einlösen; Restguthaben prüfen; Bestellung stornieren gibt das Guthaben zurück
+- [ ] **Warteliste**: Grösse auf Lager 0 setzen → auf der Produktseite E-Mail eintragen → Lager wieder erhöhen
+      (Admin oder Inventur) → Mail im Test-Postfach
+- [ ] **Inventur** (Admin → Inventur, am besten auf dem Handy): Mengen eintragen, «Stimmt», Suche
+- [ ] **Zahlungen importieren**: camt.054 aus dem E-Banking hochladen → offene Rechnungen werden «bezahlt»
+- [ ] **Pflege-Mails**: Bestellung als geliefert markieren, unter Einstellungen «Tage nach geliefert» auf 1 setzen,
+      am nächsten Tag `docker compose exec app php artisan pflanzfarm:pflegemails`; saisonal: im Ratgeber-Artikel den
+      aktuellen Monat ankreuzen
+- [ ] **Bilder**: Handyfoto als Produktbild hochladen → im Ordner `storage/app/public/produkte` entstehen `-400/-800/-1600.webp`
 - [ ] **Lager-Warnung**: Bestand einer Grösse unter die Warngrenze (Einstellungen, Standard 10) bestellen → E-Mail ans Team
 - [ ] **Zahlungserinnerungen**: In den Einstellungen Abstand und Anzahl festlegen; manuell testen mit
       `docker compose exec app php artisan pflanzfarm:zahlungserinnerungen`

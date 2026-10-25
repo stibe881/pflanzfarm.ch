@@ -1397,3 +1397,74 @@ a.search-hit:focus-visible {
   justify-self: start;
   margin-top: auto;
 }
+
+/* Pflanzservice, Gutscheincode */
+.checkout .planting-choice {
+  margin: 4px 0 16px;
+}
+.coupon-field {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0 2px;
+}
+.coupon-field input {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #cbd6c8;
+  border-radius: 5px;
+  background: #fff;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+.coupon-field input::placeholder {
+  text-transform: none;
+}
+.coupon-field.has-error input {
+  border-color: #a3412a;
+}
+.coupon-field .button {
+  min-height: 42px;
+  padding: 0 14px;
+}
+.coupon-remove {
+  background: none;
+  padding: 0 4px;
+  font-size: 1rem;
+  line-height: 1;
+  color: inherit;
+}
+
+/* Warteliste «wieder an Lager» */
+.stock-alert {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 4px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--sage-soft);
+  font-size: 0.86rem;
+}
+.stock-alert > div {
+  display: flex;
+  gap: 8px;
+}
+.stock-alert input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #cbd6c8;
+  border-radius: 5px;
+  background: #fff;
+  color: var(--ink);
+}
+.stock-alert small {
+  color: #4b6a5d;
+  font-size: 0.74rem;
+}
+.stock-alert--done {
+  color: #2f6a4a;
+  font-weight: 600;
+}
