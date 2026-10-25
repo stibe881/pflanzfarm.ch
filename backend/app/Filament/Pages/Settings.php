@@ -10,6 +10,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\HtmlString;
 
 class Settings extends Page implements HasForms
 {
@@ -37,30 +38,91 @@ class Settings extends Page implements HasForms
 
     public function form(Form $form): Form
     {
-        return $form->statePath('data')->schema([
-            Forms\Components\Section::make('Öffnungszeiten')->description('Erscheinen auf der Kontaktseite.')->schema([
-                Forms\Components\Repeater::make('opening_hours')->label('')->columns(2)->addActionLabel('Zeile hinzufügen')->schema([
-                    Forms\Components\TextInput::make('label')->label('Bezeichnung')->required()->placeholder('z. B. Montag bis Freitag'),
-                    Forms\Components\TextInput::make('value')->label('Zeiten')->required()->placeholder('z. B. 8.00–12.00 und 13.30–17.30 Uhr'),
+        return $form->statePath('data')->columns(5)->schema([
+            Forms\Components\Group::make()->columnSpan(['default' => 5, 'xl' => 3])->schema($this->fields()),
+            Forms\Components\Section::make('Live-Vorschau')->columnSpan(['default' => 5, 'xl' => 2])
+                ->extraAttributes(['style' => 'position: sticky; top: 5rem;'])
+                ->schema([
+                    Forms\Components\Placeholder::make('preview')->hiddenLabel()
+                        ->content(fn (Forms\Get $get) => new HtmlString(view('filament.forms.settings-preview', self::previewData($get))->render())),
                 ]),
-                Forms\Components\Textarea::make('opening_note')->label('Hinweis unter den Öffnungszeiten')->rows(2),
+        ]);
+    }
+
+    private function fields(): array
+    {
+        return [
+            Forms\Components\Section::make('Öffnungszeiten')->description('Erscheinen auf der Kontaktseite.')->schema([
+                Forms\Components\Repeater::make('opening_hours')->label('')->live()->columns(2)->addActionLabel('Zeile hinzufügen')->schema([
+                    Forms\Components\TextInput::make('label')->label('Bezeichnung')->required()->live(debounce: 500)->placeholder('z. B. Montag bis Freitag'),
+                    Forms\Components\TextInput::make('value')->label('Zeiten')->required()->live(debounce: 500)->placeholder('z. B. 8.00–12.00 und 13.30–17.30 Uhr'),
+                ]),
+                Forms\Components\Textarea::make('opening_note')->label('Hinweis unter den Öffnungszeiten')->rows(2)->live(debounce: 500),
             ]),
             Forms\Components\Section::make('Lieferung und Zahlung')->columns(2)->schema([
-                Money::input('delivery_fee', 'Lieferpauschale')->required(),
-                Money::input('free_delivery_from', 'Gratis-Lieferung ab Bestellwert')->helperText('0 = nie gratis'),
-                Forms\Components\Toggle::make('invoice_enabled')->label('Zahlung auf Rechnung anbieten'),
-                Forms\Components\TextInput::make('invoice_due_days')->label('Zahlungsfrist Rechnung (Tage)')->numeric()->minValue(1)->maxValue(90),
-                Forms\Components\Toggle::make('cash_enabled')->label('Barzahlung bei Abholung anbieten'),
+                Money::input('delivery_fee', 'Lieferpauschale')->required()->live(debounce: 500),
+                Money::input('free_delivery_from', 'Gratis-Lieferung ab Bestellwert')->live(debounce: 500)->helperText('0 = nie gratis'),
+                Forms\Components\Toggle::make('invoice_enabled')->label('Zahlung auf Rechnung anbieten')->live(),
+                Forms\Components\TextInput::make('invoice_due_days')->label('Zahlungsfrist Rechnung (Tage)')->numeric()->live(debounce: 500)->minValue(1)->maxValue(90),
+                Forms\Components\Toggle::make('cash_enabled')->label('Barzahlung bei Abholung anbieten')->live(),
             ]),
             Forms\Components\Section::make('Rechnungsangaben')->columns(2)->schema([
-                Forms\Components\TextInput::make('iban')->label('IBAN für Rechnungen (QR-Rechnung)')->placeholder('CH.. .... .... .... .... .')
+                Forms\Components\TextInput::make('iban')->label('IBAN für Rechnungen (QR-Rechnung)')->live(debounce: 500)
+                    ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                        if (filled($value) && count(\Sprain\SwissQrBill\DataGroup\Element\CreditorInformation::create(preg_replace('/\\s+/', '', $value))->getViolations())) {
+                            $fail('Diese IBAN ist ungültig.');
+                        }
+                    })->placeholder('CH.. .... .... .... .... .')
                     ->helperText('Mit IBAN enthält die Rechnung einen Swiss-QR-Zahlteil.'),
-                Forms\Components\TextInput::make('vat_number')->label('MWST-Nummer (falls vorhanden)')->placeholder('CHE-...MWST'),
+                Forms\Components\TextInput::make('vat_number')->label('MWST-Nummer (falls vorhanden)')->live(debounce: 500)->placeholder('CHE-...MWST'),
             ]),
             Forms\Components\Section::make('Benachrichtigungen')->schema([
-                Forms\Components\TextInput::make('notify_email')->label('E-Mail für neue Bestellungen und Anfragen')->email()->required(),
+                Forms\Components\TextInput::make('notify_email')->label('E-Mail für neue Bestellungen und Anfragen')->email()->required()->live(debounce: 500),
             ]),
-        ]);
+        ];
+    }
+
+    /** Werte für die Vorschau; Beträge kommen aus dem Formular in Franken. */
+    private static function previewData(Forms\Get $get): array
+    {
+        $fee = (float) $get('delivery_fee');
+        $free = (float) $get('free_delivery_from');
+        $example = 180.0;
+        $dueDays = max(1, (int) $get('invoice_due_days'));
+
+        $iban = trim((string) $get('iban'));
+        $ibanStatus = 'empty';
+        if ($iban !== '') {
+            try {
+                $info = \Sprain\SwissQrBill\DataGroup\Element\CreditorInformation::create(preg_replace('/\s+/', '', $iban));
+                $ibanStatus = count($info->getViolations()) ? 'invalid' : ($info->containsQrIban() ? 'qr' : 'ok');
+            } catch (\Throwable) {
+                $ibanStatus = 'invalid';
+            }
+        }
+
+        $methods = [['Karte oder TWINT', 'Sicher bezahlen über Stripe.']];
+        if ($get('invoice_enabled')) {
+            $methods[] = ['Rechnung', "Zahlbar innert {$dueDays} Tagen, Rechnung per E-Mail."];
+        }
+        if ($get('cash_enabled')) {
+            $methods[] = ['Barzahlung bei Abholung', 'Nur bei Abholung in Ebersecken.'];
+        }
+
+        return [
+            'hours' => array_values(array_filter((array) $get('opening_hours'), 'is_array')),
+            'note' => $get('opening_note'),
+            'example' => $example,
+            'free' => $free,
+            'shippingExample' => $free > 0 && $example >= $free ? 0 : $fee,
+            'methods' => $methods,
+            'dueDays' => $dueDays,
+            'dueDate' => now()->addDays($dueDays)->format('d.m.Y'),
+            'iban' => $iban,
+            'ibanStatus' => $ibanStatus,
+            'vat' => $get('vat_number'),
+            'notify' => $get('notify_email'),
+        ];
     }
 
     public function save(): void
