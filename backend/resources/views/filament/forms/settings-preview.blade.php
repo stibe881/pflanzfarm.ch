@@ -34,12 +34,18 @@
             <p style="margin:8px 0 0; color:#4b6a5d; font-size:12px;">
                 {{ $free > 0 ? 'Gratis-Lieferung ab '.$chf($free).'. ' : 'Lieferung wird immer berechnet. ' }}Abholung in Ebersecken ist immer gratis.
             </p>
-            <div style="margin-top:10px; font-size:12px; color:#24493a;">
-                Versandklassen:
+            <table style="width:100%; border-collapse:collapse; margin-top:14px; font-size:12px; color:#1f2523;">
+                <tr>
+                    <th style="text-align:left; font-weight:600; color:#6b7069; padding:0 0 4px; border-bottom:1px solid #d9ddd9;">Versandklasse</th>
+                    <th style="text-align:right; font-weight:600; color:#6b7069; padding:0 0 4px; border-bottom:1px solid #d9ddd9;">Kosten</th>
+                </tr>
                 @foreach($classes as [$cn, $cp, $cd])
-                    <span style="display:inline-block; margin:2px 4px 0 0; padding:2px 8px; border-radius:999px; background:#fff; border:1px solid #dfe6dc;">{{ $cn }} {{ $chf($cp) }}{{ $cd ? ' · Standard' : '' }}</span>
+                    <tr>
+                        <td style="padding:5px 0; border-bottom:1px solid #ecefec;">{{ $cn }}@if($cd)<span style="color:#6b7069;"> · Standard</span>@endif</td>
+                        <td style="padding:5px 0; border-bottom:1px solid #ecefec; text-align:right; font-variant-numeric:tabular-nums;">{{ $chf($cp) }}</td>
+                    </tr>
                 @endforeach
-            </div>
+            </table>
             <div style="display:grid; gap:6px; margin-top:12px;">
                 @foreach($methods as [$name, $hint])
                     <div style="display:flex; gap:10px; padding:9px 12px; border:1px solid #cbd6c8; border-radius:6px; background:#fff;">
