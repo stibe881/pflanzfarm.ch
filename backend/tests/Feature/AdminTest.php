@@ -25,7 +25,10 @@ class AdminTest extends TestCase
     {
         $this->get('/admin')->assertRedirect('/admin/login');
         $customer = User::factory()->create(['role' => 'customer']);
-        $this->actingAs($customer)->get('/admin')->assertForbidden();
+        // Kundenkonto wird abgemeldet und zur Admin-Anmeldung geschickt statt «403»
+        $this->actingAs($customer)->get('/admin/orders')->assertRedirect('/admin/login');
+        $this->assertGuest();
+        $this->get('/admin/login')->assertSee('Kundenkonto angemeldet');
     }
 
     public function test_admin_pages_render(): void

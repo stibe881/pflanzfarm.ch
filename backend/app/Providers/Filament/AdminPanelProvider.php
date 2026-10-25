@@ -63,7 +63,13 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
-            ]);
+                \App\Http\Middleware\AdminAuthenticate::class,
+            ])
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
+                fn () => session('admin_notice')
+                    ? new \Illuminate\Support\HtmlString('<div style="padding:10px 14px;border-radius:8px;background:#fef3c7;color:#78350f;font-size:14px">'.e(session('admin_notice')).'</div>')
+                    : '',
+            );
     }
 }

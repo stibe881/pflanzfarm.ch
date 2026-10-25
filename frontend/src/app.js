@@ -14004,6 +14004,11 @@ function O1() {
         window.localStorage.setItem(pf_consentKey, JSON.stringify({ analytics: v, savedAt: new Date().toISOString() }));
       } catch {}
       (pf_applyConsent(v), Ue(v ? "Danke – Ihre Einwilligung wurde gespeichert." : "Ihre Auswahl wurde gespeichert."));
+      // Fokus nicht auf den Sprunglink fallen lassen, wenn der Hinweis verschwindet
+      window.setTimeout(() => {
+        var T;
+        return (T = document.getElementById("main-content")) == null ? void 0 : T.focus({ preventScroll: !0 });
+      }, 0);
     },
     cl = () => {
       (ke((Ce == null ? void 0 : Ce.preferences) ?? !1), Mt(!0));
@@ -16186,76 +16191,92 @@ function O1() {
                       pf_PageHead("AGB", "Allgemeine Geschäftsbedingungen", "Für Bestellungen im Online-Shop der Pflanzfarm Steinmann. Stand: Oktober 2026."),
                       h("div", { className: "legal-grid" }, ...pf_terms.map(([v, T]) => h("section", { key: v }, h("h2", null, v), h("p", null, T)))),
                     ),
-                  i.jsxs("footer", {
-                    className: "site-footer",
-                    "aria-label": "Fussbereich",
-                    children: [
-                      i.jsxs("div", {
-                        className: "container",
-                        children: [
-                          i.jsxs("div", {
-                            children: [
-                              i.jsx(pf, { compact: !0, onActivate: () => I("home") }),
-                              i.jsx("p", {
-                                children: "Robuste Pflanzen und persönliche Gartenkompetenz aus der Schweiz.",
-                              }),
-                            ],
-                          }),
-                          i.jsxs("div", {
-                            children: [
-                              i.jsx("span", { children: "Shop" }),
-                              i.jsx("a", { ...Lk("shop"), children: "Alle Pflanzen" }),
-                              i.jsx("a", { ...Lk("cart"), children: "Warenkorb" }),
-                              i.jsx("a", { ...Lk("account"), children: "Mein Konto" }),
-                              i.jsx("a", { ...Lk("references"), children: "Referenzen" }),
-                            ],
-                          }),
-                          i.jsxs("div", {
-                            children: [
-                              i.jsx("span", { children: "Service" }),
-                              i.jsx("a", { ...Lk("service"), children: "Gartenservice" }),
-                              i.jsx("a", { ...Lk("guide"), children: "Ratgeber" }),
-                              i.jsx("a", { ...Lk("about"), children: "Über uns" }),
-                              i.jsx("a", { ...Lk("contact"), children: "Kontakt & Anfahrt" }),
-                            ],
-                          }),
-                          i.jsxs("div", {
-                            children: [
-                              i.jsx("span", { children: "Kontakt" }),
-                              i.jsxs("p", { children: ["Pflanzfarm Steinmann", i.jsx("br", {}), "Untergretti 2", i.jsx("br", {}), "6245 Ebersecken"] }),
-                              i.jsxs("p", {
-                                children: [
-                                  i.jsx("a", { href: "tel:+41793361495", children: "+41 79 336 14 95" }),
-                                  i.jsx("br", {}),
-                                  i.jsx("a", { href: "mailto:info@pflanzfarm.ch", children: "info@pflanzfarm.ch" }),
-                                ],
-                              }),
-                              ...(pf_catalogSettings.openingHours || []).map((v, T) =>
-                                i.jsxs("p", { children: [v.label, ": ", v.value] }, `oh${T}`),
-                              ),
-                              i.jsx(l0, {}),
-                            ],
-                          }),
-                        ],
-                      }),
-                      i.jsxs("div", {
-                        className: "container site-footer__bottom",
-                        children: [
-                          i.jsx("span", { children: "© 2026 Pflanzfarm Steinmann, Ebersecken" }),
-                          i.jsxs("div", {
-                            className: "footer-legal-links",
-                            children: [
-                              i.jsx("a", { ...Lk("privacy"), children: "Datenschutz" }),
-                              i.jsx("a", { ...Lk("terms"), children: "AGB" }),
-                              i.jsx("a", { ...Lk("imprint"), children: "Impressum" }),
-                              i.jsx("a", { ...Lk("accessibility"), children: "Barrierefreiheit" }),
-                              i.jsx("button", { type: "button", onClick: () => pf_setBo(!0), children: "Cookie-Einstellungen" }),
-                            ],
-                          }),
-                        ],
-                      }),
-                    ],
-                  }),
+                  h(
+                    "footer",
+                    { className: "pf-footer", "aria-label": "Fussbereich" },
+                    h(
+                      "div",
+                      { className: "pf-footer__cta" },
+                      h(
+                        "div",
+                        { className: "container pf-footer__cta-inner" },
+                        h(
+                          "div",
+                          null,
+                          h("span", { className: "pf-footer__kicker" }, "Persönlich beraten"),
+                          h("h2", null, "Fragen zu Ihrem Garten?"),
+                          h("p", null, "Wir helfen Ihnen gern bei der Wahl der richtigen Pflanzen – telefonisch, per WhatsApp oder vor Ort in Ebersecken."),
+                        ),
+                        h(
+                          "div",
+                          { className: "pf-footer__cta-actions" },
+                          h("a", { className: "button button--light", href: "tel:+41793361495" }, h(pf_Phone, { size: 17 }), " 079 336 14 95"),
+                          h("a", { className: "button button--outline-light", href: "https://wa.me/41793361495", target: "_blank", rel: "noopener noreferrer" }, h(g1, { size: 17 }), " WhatsApp"),
+                          h("a", { className: "button button--outline-light", ...Lk("contact") }, "Anfrage senden ", h(Ve, { size: 17 })),
+                        ),
+                      ),
+                    ),
+                    h(
+                      "div",
+                      { className: "container pf-footer__grid" },
+                      h(
+                        "div",
+                        { className: "pf-footer__brand" },
+                        h("a", { ...Lk("home"), className: "pf-footer__logo", "aria-label": "Pflanzfarm Startseite" }, h("img", { src: He("/assets/pflanzfarm-logo.webp"), alt: "Pflanzfarm Steinmann", width: 120, height: 81 })),
+                        h("p", null, "Robuste Pflanzen und persönliche Gartenkompetenz – seit 2020 aus unserer Baumschule in Ebersecken."),
+                        h(
+                          "div",
+                          { className: "pf-footer__social", "aria-label": "Social Media" },
+                          ...S1.map(({ label: v, href: T, icon: E }) =>
+                            h("a", { key: v, href: T, target: "_blank", rel: "noopener noreferrer", "aria-label": `Pflanzfarm auf ${v}`, title: v }, h(E, { size: 18 })),
+                          ),
+                        ),
+                      ),
+                      h(
+                        "nav",
+                        { className: "pf-footer__col", "aria-label": "Shop" },
+                        h("h3", null, "Shop"),
+                        h("a", { ...Lk("shop") }, "Alle Pflanzen"),
+                        h("a", { ...Lk("cart") }, "Warenkorb"),
+                        h("a", { ...Lk("account") }, "Mein Konto"),
+                        h("a", { ...Lk("terms") }, "AGB"),
+                      ),
+                      h(
+                        "nav",
+                        { className: "pf-footer__col", "aria-label": "Service" },
+                        h("h3", null, "Service"),
+                        h("a", { ...Lk("service") }, "Gartenservice"),
+                        h("a", { ...Lk("references") }, "Referenzen"),
+                        h("a", { ...Lk("guide") }, "Ratgeber"),
+                        h("a", { ...Lk("about") }, "Über uns"),
+                      ),
+                      h(
+                        "div",
+                        { className: "pf-footer__col pf-footer__visit" },
+                        h("h3", null, "Besuch"),
+                        h("p", null, "Pflanzfarm Steinmann", h("br", null), "Untergretti 2, 6245 Ebersecken"),
+                        ...(pf_catalogSettings.openingHours || []).map((v, T) => h("p", { key: `oh${T}`, className: "pf-footer__hours" }, h("b", null, v.label), h("br", null), v.value)),
+                        h("a", { ...Lk("contact") }, "Anfahrt & Karte ", h(Ve, { size: 15 })),
+                      ),
+                    ),
+                    h(
+                      "div",
+                      { className: "pf-footer__bottom" },
+                      h(
+                        "div",
+                        { className: "container pf-footer__bottom-inner" },
+                        h("span", null, "© 2026 Pflanzfarm Steinmann · info@pflanzfarm.ch"),
+                        h(
+                          "nav",
+                          { className: "pf-footer__legal", "aria-label": "Rechtliches" },
+                          h("a", { ...Lk("privacy") }, "Datenschutz"),
+                          h("a", { ...Lk("imprint") }, "Impressum"),
+                          h("a", { ...Lk("accessibility") }, "Barrierefreiheit"),
+                          h("button", { type: "button", onClick: () => pf_setBo(!0) }, "Cookie-Einstellungen"),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               }),
         ],
