@@ -14619,69 +14619,65 @@ function O1() {
               }),
             ],
           }),
-          i.jsx("section", {
-            className: "section references-preview",
-            children: i.jsxs("div", {
-              className: "container",
-              children: [
-                i.jsxs("div", {
-                  className: "section-heading section-heading--split",
-                  children: [
-                    i.jsx("div", { children: i.jsx("h2", { children: "Gärten, die Geschichten erzählen." }) }),
-                    i.jsxs("a", {
-                      className: "text-link",
-                      ...Lk("references"),
-                      children: ["Alle Referenzen ", i.jsx(Ve, { size: 16 })],
-                    }),
-                  ],
-                }),
-                i.jsx("div", {
-                  className: "reference-grid",
-                  children: Sf.map((v, T) =>
-                    i.jsx(
-                      "article",
-                      {
-                        className: `reference-card reference-card--${T + 1}`,
-                        children: i.jsxs("a", {
-                          className: "reference-card__action",
-                          ...Lk("references"),
-                          "aria-label": `Referenz ${v.title} ansehen`,
-                          children: [
-                            v.image
-                              ? i.jsx("img", {
-                                  src: He(v.image),
-                                  srcSet: At(v.imageSet),
-                                  sizes: "(max-width: 760px) 92vw, 46vw",
-                                  loading: "lazy",
-                                  decoding: "async",
-                                  alt: "",
-                                })
-                              : i.jsxs("span", {
-                                  className: "reference-card__art",
-                                  children: [
-                                    i.jsx(il, { size: 46 }),
-                                    i.jsx("span", { children: T === 1 ? "Naturstein & Struktur" : "Obst für morgen" }),
-                                  ],
-                                }),
-                            i.jsxs("span", {
-                              className: "reference-card__overlay",
-                              children: [
-                                i.jsx("span", { children: v.category }),
-                                i.jsx("span", { className: "reference-card__title", children: v.title }),
-                                i.jsx("span", { className: "reference-card__description", children: v.description }),
-                                i.jsx("i", { children: i.jsx(i0, { size: 20 }) }),
-                              ],
-                            }),
-                          ],
-                        }),
-                      },
-                      v.title,
+          h(
+            "section",
+            { className: "section ref-showcase", "aria-labelledby": "ref-showcase-title" },
+            h(
+              "div",
+              { className: "container" },
+              h(
+                "div",
+                { className: "ref-showcase__head" },
+                h(
+                  "div",
+                  null,
+                  h("span", { className: "eyebrow" }, "Referenzen"),
+                  h("h2", { id: "ref-showcase-title" }, "Gärten, die Geschichten erzählen."),
+                ),
+                h(
+                  "div",
+                  { className: "ref-showcase__intro" },
+                  h("p", null, "Vom dichten Sichtschutz bis zum Formgehölz: Ein Blick auf Projekte, die wir mit unseren Pflanzen umgesetzt haben."),
+                  h("a", { className: "text-link", ...Lk("references") }, "Alle Referenzen ", h(Ve, { size: 16 })),
+                ),
+              ),
+              h(
+                "div",
+                { className: `ref-showcase__grid ref-showcase__grid--${Math.min(Sf.length, 3)}` },
+                ...Sf.slice(0, 3).map((v, T) =>
+                  h(
+                    "a",
+                    { key: v.title, className: T === 0 ? "ref-tile ref-tile--main" : "ref-tile", ...Lk("references"), "aria-label": `Referenz ${v.title} ansehen` },
+                    v.image
+                      ? h("img", {
+                          src: He(v.image),
+                          srcSet: At(v.imageSet || v.image),
+                          sizes: T === 0 ? "(max-width: 760px) 92vw, 60vw" : "(max-width: 760px) 92vw, 30vw",
+                          loading: "lazy",
+                          decoding: "async",
+                          alt: v.title,
+                        })
+                      : h("span", { className: "ref-tile__placeholder" }, h(il, { size: 42 })),
+                    h(
+                      "span",
+                      { className: "ref-tile__card" },
+                      h("span", { className: "ref-tile__category" }, v.category),
+                      h("span", { className: "ref-tile__title" }, v.title),
+                      T === 0 && v.description && h("span", { className: "ref-tile__text" }, v.description),
+                      (v.location || v.year) &&
+                        h(
+                          "span",
+                          { className: "ref-tile__meta" },
+                          v.location && h("span", null, h(Jm, { size: 13 }), " ", v.location),
+                          v.year && h("span", null, h(u1, { size: 13 }), " ", v.year),
+                        ),
+                      h("span", { className: "ref-tile__arrow", "aria-hidden": "true" }, h(i0, { size: 18 })),
                     ),
                   ),
-                }),
-              ],
-            }),
-          }),
+                ),
+              ),
+            ),
+          ),
           i.jsxs("section", {
             className: "section category-section container",
             children: [
