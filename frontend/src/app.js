@@ -16134,6 +16134,8 @@ function O1() {
         className: "app",
         children: [
           i.jsx("a", { className: "skip-link", href: "#main-content", children: "Zum Inhalt springen" }),
+          pf_catalogSettings.testMode &&
+            i.jsx("div", { className: "test-banner", role: "note", children: "Testumgebung – Bestellungen, Zahlungen und E-Mails sind nicht echt." }),
           i.jsxs(i.Fragment, {
                 children: [
                   cu(),

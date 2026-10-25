@@ -15,6 +15,13 @@ class StripeCheckout
     /** Erstellt eine Stripe-Checkout-Session (Karte und TWINT) und gibt die Zahlungs-URL zurück. */
     public function createSession(Order $order): string
     {
+        if (config('pflanzfarm.fake_payments')) {
+            // Testumgebung ohne Stripe-Konto: eigene Testseite simuliert die Zahlung
+            $order->update(['stripe_session_id' => 'test_'.$order->number]);
+
+            return '/test-zahlung/'.$order->number.'?t='.$order->access_token;
+        }
+
         $lines = $order->items->map(fn ($item) => [
             'quantity' => $item->quantity,
             'price_data' => [

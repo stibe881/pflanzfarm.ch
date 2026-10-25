@@ -60,6 +60,7 @@ class CatalogController extends Controller
                 'freeDeliveryFrom' => (int) Setting::get('free_delivery_from'),
                 'invoiceEnabled' => (bool) Setting::get('invoice_enabled'),
                 'cashEnabled' => (bool) Setting::get('cash_enabled'),
+                'testMode' => (bool) config('pflanzfarm.test_mode'),
             ],
         ]);
     }

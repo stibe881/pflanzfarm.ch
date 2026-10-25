@@ -1,0 +1,64 @@
+# Testumgebung: docker compose up -d   →   Website http://localhost:8080, E-Mails http://localhost:8025
+services:
+  app:
+    build: ./backend
+    ports:
+      - "8080:80"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "false"
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      APP_KEY: ${APP_KEY:-base64:cGZsYW56ZmFybS10ZXN0dW1nZWJ1bmctbnVyLXRlc3Q=}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_DATABASE: pflanzfarm
+      DB_USERNAME: pflanzfarm
+      DB_PASSWORD: pflanzfarm-test
+      SESSION_DRIVER: database
+      SESSION_SECURE_COOKIE: "false"
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost:8080,127.0.0.1:8080}
+      QUEUE_CONNECTION: database
+      # Alle E-Mails landen im Test-Postfach (Mailpit), nicht bei echten Empfängern
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM_ADDRESS: shop@pflanzfarm.ch
+      MAIL_FROM_NAME: "Pflanzfarm Steinmann (Test)"
+      PFLANZFARM_TEST_MODE: "true"
+      # Zahlung simulieren. Für echte Stripe-Tests: STRIPE_FAKE=false und Testschlüssel in .env eintragen
+      STRIPE_FAKE: ${STRIPE_FAKE:-true}
+      STRIPE_KEY: ${STRIPE_KEY:-}
+      STRIPE_SECRET: ${STRIPE_SECRET:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      SITE_PASSWORD: ${SITE_PASSWORD:-}
+      TEST_ADMIN_EMAIL: ${TEST_ADMIN_EMAIL:-admin@pflanzfarm.test}
+      TEST_ADMIN_PASSWORD: ${TEST_ADMIN_PASSWORD:-Pflanzfarm-Test-2026}
+    volumes:
+      - uploads:/var/www/html/storage/app/public
+    depends_on:
+      - db
+      - mailpit
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: pflanzfarm
+      MYSQL_USER: pflanzfarm
+      MYSQL_PASSWORD: pflanzfarm-test
+      MYSQL_ROOT_PASSWORD: pflanzfarm-root-test
+    volumes:
+      - db:/var/lib/mysql
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "8025:8025"
+    environment:
+      MP_UI_AUTH: ${MAILPIT_AUTH:-}
+    restart: unless-stopped
+
+volumes:
+  db:
+  uploads:

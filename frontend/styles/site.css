@@ -753,3 +753,13 @@ a.cart-button {
     grid-template-columns: 1fr 1fr;
   }
 }
+.test-banner {
+  position: relative;
+  z-index: 30;
+  padding: 7px 16px;
+  background: #f6c344;
+  color: #3b2a00;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+}

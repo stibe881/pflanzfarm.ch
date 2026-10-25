@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        $middleware->prepend(\App\Http\Middleware\TestEnvironmentGuard::class);
         $middleware->trustProxies(at: '*');
         $middleware->validateCsrfTokens(except: ['stripe/webhook', 'newsletter/abmelden/*']);
     })

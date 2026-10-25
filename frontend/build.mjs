@@ -1,7 +1,7 @@
 // Baut die Website nach backend/public (JS/CSS mit Hash) und legt die HTML-Vorlage für Laravel ab.
 import { build } from "esbuild";
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync, readdirSync, unlinkSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, unlinkSync, mkdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -42,5 +42,18 @@ writeFileSync(join(assets, cssName), cssCode);
 const html = readFileSync(join(here, "index.template.html"), "utf8").replace("__JS__", jsName).replace("__CSS__", cssName);
 mkdirSync(join(here, "..", "backend", "resources", "views"), { recursive: true });
 writeFileSync(join(here, "..", "backend", "resources", "spa.html"), html);
-writeFileSync(join(pub, "index.html"), html);
+// Vorgerenderte Seiten auf die neuen Dateinamen umstellen, damit sie nach einem Build nicht ins Leere zeigen
+const walk = (dir) =>
+  readdirSync(dir).flatMap((f) => {
+    const p = join(dir, f);
+    if (["assets", "storage", "css", "js", "vendor"].includes(f) && dir === pub) return [];
+    return statSync(p).isDirectory() ? walk(p) : f === "index.html" ? [p] : [];
+  });
+for (const file of walk(pub)) {
+  const page = readFileSync(file, "utf8");
+  writeFileSync(
+    file,
+    page.replace(/\/assets\/index-[0-9a-f]{8}\.js/g, `/assets/${jsName}`).replace(/\/assets\/index-[0-9a-f]{8}\.css/g, `/assets/${cssName}`),
+  );
+}
 console.log(`gebaut: ${jsName} (${(jsCode.length / 1024).toFixed(0)} KB), ${cssName}`);
