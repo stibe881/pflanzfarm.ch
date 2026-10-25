@@ -4,11 +4,24 @@
 # PHP-Version wählbar, z. B.:          PHP=php8.3 sh backend/deploy/install.sh
 set -e
 cd "$(dirname "$0")/.."
-PHP="${PHP:-php}"
+# Neueste verfügbare PHP-Version suchen (Hetzner hat je nach Server z. B. php83 oder php8.3 zusätzlich zu php)
+if [ -z "$PHP" ]; then
+  PHP=php
+  for c in php8.4 php84 php8.3 php83 /usr/bin/php8.4 /usr/bin/php8.3; do
+    if command -v "$c" >/dev/null 2>&1; then PHP="$c"; break; fi
+  done
+fi
 
-echo "PHP: $($PHP -r 'echo PHP_VERSION;')"
-$PHP -r 'exit(version_compare(PHP_VERSION, "8.3.0", ">=") ? 0 : 1);' || {
-  echo "Es wird PHP 8.3 oder neuer benötigt. Versuche z. B.: PHP=php8.3 sh backend/deploy/install.sh"; exit 1; }
+echo "PHP: $($PHP -r 'echo PHP_VERSION;') ($PHP)"
+$PHP -r 'exit(version_compare(PHP_VERSION, "8.2.0", ">=") ? 0 : 1);' || {
+  echo "Es wird PHP 8.2 oder neuer benötigt. Versuche z. B.: PHP=php82 sh backend/deploy/install.sh"; exit 1; }
+
+MISSING=$($PHP -r 'echo implode(" ", array_filter(["intl","gd","zip","pdo_mysql","mbstring","dom","fileinfo","openssl"], fn($e) => !extension_loaded($e)));')
+if [ -n "$MISSING" ]; then
+  echo "Fehlende PHP-Erweiterungen: $MISSING"
+  echo "Bitte in konsoleH unter PHP-Konfiguration aktivieren und das Skript erneut starten."
+  exit 1
+fi
 
 # Composer bei Bedarf lokal herunterladen
 if command -v composer >/dev/null 2>&1; then

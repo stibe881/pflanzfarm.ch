@@ -5,7 +5,7 @@ Diese Anleitung bringt die Testversion auf `https://pflanzfarm.gross-ict.ch` –
 
 ## 1. Vorbereitung in konsoleH
 
-1. **PHP-Version**: Für die Subdomain PHP **8.3** einstellen (Einstellungen → PHP-Konfiguration).
+1. **PHP-Version**: Für die Subdomain PHP **8.2 oder neuer** einstellen (Einstellungen → PHP-Konfiguration).
 2. **Datenbank**: Unter «Datenbanken → MySQL» eine neue Datenbank anlegen. Notiere Datenbankname, Benutzer, Passwort
    und den angezeigten **Host** (z. B. `localhost` oder `sqlXXX.your-server.de`).
 3. **SSH**: Unter «Zugangsdaten» den SSH-Zugang aktivieren bzw. die Zugangsdaten notieren.
@@ -53,8 +53,7 @@ Speichern (Ctrl+O, Enter, Ctrl+X) und das Skript erneut starten:
 sh backend/deploy/install.sh
 ```
 
-Falls «Es wird PHP 8.3 benötigt» erscheint, ist auf der Kommandozeile eine ältere PHP-Version Standard. Dann so:
-`PHP=php83 sh backend/deploy/install.sh` (oder `php8.3`; mit `ls /usr/bin/php*` siehst du, welche es gibt).
+Das Skript sucht automatisch die neueste PHP-Version auf dem Server (mindestens 8.2) und prüft die nötigen Erweiterungen.
 
 ## 4. Webverzeichnis auf `backend/public` zeigen lassen
 
