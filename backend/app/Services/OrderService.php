@@ -25,6 +25,7 @@ class OrderService
         return DB::transaction(function () use ($data, $items, $user) {
             $lines = [];
             $subtotal = 0;
+            $variants = [];
 
             foreach ($items as $item) {
                 /** @var ProductVariant|null $variant */
@@ -35,7 +36,11 @@ class OrderService
                 if ($variant->stock < $item['quantity']) {
                     throw ValidationException::withMessages(['items' => "Von «{$variant->product->name} ({$variant->label})» sind nur noch {$variant->stock} Stück verfügbar."]);
                 }
+                if ($variant->pickup_only && $data['delivery_method'] === 'lieferung') {
+                    throw ValidationException::withMessages(['delivery_method' => "«{$variant->product->name} ({$variant->label})» kann nur in Ebersecken abgeholt werden. Bitte wählen Sie Abholung."]);
+                }
                 $variant->decrement('stock', $item['quantity']);
+                $variants[] = $variant;
                 $lineTotal = $variant->price * $item['quantity'];
                 $subtotal += $lineTotal;
                 $lines[] = [
@@ -48,7 +53,7 @@ class OrderService
                 ];
             }
 
-            $shipping = $data['delivery_method'] === 'lieferung' ? self::shippingFor($subtotal) : 0;
+            $shipping = $data['delivery_method'] === 'lieferung' ? self::shippingFor($subtotal, $variants) : 0;
 
             $order = Order::query()->create([
                 'number' => self::nextNumber(),
@@ -75,11 +80,25 @@ class OrderService
         });
     }
 
-    public static function shippingFor(int $subtotal): int
+    /**
+     * Versandkosten: Es zählt die teuerste Versandklasse im Warenkorb,
+     * ab dem Gratis-Bestellwert (falls gesetzt) ist die Lieferung gratis.
+     *
+     * @param  iterable<ProductVariant>  $variants
+     */
+    public static function shippingFor(int $subtotal, iterable $variants): int
     {
         $free = (int) Setting::get('free_delivery_from');
+        if ($free > 0 && $subtotal >= $free) {
+            return 0;
+        }
 
-        return $free > 0 && $subtotal >= $free ? 0 : (int) Setting::get('delivery_fee');
+        $max = 0;
+        foreach ($variants as $variant) {
+            $max = max($max, (int) $variant->effectiveShippingClass()?->price);
+        }
+
+        return $max;
     }
 
     public static function nextNumber(): string

@@ -26,7 +26,7 @@
     </div>
 
     <div>
-        <p style="{{ $label }}">Kasse – Beispiel mit Warenkorb {{ $chf($example) }}</p>
+        <p style="{{ $label }}">Kasse – Beispiel mit Warenkorb {{ $chf($example) }} (Standardklasse)</p>
         <div style="{{ $card }} background:#f3f0e8;">
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Zwischensumme</span><strong>{{ $chf($example) }}</strong></div>
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Lieferung</span><span>{{ $shippingExample > 0 ? $chf($shippingExample) : 'gratis' }}</span></div>
@@ -34,6 +34,12 @@
             <p style="margin:8px 0 0; color:#4b6a5d; font-size:12px;">
                 {{ $free > 0 ? 'Gratis-Lieferung ab '.$chf($free).'. ' : 'Lieferung wird immer berechnet. ' }}Abholung in Ebersecken ist immer gratis.
             </p>
+            <div style="margin-top:10px; font-size:12px; color:#24493a;">
+                Versandklassen:
+                @foreach($classes as [$cn, $cp, $cd])
+                    <span style="display:inline-block; margin:2px 4px 0 0; padding:2px 8px; border-radius:999px; background:#fff; border:1px solid #dfe6dc;">{{ $cn }} {{ $chf($cp) }}{{ $cd ? ' · Standard' : '' }}</span>
+                @endforeach
+            </div>
             <div style="display:grid; gap:6px; margin-top:12px;">
                 @foreach($methods as [$name, $hint])
                     <div style="display:flex; gap:10px; padding:9px 12px; border:1px solid #cbd6c8; border-radius:6px; background:#fff;">

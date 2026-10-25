@@ -108,7 +108,8 @@ Die vorgerenderten Seiten dienen Suchmaschinen und dem schnellen ersten Seitenau
 
 - [ ] **AGB** (`/agb/`) sind ein Entwurf und müssen geprüft werden.
 - [ ] **Datenschutzerklärung**: Hosting-Anbieter (Hetzner angenommen), Stripe, Resend, Google Analytics prüfen.
-- [ ] **Einstellungen** im Admin: Lieferpauschale (Standard CHF 49.–), Gratis-Lieferung ab (Standard CHF 500.–), IBAN für QR-Rechnungen, MWST-Nummer, Öffnungszeiten, E-Mail für Benachrichtigungen.
+- [ ] **Versandklassen** im Admin (Shop → Versandklassen) anlegen, z. B. Paket, Kleinlieferung, Grosslieferung, und jeder Produktgrösse zuweisen; sehr grosse Pflanzen als «Nur Abholung» markieren. Die Standardklasse «Standardlieferung» (CHF 49.–) gilt für alle Grössen ohne eigene Klasse.
+- [ ] **Einstellungen** im Admin: Gratis-Lieferung ab (Standard CHF 500.–, 0 = nie gratis), IBAN für QR-Rechnungen, MWST-Nummer, Öffnungszeiten, E-Mail für Benachrichtigungen.
 - [ ] **Produkte**: Preise und Lagerbestand für alle Thuja-Grössen erfassen (aktuell ist nur 80–100 cm bestellbar), Lagerbestände aller Produkte prüfen.
 - [ ] **Google Analytics**: Mess-ID in `frontend/src/app.js` (`pf_gaId`) eintragen und neu bauen.
 - [ ] Testbestellung mit Stripe-Testkarte `4242 4242 4242 4242` und mit TWINT im Testmodus, danach Live-Schlüssel eintragen.

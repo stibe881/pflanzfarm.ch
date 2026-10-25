@@ -15,7 +15,7 @@ class CatalogController extends Controller
     public function __invoke(): JsonResponse
     {
         $products = Product::query()->where('active', true)->orderBy('sort')->orderBy('id')
-            ->with('activeVariants')->get()
+            ->with('activeVariants.shippingClass')->get()
             ->map(fn (Product $p) => self::product($p));
 
         $popup = Popup::query()->current()->latest('starts_at')->first();
@@ -56,7 +56,6 @@ class CatalogController extends Controller
             'settings' => [
                 'openingHours' => Setting::get('opening_hours'),
                 'openingNote' => Setting::get('opening_note'),
-                'deliveryFee' => (int) Setting::get('delivery_fee'),
                 'freeDeliveryFrom' => (int) Setting::get('free_delivery_from'),
                 'invoiceEnabled' => (bool) Setting::get('invoice_enabled'),
                 'cashEnabled' => (bool) Setting::get('cash_enabled'),
@@ -73,6 +72,8 @@ class CatalogController extends Controller
             'label' => $v->label,
             'price' => $v->price / 100,
             'stock' => max(0, $v->stock),
+            'pickupOnly' => $v->pickup_only,
+            'shipping' => ($class = $v->effectiveShippingClass()) ? ['name' => $class->name, 'price' => $class->price / 100] : null,
         ])->values();
 
         return [

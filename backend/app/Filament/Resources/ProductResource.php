@@ -51,7 +51,7 @@ class ProductResource extends Resource
             Forms\Components\Section::make('Grössen, Preise und Lager')->schema([
                 Forms\Components\Repeater::make('variants')->relationship()->label('')
                     ->orderColumn('sort')->reorderableWithButtons()
-                    ->columns(5)
+                    ->columns(6)
                     ->defaultItems(1)
                     ->addActionLabel('Grösse hinzufügen')
                     ->itemLabel(fn (array $state) => $state['label'] ?? null)
@@ -59,8 +59,15 @@ class ProductResource extends Resource
                         Forms\Components\TextInput::make('label')->label('Grösse / Sorte')->required()->placeholder('z. B. 80–100 cm'),
                         Money::input('price', 'Preis inkl. MWST')->required()->helperText('Grössen mit CHF 0.00 sind nicht bestellbar.'),
                         Forms\Components\TextInput::make('stock')->label('Lagerbestand')->numeric()->integer()->required()->default(0),
+                        Forms\Components\Select::make('shipping_class_id')->label('Versandklasse')
+                            ->relationship('shippingClass', 'name')
+                            ->getOptionLabelFromRecordUsing(fn (\App\Models\ShippingClass $c) => $c->name.' ('.Money::format($c->price).')')
+                            ->placeholder('Standard')
+                            ->disabled(fn (Forms\Get $get) => (bool) $get('pickup_only')),
                         Forms\Components\TextInput::make('sku')->label('Artikelnummer'),
                         Forms\Components\Toggle::make('active')->label('Bestellbar')->default(true)->inline(false),
+                        Forms\Components\Toggle::make('pickup_only')->label('Nur Abholung')->live()->inline(false)
+                            ->helperText('Nicht lieferbar, z. B. sehr grosse Pflanzen.'),
                     ]),
             ]),
         ]);

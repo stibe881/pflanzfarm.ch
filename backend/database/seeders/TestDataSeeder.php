@@ -35,6 +35,13 @@ class TestDataSeeder extends Seeder
             ProductVariant::query()->where('label', $label)->update(['price' => $price, 'stock' => $stock, 'active' => true]);
         }
 
+        // Beispiel-Versandklassen: Photinia als Paket, grosse Thuja mit Grosslieferung, 140–160 cm nur Abholung
+        $paket = \App\Models\ShippingClass::query()->firstOrCreate(['name' => 'Paket'], ['price' => 1200, 'description' => 'Versand per Post, 2–3 Arbeitstage', 'sort' => 1]);
+        $gross = \App\Models\ShippingClass::query()->firstOrCreate(['name' => 'Grosslieferung'], ['price' => 12000, 'description' => 'Lieferung mit Lastwagen', 'sort' => 3]);
+        ProductVariant::query()->whereHas('product', fn ($q) => $q->where('slug', 'photinia-fraseri-red-robin'))->update(['shipping_class_id' => $paket->id]);
+        ProductVariant::query()->where('label', '120–140 cm')->update(['shipping_class_id' => $gross->id]);
+        ProductVariant::query()->where('label', '140–160 cm')->update(['pickup_only' => true]);
+
         // Beispiel-IBAN aus der Swiss-QR-Spezifikation, damit Rechnungen einen QR-Zahlteil haben
         Setting::put('iban', 'CH44 3199 9123 0008 8901 2');
 

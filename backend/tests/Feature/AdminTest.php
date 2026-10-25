@@ -41,7 +41,7 @@ class AdminTest extends TestCase
             '/admin/products', '/admin/products/create', '/admin/products/'.Product::first()->id.'/edit',
             '/admin/users', '/admin/users/create', '/admin/users/'.$admin->id,
             '/admin/popups', '/admin/popups/create', '/admin/references', '/admin/guide-articles',
-            '/admin/newsletter-subscribers', '/admin/newsletter-campaigns', '/admin/newsletter-campaigns/create', '/admin/settings',
+            '/admin/newsletter-subscribers', '/admin/newsletter-campaigns', '/admin/newsletter-campaigns/create', '/admin/settings', '/admin/shipping-classes', '/admin/shipping-classes/create',
         ];
         foreach ($pages as $url) {
             $this->actingAs($admin)->get($url)->assertOk();

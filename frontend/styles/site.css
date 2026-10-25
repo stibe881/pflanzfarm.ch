@@ -944,3 +944,20 @@ a.cart-button {
     align-items: flex-start;
   }
 }
+.shipping-note {
+  margin: -6px 0 18px;
+  font-size: 0.8rem;
+  color: #4b6a5d;
+}
+.shipping-note--pickup {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--terracotta-soft);
+  color: #7e432d;
+  font-weight: 600;
+}
+.checkout .choice--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f6f6f4;
+}

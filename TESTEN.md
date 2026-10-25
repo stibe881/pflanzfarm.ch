@@ -32,13 +32,14 @@ Stoppen: `docker compose down`. Alles auf Anfang zurücksetzen (Datenbank leeren
 | Team | `team@pflanzfarm.test` | `Pflanzfarm-Test-2026` |
 | Kunde (mit 2 Beispielbestellungen) | `kunde@pflanzfarm.test` | `Kunde-Test-2026` |
 
-Die Testdaten enthalten zusätzlich Beispielpreise für drei weitere Thuja-Grössen, eine Beispiel-IBAN für QR-Rechnungen,
+Die Testdaten enthalten zusätzlich Beispielpreise für drei weitere Thuja-Grössen, Beispiel-Versandklassen (Photinia als «Paket» CHF 12, Thuja 120–140 cm als «Grosslieferung» CHF 120, Thuja 140–160 cm nur Abholung), eine Beispiel-IBAN für QR-Rechnungen,
 drei Bestellungen in verschiedenen Zuständen und einen Newsletter-Abonnenten. Diese Daten gibt es nur in der Testumgebung.
 
 ## Was du testen kannst
 
 - [ ] **Shop**: Produkte, Grössen mit unterschiedlichem Preis, Merkliste (Herz), Hecken-Rechner
 - [ ] **Warenkorb** bleibt nach dem Neuladen erhalten
+- [ ] **Versandkosten**: Photinia allein (CHF 12), dazu eine Thuja 120–140 cm (es zählt die teuerste Klasse: CHF 120), dazu Thuja 140–160 cm (nur Abholung möglich)
 - [ ] **Kasse als Gast** mit Lieferung und Rechnung → Danke-Seite → Rechnung (PDF mit QR-Zahlteil) → E-Mails im Test-Postfach
 - [ ] **Karte/TWINT**: Es erscheint eine Test-Zahlungsseite mit «Zahlung erfolgreich» oder «Zahlung abbrechen»
 - [ ] **Barzahlung** bei Abholung

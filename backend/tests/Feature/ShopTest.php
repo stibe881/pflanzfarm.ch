@@ -94,6 +94,33 @@ class ShopTest extends TestCase
         $this->postJson('/api/orders', $this->orderPayload(['items' => [['variant_id' => $berries->id, 'quantity' => 1]]]))->assertJsonValidationErrors('items');
     }
 
+    public function test_shipping_uses_most_expensive_class_and_pickup_only(): void
+    {
+        $paket = \App\Models\ShippingClass::query()->create(['name' => 'Paket', 'price' => 1200]);
+        $gross = \App\Models\ShippingClass::query()->create(['name' => 'Grosslieferung', 'price' => 12000]);
+        $photinia = ProductVariant::query()->whereHas('product', fn ($q) => $q->where('slug', 'photinia-fraseri-red-robin'))->first();
+        $photinia->update(['shipping_class_id' => $paket->id]);
+        $thuja = ProductVariant::query()->where('label', '80–100 cm')->first();
+
+        // nur Paket-Artikel: CHF 12
+        $r = $this->postJson('/api/orders', $this->orderPayload(['items' => [['variant_id' => $photinia->id, 'quantity' => 1]]]))->assertCreated();
+        $this->assertSame(1200, Order::query()->where('number', $r->json('order.number'))->value('shipping'));
+
+        // Paket + Grosslieferung: es zählt die teuerste Klasse
+        $thuja->update(['shipping_class_id' => $gross->id]);
+        $r = $this->postJson('/api/orders', $this->orderPayload(['items' => [['variant_id' => $photinia->id, 'quantity' => 1], ['variant_id' => $thuja->id, 'quantity' => 2]]]))->assertCreated();
+        $this->assertSame(12000, Order::query()->where('number', $r->json('order.number'))->value('shipping'));
+
+        // Nur-Abholung-Artikel kann nicht geliefert werden
+        $thuja->update(['pickup_only' => true]);
+        $this->postJson('/api/orders', $this->orderPayload(['items' => [['variant_id' => $thuja->id, 'quantity' => 1]]]))->assertJsonValidationErrors('delivery_method');
+        $this->postJson('/api/orders', $this->orderPayload(['items' => [['variant_id' => $thuja->id, 'quantity' => 1]], 'delivery_method' => 'abholung', 'street' => null]))->assertCreated();
+
+        $catalog = collect($this->getJson('/api/catalog')->json('products'))->firstWhere('slug', 'thuja-smaragd');
+        $this->assertTrue($catalog['variantData'][0]['pickupOnly']);
+        $this->assertSame('Grosslieferung', $catalog['variantData'][0]['shipping']['name']);
+    }
+
     public function test_variant_without_price_is_not_orderable(): void
     {
         $variant = ProductVariant::query()->where('label', '100–120 cm')->first();

@@ -26,7 +26,6 @@ class Setting extends Model
             ['label' => 'Baumschule, Beratung & Abholung', 'value' => 'nach telefonischer Vereinbarung'],
         ],
         'opening_note' => 'Als Familienbetrieb sind wir oft in Gärten unterwegs. Melden Sie sich kurz vor Ihrem Besuch – dann nehmen wir uns Zeit für Sie.',
-        'delivery_fee' => 4900,
         'free_delivery_from' => 50000,
         'invoice_enabled' => true,
         'invoice_due_days' => 30,

@@ -13405,7 +13405,6 @@ let pf_catalogSettings = {
     openingHours: [{ label: "Baumschule, Beratung & Abholung", value: "nach telefonischer Vereinbarung" }],
     openingNote:
       "Als Familienbetrieb sind wir oft in Gärten unterwegs. Melden Sie sich kurz vor Ihrem Besuch – dann nehmen wir uns Zeit für Sie.",
-    deliveryFee: 4900,
     freeDeliveryFrom: 50000,
     invoiceEnabled: !0,
     cashEnabled: !0,
@@ -13443,14 +13442,17 @@ const pf_xsrf = () => decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TO
   // Preis und Bestand der gewählten Grösse
   pf_vd = (o, C) => {
     const _ = (o.variantData || []).find((y) => y.label === C) || (o.variantData || [])[0];
-    return _ || { id: null, label: C, price: o.price, stock: o.stock ?? 0 };
+    return _ || { id: null, label: C, price: o.price, stock: o.stock ?? 0, shipping: null, pickupOnly: !1 };
   },
-  pf_shipping = (o, C) =>
-    C !== "lieferung"
+  // Versandkosten: teuerste Versandklasse im Warenkorb, ab Gratis-Bestellwert gratis
+  pf_shipping = (o, C) => {
+    if (C !== "lieferung" || !o.length) return 0;
+    const _ = o.reduce((y, L) => y + pf_vd(L.product, L.variant).price * L.quantity, 0);
+    return pf_catalogSettings.freeDeliveryFrom > 0 && _ * 100 >= pf_catalogSettings.freeDeliveryFrom
       ? 0
-      : pf_catalogSettings.freeDeliveryFrom > 0 && o * 100 >= pf_catalogSettings.freeDeliveryFrom
-        ? 0
-        : pf_catalogSettings.deliveryFee / 100,
+      : Math.max(0, ...o.map((y) => (pf_vd(y.product, y.variant).shipping || { price: 0 }).price));
+  },
+  pf_pickupOnly = (o) => o.filter((C) => pf_vd(C.product, C.variant).pickupOnly),
   pf_store = {
     get(o, C) {
       try {
@@ -13487,7 +13489,7 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
       street: (C == null ? void 0 : C.street) || "",
       postal_code: (C == null ? void 0 : C.postal_code) || "",
       city: (C == null ? void 0 : C.city) || "",
-      delivery_method: "lieferung",
+      delivery_method: pf_pickupOnly(o).length ? "abholung" : "lieferung",
       payment_method: "stripe",
       note: "",
       accept_terms: !1,
@@ -13498,14 +13500,18 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
     [A, p] = H.useState(""),
     B = (k, ye) => X((Ot) => ({ ...Ot, [k]: ye })),
     ge = o.reduce((k, ye) => k + pf_vd(ye.product, ye.variant).price * ye.quantity, 0),
-    O = pf_shipping(ge, L.delivery_method),
+    O = pf_shipping(o, L.delivery_method),
+    pf_po = pf_pickupOnly(o),
     re = o.filter((k) => !pf_vd(k.product, k.variant).id || k.product.priceOnRequest);
   H.useEffect(() => {
     C && X((k) => ({ ...k, name: k.name || C.name, email: k.email || C.email, phone: k.phone || C.phone || "", street: k.street || C.street || "", postal_code: k.postal_code || C.postal_code || "", city: k.city || C.city || "" }));
   }, [C]);
-  H.useEffect(() => {
+  (H.useEffect(() => {
     L.payment_method === "cash" && L.delivery_method !== "abholung" && B("payment_method", "stripe");
-  }, [L.delivery_method]);
+  }, [L.delivery_method]),
+    H.useEffect(() => {
+      pf_po.length && L.delivery_method === "lieferung" && B("delivery_method", "abholung");
+    }, [pf_po.length]));
   const ve = async (k) => {
     if ((k.preventDefault(), ne)) return;
     (Ne(!0), p(""), Le({}));
@@ -13574,17 +13580,27 @@ function pf_Checkout({ lines: o, user: C, onNavigate: _, onPlaced: y }) {
           "div",
           { className: "choice-list" },
           ...[
-            ["lieferung", "Lieferung", O > 0 || L.delivery_method !== "lieferung" ? `Schweizweit, ${Sa(pf_shipping(ge, "lieferung"))}` : "Schweizweit, gratis"],
-            ["abholung", "Abholung in Ebersecken", "Gratis, Termin nach Vereinbarung"],
-          ].map(([k, ye, Ot]) =>
+            [
+              "lieferung",
+              "Lieferung",
+              pf_po.length
+                ? `Nicht möglich: ${pf_po.map((k) => k.product.name + " (" + k.variant + ")").join(", ")} ${pf_po.length > 1 ? "können" : "kann"} nur abgeholt werden`
+                : pf_shipping(o, "lieferung")
+                  ? `Schweizweit, ${Sa(pf_shipping(o, "lieferung"))}${(pf_vd(o[0].product, o[0].variant).shipping || {}).name ? " (" + o.map((k) => pf_vd(k.product, k.variant).shipping).filter(Boolean).sort((k, ye) => ye.price - k.price)[0].name + ")" : ""}`
+                  : "Schweizweit, gratis",
+              pf_po.length > 0,
+            ],
+            ["abholung", "Abholung in Ebersecken", "Gratis, Termin nach Vereinbarung", !1],
+          ].map(([k, ye, Ot, pf_dis]) =>
             h(
               "label",
-              { key: k, className: L.delivery_method === k ? "choice choice--active" : "choice" },
-              h("input", { type: "radio", name: "delivery_method", checked: L.delivery_method === k, onChange: () => B("delivery_method", k) }),
+              { key: k, className: pf_dis ? "choice choice--disabled" : L.delivery_method === k ? "choice choice--active" : "choice" },
+              h("input", { type: "radio", name: "delivery_method", disabled: pf_dis, checked: L.delivery_method === k, onChange: () => B("delivery_method", k) }),
               h("span", null, h("b", null, ye), h("small", null, Ot)),
             ),
           ),
         ),
+        pf_err(Se, "delivery_method"),
         L.delivery_method === "lieferung" &&
           h(
             "div",
@@ -15094,6 +15110,15 @@ function O1() {
                           }),
                     ],
                   }),
+                  !_.priceOnRequest &&
+                    i.jsx("p", {
+                      className: pf_vd(_, L).pickupOnly ? "shipping-note shipping-note--pickup" : "shipping-note",
+                      children: pf_vd(_, L).pickupOnly
+                        ? "Diese Grösse ist nur zur Abholung in Ebersecken erhältlich (keine Lieferung)."
+                        : pf_vd(_, L).shipping
+                          ? `Lieferung: ${pf_vd(_, L).shipping.name}, ${Sa(pf_vd(_, L).shipping.price)}${pf_catalogSettings.freeDeliveryFrom > 0 ? ` · gratis ab ${Sa(pf_catalogSettings.freeDeliveryFrom / 100)}` : ""} · Abholung gratis`
+                          : "Abholung in Ebersecken gratis",
+                    }),
                   i.jsxs("div", {
                     className: "delivery-points",
                     children: [
@@ -15652,17 +15677,19 @@ function O1() {
                       i.jsxs("div", {
                         children: [
                           i.jsx("span", { children: "Lieferung" }),
-                          i.jsx("span", { children: pf_shipping(ai, "lieferung") ? Sa(pf_shipping(ai, "lieferung")) : "gratis" }),
+                          i.jsx("span", { children: pf_pickupOnly(et).length ? "nur Abholung" : pf_shipping(et, "lieferung") ? Sa(pf_shipping(et, "lieferung")) : "gratis" }),
                         ],
                       }),
                       i.jsx("hr", {}),
                       i.jsxs("div", {
                         className: "order-summary__total",
-                        children: [i.jsx("strong", { children: "Total inkl. MWST" }), i.jsx("strong", { children: Sa(ai + pf_shipping(ai, "lieferung")) })],
+                        children: [i.jsx("strong", { children: "Total inkl. MWST" }), i.jsx("strong", { children: Sa(ai + (pf_pickupOnly(et).length ? 0 : pf_shipping(et, "lieferung"))) })],
                       }),
                       i.jsx("small", {
                         children:
-                          pf_catalogSettings.freeDeliveryFrom > 0 && ai * 100 < pf_catalogSettings.freeDeliveryFrom
+                          pf_pickupOnly(et).length
+                            ? `${pf_pickupOnly(et).map((v) => v.product.name + " (" + v.variant + ")").join(", ")} ${pf_pickupOnly(et).length > 1 ? "können" : "kann"} nur in Ebersecken abgeholt werden.`
+                            : pf_catalogSettings.freeDeliveryFrom > 0 && ai * 100 < pf_catalogSettings.freeDeliveryFrom
                             ? `Gratis-Lieferung ab ${Sa(pf_catalogSettings.freeDeliveryFrom / 100)}. Abholung in Ebersecken ist immer gratis.`
                             : "Abholung in Ebersecken ist gratis. Bezahlung mit Karte, TWINT, auf Rechnung oder bar bei Abholung.",
                       }),

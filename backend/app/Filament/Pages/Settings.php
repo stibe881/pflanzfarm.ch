@@ -60,7 +60,8 @@ class Settings extends Page implements HasForms
                 Forms\Components\Textarea::make('opening_note')->label('Hinweis unter den Öffnungszeiten')->rows(2)->live(debounce: 500),
             ]),
             Forms\Components\Section::make('Lieferung und Zahlung')->columns(2)->schema([
-                Money::input('delivery_fee', 'Lieferpauschale')->required()->live(debounce: 500),
+                Forms\Components\Placeholder::make('shipping_hint')->label('Versandkosten')
+                    ->content(new HtmlString('Werden pro Grösse über <a href="'.\App\Filament\Resources\ShippingClassResource::getUrl().'" style="text-decoration:underline">Versandklassen</a> festgelegt.')),
                 Money::input('free_delivery_from', 'Gratis-Lieferung ab Bestellwert')->live(debounce: 500)->helperText('0 = nie gratis'),
                 Forms\Components\Toggle::make('invoice_enabled')->label('Zahlung auf Rechnung anbieten')->live(),
                 Forms\Components\TextInput::make('invoice_due_days')->label('Zahlungsfrist Rechnung (Tage)')->numeric()->live(debounce: 500)->minValue(1)->maxValue(90),
@@ -85,7 +86,8 @@ class Settings extends Page implements HasForms
     /** Werte für die Vorschau; Beträge kommen aus dem Formular in Franken. */
     private static function previewData(Forms\Get $get): array
     {
-        $fee = (float) $get('delivery_fee');
+        $classes = \App\Models\ShippingClass::query()->orderBy('sort')->get();
+        $fee = ($classes->firstWhere('is_default', true) ?? $classes->first())?->price / 100;
         $free = (float) $get('free_delivery_from');
         $example = 180.0;
         $dueDays = max(1, (int) $get('invoice_due_days'));
@@ -113,6 +115,7 @@ class Settings extends Page implements HasForms
             'hours' => array_values(array_filter((array) $get('opening_hours'), 'is_array')),
             'note' => $get('opening_note'),
             'example' => $example,
+            'classes' => $classes->map(fn ($c) => [$c->name, $c->price / 100, $c->is_default])->all(),
             'free' => $free,
             'shippingExample' => $free > 0 && $example >= $free ? 0 : $fee,
             'methods' => $methods,
