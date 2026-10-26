@@ -41,7 +41,7 @@ class DatabaseSeeder extends Seeder
 
         $photinia = Product::query()->create([
             'name' => 'Photinia fraseri ‘Red Robin’', 'slug' => 'photinia-fraseri-red-robin', 'latin' => 'Photinia × fraseri ‘Red Robin’',
-            'category' => 'Heckenpflanzen', 'badge' => 'Beliebt', 'image' => $this->img('/assets/photinia-red-robin.jpg'),
+            'category' => 'Heckenpflanzen', 'badge' => 'Beliebt', 'image' => $this->img('/assets/photinia-red-robin-v2.jpg'),
             'traits' => ['Immergrün', 'Sonnig', 'Blütenreich'], 'sort' => 2,
             'height_label' => 'Liefergrösse auf Anfrage',
             'description' => 'Glanzmispel mit attraktivem rotem Austrieb für strukturierte, immergrüne Pflanzungen.',
@@ -51,7 +51,7 @@ class DatabaseSeeder extends Seeder
 
         $berries = Product::query()->create([
             'name' => 'Diverse Beerensträucher', 'slug' => 'diverse-beerenstraeucher', 'latin' => 'Ribes – verschiedene Sorten',
-            'category' => 'Beerensträucher', 'badge' => 'Sortiment', 'image' => $this->img('/assets/diverse-beerenstraeucher.jpg'),
+            'category' => 'Beerensträucher', 'badge' => 'Sortiment', 'image' => $this->img('/assets/diverse-beerenstraeucher-v2.jpg'),
             'traits' => ['Sonnig', 'Naschgarten'], 'sort' => 3, 'price_on_request' => true, 'height_label' => 'Verschiedene Sorten',
             'description' => 'Verschiedene Beerensträucher für einen vielfältigen Naschgarten. Preis und Verfügbarkeit auf Anfrage.',
         ]);
