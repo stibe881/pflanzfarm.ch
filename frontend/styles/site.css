@@ -2718,3 +2718,10 @@ button.inline-link:hover {
     flex: 1 1 100%;
   }
 }
+
+/* Stempel im Startseiten-Bild: bei schmaleren Fenstern nicht über den Rand ragen (sonst seitliches Scrollen) */
+@media (max-width: 1260px) {
+  .visual-stamp {
+    right: 10px;
+  }
+}

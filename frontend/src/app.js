@@ -14980,7 +14980,7 @@ function O1() {
                 className: Qe ? "main-nav main-nav--open" : "main-nav",
                 "aria-label": "Hauptnavigation",
                 children: [
-                  i.jsx("a", { ...Lk("shop"), "aria-current": o === "shop" || o === "product" ? "page" : void 0, children: "Pflanzen" }),
+                  i.jsx("a", { ...Lk("shop"), "aria-current": o === "shop" || o === "product" ? "page" : void 0, children: "Pflanzenshop" }),
                   i.jsx("a", { ...Lk("service"), "aria-current": o === "service" ? "page" : void 0, children: "Gartenservice" }),
                   i.jsx("a", { ...Lk("references"), "aria-current": o === "references" ? "page" : void 0, children: "Referenzen" }),
                   i.jsx("a", { ...Lk("guide"), "aria-current": o === "guide" ? "page" : void 0, children: "Ratgeber" }),
@@ -17011,7 +17011,7 @@ function O1() {
                       h(
                         "nav",
                         { className: "pf-footer__nav", "aria-label": "Fussnavigation" },
-                        h("a", { ...Lk("shop") }, "Pflanzen"),
+                        h("a", { ...Lk("shop") }, "Pflanzenshop"),
                         h("a", { ...Lk("service") }, "Gartenservice"),
                         h("a", { ...Lk("references") }, "Referenzen"),
                         h("a", { ...Lk("guide") }, "Ratgeber"),
