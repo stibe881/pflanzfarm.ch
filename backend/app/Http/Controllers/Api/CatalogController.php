@@ -170,6 +170,7 @@ class CatalogController extends Controller
         // Für die mitgelieferten Bilder gibt es WebP-Varianten in zwei Breiten.
         $map = [
             '/assets/thuja-smaragd.jpg' => '/assets/thuja-smaragd-400.webp 400w, /assets/thuja-smaragd-800.webp 800w',
+            '/assets/thuja-smaragd-v2.jpg' => '/assets/thuja-smaragd-v2-400.webp 400w, /assets/thuja-smaragd-v2-765.webp 765w',
             '/assets/photinia-red-robin.jpg' => '/assets/photinia-red-robin-400.webp 400w, /assets/photinia-red-robin-800.webp 800w',
             '/assets/diverse-beerenstraeucher.jpg' => '/assets/diverse-beerenstraeucher-400.webp 400w, /assets/diverse-beerenstraeucher-800.webp 800w',
             '/assets/pflanzfarm-garten-1.jpg' => '/assets/pflanzfarm-garten-1-640.webp 640w, /assets/pflanzfarm-garten-1-1280.webp 1280w',

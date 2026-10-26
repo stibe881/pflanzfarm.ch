@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
     {
         $thuja = Product::query()->create([
             'name' => 'Thuja Smaragd', 'slug' => 'thuja-smaragd', 'latin' => 'Thuja occidentalis „Smaragd“',
-            'category' => 'Heckenpflanzen', 'badge' => 'Bestseller', 'image' => $this->img('/assets/thuja-smaragd.jpg'),
+            'category' => 'Heckenpflanzen', 'badge' => 'Bestseller', 'image' => $this->img('/assets/thuja-smaragd-v2.jpg'),
             'traits' => ['Immergrün', 'Pflegeleicht'], 'sort' => 1,
             'description' => 'Der bewährte Klassiker für dichte, formschöne Hecken und natürlichen Sichtschutz.',
         ]);
