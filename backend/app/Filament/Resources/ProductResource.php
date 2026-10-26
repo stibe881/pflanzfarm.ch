@@ -63,6 +63,15 @@ class ProductResource extends Resource
                     Forms\Components\CheckboxList::make('planting_months')->label('Pflanzzeit')->columnSpan(2)->columns(6)
                         ->options(collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => \Illuminate\Support\Carbon::create(2026, $m, 1)->locale('de_CH')->isoFormat('MMM')])->all()),
                 ]),
+            Forms\Components\Section::make('Pflanzberatung')->collapsible()->columns(2)
+                ->collapsed(fn (?Product $record) => ! $record?->hasCareAdvice())
+                ->description('Erscheint in der Bildergalerie der Produktseite unter «Pflanzberatung». Leer lassen = allgemeiner Hinweis auf unsere Fachberatung.')
+                ->schema([
+                    Forms\Components\Textarea::make('care_location')->label('Standort')->rows(3)->maxLength(600)->placeholder('z. B. Sonnig bis halbschattig, auf normalem, nicht zu trockenem Gartenboden.'),
+                    Forms\Components\Textarea::make('care_planting')->label('Pflanzung')->rows(3)->maxLength(600)->placeholder('z. B. 3 Pflanzen pro Laufmeter, Pflanzloch doppelt so breit wie der Ballen.'),
+                    Forms\Components\Textarea::make('care_first')->label('Erste Pflege')->rows(3)->maxLength(600)->placeholder('z. B. Im ersten Jahr bei Trockenheit 1–2× pro Woche durchdringend giessen.'),
+                    Forms\Components\Textarea::make('care_ongoing')->label('Pflege')->rows(3)->maxLength(600)->placeholder('z. B. Formschnitt im Juni, im Frühling organisch düngen.'),
+                ]),
             Forms\Components\Section::make('Mengenrabatt')->collapsible()->collapsed(fn (?Product $record) => empty($record?->volume_discounts))
                 ->description('Gilt je Grösse ab der angegebenen Stückzahl, z. B. ab 50 Stück 10 %. Es zählt die höchste erreichte Stufe.')
                 ->schema([

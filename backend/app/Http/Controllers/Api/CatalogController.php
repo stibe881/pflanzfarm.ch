@@ -139,6 +139,7 @@ class CatalogController extends Controller
                 'hardiness' => $p->hardiness,
                 'months' => array_map('intval', array_values((array) $p->planting_months)),
             ],
+            'care' => $p->careAdvice(),
             'variants' => $variants->pluck('label')->all(),
             'variantData' => $variants->all(),
             'stock' => $variants->sum('stock'),

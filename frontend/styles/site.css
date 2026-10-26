@@ -2725,3 +2725,57 @@ button.inline-link:hover {
     right: 10px;
   }
 }
+
+/* Produktgalerie: Pflanzberatung mit Standort, Pflanzung, erster Pflege und Pflege */
+.gallery-care {
+  align-content: start;
+  justify-items: stretch;
+  gap: 10px;
+  padding: 36px 40px;
+  height: auto;
+  text-align: left;
+}
+.gallery-care > span {
+  width: 56px;
+  height: 56px;
+}
+.gallery-care h2 {
+  margin: 0 0 4px;
+}
+.gallery-care__list {
+  margin: 0;
+  display: grid;
+  gap: 0;
+}
+.gallery-care__list > div {
+  display: grid;
+  gap: 3px;
+  padding: 12px 0;
+  border-top: 1px solid #c9d6c5;
+}
+.gallery-care__list dt {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.gallery-care__list dd {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.gallery-care__more {
+  max-width: none !important;
+  margin: 6px 0 0 !important;
+  padding-top: 12px;
+  border-top: 1px solid #c9d6c5;
+  font-size: 0.86rem !important;
+}
+.gallery-care__more a {
+  color: var(--ink);
+  font-weight: 700;
+}
+@media (max-width: 560px) {
+  .gallery-care {
+    padding: 26px 20px;
+  }
+}

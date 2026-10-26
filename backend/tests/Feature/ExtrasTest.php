@@ -270,4 +270,20 @@ XML;
 
         $this->get('/admin/guide-categories')->assertOk()->assertSee('Rosen');
     }
+
+    public function test_product_care_advice_only_filled_points_and_editable_in_admin(): void
+    {
+        $product = $this->thuja()->product;
+        $this->assertSame([], collect($this->getJson('/api/catalog')->json('products'))->firstWhere('slug', $product->slug)['care']);
+
+        $admin = User::factory()->create(['role' => 'admin', 'email_verified_at' => now()]);
+        $this->actingAs($admin);
+        \Livewire\Livewire::test(\App\Filament\Resources\ProductResource\Pages\EditProduct::class, ['record' => $product->getRouteKey()])
+            ->fillForm(['care_location' => 'Sonnig bis halbschattig.', 'care_ongoing' => 'Formschnitt im Juni.'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $care = collect($this->getJson('/api/catalog')->json('products'))->firstWhere('slug', $product->slug)['care'];
+        $this->assertSame([['title' => 'Standort', 'text' => 'Sonnig bis halbschattig.'], ['title' => 'Pflege', 'text' => 'Formschnitt im Juni.']], $care);
+    }
 }

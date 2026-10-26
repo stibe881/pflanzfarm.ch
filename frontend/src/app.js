@@ -15614,6 +15614,19 @@ function O1() {
                             decoding: "async",
                             alt: _.name,
                           })
+                        : Ie === "care" && (_.care || []).length > 0
+                        ? h(
+                            "div",
+                            { className: "gallery-insight gallery-care" },
+                            h("span", { "aria-hidden": "true" }, h(In, { size: 30 })),
+                            h("h2", null, "Gut begleitet"),
+                            h(
+                              "dl",
+                              { className: "gallery-care__list" },
+                              ..._.care.map((v) => h("div", { key: v.title }, h("dt", null, v.title), h("dd", null, v.text))),
+                            ),
+                            h("p", { className: "gallery-care__more" }, "Fragen? Wir beraten Sie gern: ", h("a", { href: "tel:+41793361495" }, "079 336 14 95")),
+                          )
                         : i.jsxs("div", {
                             className: "gallery-insight",
                             children: [

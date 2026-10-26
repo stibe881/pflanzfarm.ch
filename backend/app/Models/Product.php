@@ -52,4 +52,19 @@ class Product extends Model
     {
         return $this->variants()->where('active', true);
     }
+
+    public const CARE_FIELDS = ['care_location' => 'Standort', 'care_planting' => 'Pflanzung', 'care_first' => 'Erste Pflege', 'care_ongoing' => 'Pflege'];
+
+    /** @return array<int, array{title: string, text: string}> nur ausgefüllte Punkte der Pflanzberatung */
+    public function careAdvice(): array
+    {
+        return collect(self::CARE_FIELDS)
+            ->map(fn ($title, $field) => ['title' => $title, 'text' => trim((string) $this->{$field})])
+            ->filter(fn ($row) => $row['text'] !== '')->values()->all();
+    }
+
+    public function hasCareAdvice(): bool
+    {
+        return $this->careAdvice() !== [];
+    }
 }
