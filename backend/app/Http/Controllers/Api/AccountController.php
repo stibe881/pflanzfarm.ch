@@ -164,6 +164,17 @@ class AccountController extends Controller
     }
 
     /** Datenauskunft nach DSG: alle zur Person gespeicherten Daten als JSON. */
+    /** Merkliste speichern (nur Produkte, die es im Shop gibt) */
+    public function wishlist(Request $request): JsonResponse
+    {
+        $data = $request->validate(['items' => ['present', 'array', 'max:200'], 'items.*' => ['string', 'max:120']]);
+        $known = \App\Models\Product::query()->whereIn('slug', $data['items'])->pluck('slug')->all();
+        $items = array_values(array_unique(array_filter($data['items'], fn ($slug) => in_array($slug, $known, true))));
+        $request->user()->forceFill(['wishlist' => $items])->saveQuietly(); // ohne Eintrag im Admin-Protokoll
+
+        return response()->json(['wishlist' => $items]);
+    }
+
     public function export(Request $request): JsonResponse
     {
         return response()->json(self::exportData($request->user()))
@@ -187,6 +198,7 @@ class AccountController extends Controller
         return [
             'exportiert_am' => now()->toIso8601String(),
             'konto' => $user->only(['name', 'email', 'phone', 'street', 'postal_code', 'city', 'created_at', 'email_verified_at']),
+            'merkliste' => array_values($user->wishlist ?? []),
             'newsletter' => NewsletterSubscriber::query()->where('email', $user->email)->first()?->only(['email', 'status', 'confirmed_at', 'unsubscribed_at', 'created_at']),
             'bestellungen' => $user->orders()->with('items')->get()->map(fn (Order $o) => [
                 ...$o->only(['number', 'created_at', 'status', 'payment_method', 'payment_status', 'delivery_method', 'name', 'email', 'phone', 'street', 'postal_code', 'city', 'note']),
@@ -217,6 +229,7 @@ class AccountController extends Controller
             'postal_code' => $user->postal_code,
             'city' => $user->city,
             'verified' => $user->hasVerifiedEmail(),
+            'wishlist' => array_values($user->wishlist ?? []),
         ];
     }
 }

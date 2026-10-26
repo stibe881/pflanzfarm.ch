@@ -14149,7 +14149,7 @@ function pf_ConfirmHost() {
         h(
           "div",
           { className: "pf-confirm__box" },
-          h("span", { className: o.danger ? "pf-confirm__icon pf-confirm__icon--danger" : "pf-confirm__icon", "aria-hidden": "true" }, "!"),
+          h("span", { className: o.danger ? "pf-confirm__icon pf-confirm__icon--danger" : "pf-confirm__icon", "aria-hidden": "true" }, o.icon ? h(o.icon, { size: 20 }) : "!"),
           h("h2", { id: "pf-confirm-title" }, o.title),
           o.text && h("p", { id: "pf-confirm-text" }, o.text),
           h(
@@ -14504,7 +14504,7 @@ function O1() {
     [pf_bo, pf_setBo] = H.useState(() => pf_readConsent() === null),
     [d, N] = H.useState(1),
     [G, Y] = H.useState(!1),
-    [ae, fe] = H.useState(() => pf_store.get("pflanzfarm-merkliste", [])),
+    [ae, fe] = H.useState([]),
     [pf_user, pf_setUser] = H.useState(null),
     [pf_ver, pf_setVer] = H.useState(0),
     [pf_onlySaved, pf_setOnlySaved] = H.useState(!1),
@@ -14691,9 +14691,21 @@ function O1() {
     H.useEffect(() => {
       pf_store.set("pflanzfarm-warenkorb", Se);
     }, [Se]),
+    // Merkliste liegt im Kundenkonto: nach An-/Abmeldung übernehmen; vor der Anmeldung angeklickte Pflanze nachtragen
     H.useEffect(() => {
-      pf_store.set("pflanzfarm-merkliste", ae);
-    }, [ae]),
+      const v = (pf_user && pf_user.wishlist) || [];
+      let T = null;
+      try {
+        (T = window.sessionStorage.getItem("pflanzfarm-merken")), T && window.sessionStorage.removeItem("pflanzfarm-merken");
+      } catch {}
+      try {
+        window.localStorage.removeItem("pflanzfarm-merkliste");
+      } catch {}
+      if (pf_user && T && !v.includes(T)) {
+        pf_saveWishlist([...v, T]);
+        Ue("Die Pflanze wurde Ihrer Merkliste hinzugefügt.");
+      } else fe(v);
+    }, [pf_user]),
     H.useEffect(() => {
       const v = new URLSearchParams(window.location.search),
         T = { bestaetigt: "Danke – Ihre Newsletter-Anmeldung ist bestätigt.", abgemeldet: "Sie sind vom Newsletter abgemeldet.", ungueltig: "Der Link ist ungültig oder abgelaufen." }[v.get("newsletter")];
@@ -14881,8 +14893,28 @@ function O1() {
         (Oa.current = window.setTimeout(() => Bt(!1), 460)),
         pf_setDrawer({ name: v.name, variant: E, quantity: T }));
     },
-    Da = (v) => {
-      fe((T) => (T.includes(v) ? T.filter((E) => E !== v) : [...T, v]));
+    pf_saveWishlist = (v) => {
+      const T = ae;
+      (fe(v),
+        pf_api("/me/wishlist", { method: "PUT", body: { items: v } })
+          .then((E) => pf_setUser((K) => (K ? { ...K, wishlist: E.wishlist } : K)))
+          .catch(() => (fe(T), Ue("Die Merkliste konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."))));
+    },
+    Da = async (v) => {
+      if (pf_user) return pf_saveWishlist(ae.includes(v) ? ae.filter((T) => T !== v) : [...ae, v]);
+      (await pf_confirm({
+        title: "Merkliste mit Kundenkonto",
+        icon: c0,
+        text: "Melden Sie sich an oder erstellen Sie ein kostenloses Konto, um Pflanzen zu merken. So finden Sie Ihre Merkliste auf jedem Gerät wieder.",
+        confirm: "Anmelden",
+        cancel: "Später",
+      })) &&
+        ((() => {
+          try {
+            window.sessionStorage.setItem("pflanzfarm-merken", v);
+          } catch {}
+        })(),
+        I("account"));
     },
     vl = () => {
       if (!/^\S+@\S+\.\S+$/.test(Ea.trim())) {
@@ -16399,7 +16431,7 @@ function O1() {
               ["Pflegetipps und Warteliste",
                 "Nach einer Lieferung senden wir Ihnen einmalig Pflegetipps zu den gekauften Pflanzen, gegebenenfalls mit der Bitte um eine Bewertung, sowie gelegentlich saisonale Hinweise (z. B. zum Schnitt) zu Pflanzen, die Sie bei uns gekauft haben. Jede dieser E-Mails enthält einen Abmeldelink. Wenn Sie sich für «Benachrichtigen, wenn wieder da» eintragen, speichern wir Ihre E-Mail-Adresse und die gewünschte Grösse und schreiben Ihnen einmalig, sobald sie wieder verfügbar ist."],
               ["Cookies und lokale Speicherung", [
-                "Für Anmeldung und Bestellung verwenden wir technisch notwendige Cookies (Sitzung und Schutz vor Missbrauch), die beim Schliessen des Browsers bzw. nach spätestens 2 Stunden ablaufen. Im lokalen Speicher Ihres Browsers merken wir uns Ihren Warenkorb, Ihre Merkliste und Ihre Entscheidung im Cookie-Hinweis; diese Daten verlassen Ihr Gerät nicht. Im Sitzungsspeicher steht zudem, ob ein saisonaler Hinweis bereits angezeigt wurde. Weitere Cookies setzen wir nur mit Ihrer Einwilligung (siehe Google Analytics). ",
+                "Für Anmeldung und Bestellung verwenden wir technisch notwendige Cookies (Sitzung und Schutz vor Missbrauch), die beim Schliessen des Browsers bzw. nach spätestens 2 Stunden ablaufen. Im lokalen Speicher Ihres Browsers merken wir uns Ihren Warenkorb und Ihre Entscheidung im Cookie-Hinweis; diese Daten verlassen Ihr Gerät nicht. Ihre Merkliste speichern wir in Ihrem Kundenkonto. Im Sitzungsspeicher steht zudem, ob ein saisonaler Hinweis bereits angezeigt wurde. Weitere Cookies setzen wir nur mit Ihrer Einwilligung (siehe Google Analytics). ",
                 i.jsx("button", { type: "button", className: "inline-link", onClick: () => pf_setBo(!0), children: "Cookie-Einstellungen öffnen" }, "c"),
               ]],
               ["Google Analytics",

@@ -33,5 +33,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me/orders', [AccountController::class, 'orders']);
     Route::post('/me/orders/{number}/cancel', [AccountController::class, 'cancelOrder'])->middleware('throttle:forms');
     Route::get('/me/export', [AccountController::class, 'export']);
+    Route::put('/me/wishlist', [AccountController::class, 'wishlist'])->middleware('throttle:60,1');
     Route::post('/email/verification-notification', [AccountController::class, 'resendVerification'])->middleware('throttle:forms');
 });

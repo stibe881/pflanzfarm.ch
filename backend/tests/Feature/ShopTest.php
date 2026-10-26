@@ -325,4 +325,17 @@ class ShopTest extends TestCase
         $msg = $this->postJson('/api/orders', $this->orderPayload($small))->assertStatus(422)->json('errors.payment_method.0');
         $this->assertStringContainsString('Invalid API Key', $msg);
     }
+
+    public function test_wishlist_requires_login_and_is_stored_in_account(): void
+    {
+        $this->putJson('/api/me/wishlist', ['items' => ['thuja-smaragd']])->assertUnauthorized();
+
+        $user = \App\Models\User::factory()->create(['role' => 'customer']);
+        $this->actingAs($user)->putJson('/api/me/wishlist', ['items' => ['thuja-smaragd', 'gibt-es-nicht', 'thuja-smaragd']])
+            ->assertOk()->assertJsonPath('wishlist', ['thuja-smaragd']);
+        $this->getJson('/api/me')->assertJsonPath('user.wishlist', ['thuja-smaragd']);
+        $this->getJson('/api/me/export')->assertJsonPath('merkliste', ['thuja-smaragd']);
+
+        $this->putJson('/api/me/wishlist', ['items' => []])->assertOk()->assertJsonPath('wishlist', []);
+    }
 }
