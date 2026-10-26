@@ -15697,7 +15697,8 @@ function O1() {
                   i.jsxs("label", {
                     className: "variant-label",
                     children: [
-                      "Grösse",
+                      // «Grösse» bei Höhenangaben, sonst (z. B. verschiedene Sorten) «Sorte»
+                      _.variants.every((v) => /\d\s*(cm|m)\b/.test(v) || /anfrage/i.test(v)) ? "Grösse" : "Sorte",
                       i.jsx("select", {
                         value: L,
                         onChange: (v) => X(v.target.value),

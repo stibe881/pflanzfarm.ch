@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    public const CATEGORIES = ['Heckenpflanzen' => 'Heckenpflanzen', 'Beerensträucher' => 'Beerensträucher', 'Baumschule' => 'Baumschule'];
+    public const CATEGORIES = ['Heckenpflanzen' => 'Heckenpflanzen', 'Beerensträucher' => 'Beerensträucher', 'Kleingehölze' => 'Kleingehölze', 'Baumschule' => 'Baumschule'];
 
     public const LOCATIONS = ['sonne' => 'Sonne', 'halbschatten' => 'Halbschatten', 'schatten' => 'Schatten'];
 
