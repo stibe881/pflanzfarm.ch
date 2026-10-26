@@ -102,7 +102,9 @@ class DatabaseSeeder extends Seeder
             ]],
         ];
         foreach ($articles as $i => [$title, $slug, $productId, $paras]) {
-            GuideArticle::query()->create(['title' => $title, 'slug' => $slug, 'product_id' => $productId, 'body' => implode("\n\n", $paras), 'sort' => $i]);
+            GuideArticle::query()->firstOrCreate(['slug' => $slug], ['title' => $title, 'product_id' => $productId, 'body' => implode("\n\n", $paras), 'sort' => $i]);
         }
+        // Kategorien und weitere Ratgeber-Tipps (wiederholbar)
+        \App\Support\GuideContent::install();
     }
 }

@@ -25,6 +25,11 @@ class GuideArticle extends Model
         return $this->excerpt ?: \Illuminate\Support\Str::limit($this->paragraphs()[0] ?? '', 180);
     }
 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(GuideCategory::class, 'guide_category_id');
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

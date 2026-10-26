@@ -44,14 +44,21 @@ class CatalogController extends Controller
                 'tags' => $r->tags ?? [],
                 'onHomepage' => $r->on_homepage,
             ]),
-            'articles' => GuideArticle::query()->where('published', true)->orderBy('sort')->orderBy('id')->with('product:id,slug')->get()->map(fn (GuideArticle $a) => [
+            'articles' => GuideArticle::query()->where('published', true)->orderBy('sort')->orderBy('id')->with(['product:id,slug', 'category:id,name,slug'])->get()->map(fn (GuideArticle $a) => [
                 'id' => $a->slug,
                 'title' => $a->title,
+                'category' => $a->category?->name,
+                'categorySlug' => $a->category?->slug,
+                'image' => $a->image ? self::image($a->image) : null,
+                'imageSet' => $a->image ? self::imageSet($a->image) : null,
                 'excerpt' => $a->summary(),
                 'paras' => $a->paragraphs(),
                 'updated' => $a->updated_at?->toDateString(),
                 'product' => $a->product?->slug,
             ]),
+            // Kategorien in der Admin-Reihenfolge (nur solche mit veröffentlichten Artikeln)
+            'guideCategories' => \App\Models\GuideCategory::query()->whereHas('articles', fn ($q) => $q->where('published', true))
+                ->orderBy('sort')->orderBy('name')->get(['name', 'slug'])->map(fn ($c) => ['name' => $c->name, 'slug' => $c->slug]),
             'popup' => $popup ? [
                 'id' => $popup->id,
                 'title' => $popup->title,

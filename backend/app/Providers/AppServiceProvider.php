@@ -34,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
             $model::observe(\App\Observers\ActivityObserver::class);
         }
 
-        foreach ([\App\Models\Product::class, \App\Models\Reference::class, \App\Models\Popup::class] as $model) {
+        foreach ([\App\Models\Product::class, \App\Models\Reference::class, \App\Models\Popup::class, \App\Models\GuideArticle::class] as $model) {
             $model::observe(\App\Observers\ImageObserver::class);
         }
 
@@ -48,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Katalog-Zwischenspeicher leeren, sobald sich Shop-Inhalte ändern (auch Lager durch Bestellungen)
         foreach ([\App\Models\Product::class, \App\Models\ProductVariant::class, \App\Models\ShippingClass::class, \App\Models\Reference::class,
-            \App\Models\GuideArticle::class, \App\Models\Popup::class, \App\Models\Setting::class, \App\Models\DeliveryZone::class] as $model) {
+            \App\Models\GuideArticle::class, \App\Models\GuideCategory::class, \App\Models\Popup::class, \App\Models\Setting::class, \App\Models\DeliveryZone::class] as $model) {
             foreach (['saved', 'updated', 'deleted'] as $event) {
                 $model::$event(fn () => \Illuminate\Support\Facades\Cache::forget(\App\Http\Controllers\Api\CatalogController::CACHE_KEY));
             }

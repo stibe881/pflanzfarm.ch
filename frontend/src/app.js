@@ -13288,6 +13288,7 @@ let pf_catalogSettings = {
   },
   pf_refs = null,
   pf_articles = null,
+  pf_guideCats = null,
 
   pf_prefillText = "";
 const pf_xsrf = () => decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/) || [])[1] || ""),
@@ -14330,6 +14331,39 @@ function pf_Account({ user: o, setUser: C, toast: _, onNavigate: y }) {
     ),
   );
 }
+// Ratgeber: Kategorien (aus der API, sonst aus den Artikeln) und Bild je Artikel
+const pf_slugify = (o) =>
+    o
+      .toLowerCase()
+      .replace(/ä/g, "ae")
+      .replace(/ö/g, "oe")
+      .replace(/ü/g, "ue")
+      .replace(/&/g, " ")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, ""),
+  pf_catSlug = (o) => o.categorySlug || pf_slugify(o.category || ""),
+  pf_guideCatsOf = (o) => {
+    const C = pf_guideCats || [...new Set(o.map((_) => _.category).filter(Boolean))].map((_) => ({ name: _, slug: pf_slugify(_) }));
+    return C.map((_) => ({ ..._, count: o.filter((y) => pf_catSlug(y) === _.slug).length })).filter((_) => _.count > 0);
+  },
+  pf_guidePics = {
+    garten: [
+      ["/assets/pflanzfarm-garten-3.jpg", "/assets/pflanzfarm-garten-3-640.webp 640w, /assets/pflanzfarm-garten-3-1280.webp 1280w"],
+      ["/assets/pflanzfarm-garten-2.jpg", "/assets/pflanzfarm-garten-2-640.webp 640w, /assets/pflanzfarm-garten-2-1280.webp 1280w"],
+      ["/assets/pflanzfarm-garten-1.jpg", "/assets/pflanzfarm-garten-1-640.webp 640w, /assets/pflanzfarm-garten-1-1280.webp 1280w"],
+    ],
+    thuja: ["/assets/thuja-smaragd.jpg", "/assets/thuja-smaragd-400.webp 400w, /assets/thuja-smaragd-800.webp 800w"],
+    photinia: ["/assets/photinia-red-robin.jpg", "/assets/photinia-red-robin-400.webp 400w, /assets/photinia-red-robin-800.webp 800w"],
+    beeren: ["/assets/diverse-beerenstraeucher.jpg", "/assets/diverse-beerenstraeucher-400.webp 400w, /assets/diverse-beerenstraeucher-800.webp 800w"],
+  },
+  pf_guideImage = (o, C) => {
+    if (o.image) return [o.image, o.imageSet || ""];
+    const _ = o.product && Ql.find((L) => L.slug === o.product);
+    if (_ && _.image) return [_.image, _.imageSet];
+    const y = pf_guidePics,
+      L = { "Beerensträucher": [y.beeren], Heckenpflanzen: [y.thuja, y.photinia, y.garten[0]], "Immergrüne Gehölze": [y.garten[2], y.garten[1], y.thuja] }[o.category] || y.garten;
+    return L[C % L.length];
+  };
 // Rechtstexte von Pflanzfarm (AGB, Versandbedingungen, Widerrufsbelehrung): [Überschrift, Einleitung, Aufzählung]
 const pf_terms = [
   {
@@ -14406,6 +14440,7 @@ function O1() {
     [pf_flt, pf_setFlt] = H.useState({ loc: [], evergreen: !1, use: "", height: "", price: "" }),
     [pf_fltOpen, pf_setFltOpen] = H.useState(!1),
     [pf_loaded, pf_setLoaded] = H.useState(!1),
+    [pf_gcat, pf_setGcat] = H.useState(() => new URLSearchParams(window.location.search).get("thema") || ""),
     
     
     [Qe, k] = H.useState(!1),
@@ -14628,6 +14663,7 @@ function O1() {
               (pf_refs = E.references),
               Sf.splice(0, Sf.length, ...E.references.filter((K) => K.onHomepage).slice(0, 3)),
               (pf_articles = E.articles),
+              (pf_guideCats = E.guideCategories || null),
               (pf_catalogSettings = { ...pf_catalogSettings, ...E.settings }),
               te(
                 E.popup
@@ -16595,7 +16631,7 @@ function O1() {
     },
     pf_articlePage = (v, T) => {
       const E = v.product && Ql.find((De) => De.slug === v.product),
-        K = T.filter((De) => De.id !== v.id).slice(0, 3);
+        K = [...T.filter((De) => De.id !== v.id && De.category && De.category === v.category), ...T.filter((De) => De.id !== v.id && (!De.category || De.category !== v.category))].slice(0, 3);
       return h(
         "main",
         { id: "main-content", tabIndex: -1, className: "legal-page container info-page article-page" },
@@ -16603,7 +16639,7 @@ function O1() {
         h(
           "article",
           { className: "guide-article guide-article--full" },
-          h("span", { className: "eyebrow" }, "Ratgeber"),
+          h("span", { className: "eyebrow" }, v.category ? `Ratgeber · ${v.category}` : "Ratgeber"),
           h("h1", null, v.title),
           ...v.paras.map((De, Te) => h("p", { key: Te }, De)),
           E &&
@@ -16704,19 +16740,21 @@ function O1() {
     pf_guideView = (v) => {
       const pf_a = pf_article(pf_path);
       if (pf_a) return pf_articlePage(pf_a, v);
-      const T = [
-          ["/assets/pflanzfarm-garten-3.jpg", "/assets/pflanzfarm-garten-3-640.webp 640w, /assets/pflanzfarm-garten-3-1280.webp 1280w"],
-          ["/assets/pflanzfarm-garten-2.jpg", "/assets/pflanzfarm-garten-2-640.webp 640w, /assets/pflanzfarm-garten-2-1280.webp 1280w"],
-          ["/assets/pflanzfarm-garten-1.jpg", "/assets/pflanzfarm-garten-1-640.webp 640w, /assets/pflanzfarm-garten-1-1280.webp 1280w"],
-        ],
+      const Te0 = pf_guideCatsOf(v),
+        pf_cur = Te0.find((Ce) => Ce.slug === pf_gcat) ? pf_gcat : "",
+        pf_list = pf_cur ? v.filter((Ce) => pf_catSlug(Ce) === pf_cur) : v,
+        pf_pick = (Ce) => {
+          pf_setGcat(Ce);
+          const Ft = new URL(window.location.href);
+          (Ce ? Ft.searchParams.set("thema", Ce) : Ft.searchParams.delete("thema"), window.history.replaceState(window.history.state, "", Ft.pathname + Ft.search + Ft.hash));
+        },
         E = (K, De) => {
           const Te = K.product && Ql.find((yt) => yt.slug === K.product),
-            vt = T[De % T.length],
             Ft = K.paras.join(" ").split(/\s+/).length,
             Ce = K.excerpt || K.paras[0] || "";
           return {
-            img: Te ? [Te.image, Te.imageSet] : vt,
-            topic: Te ? Te.category : "Pflege",
+            img: pf_guideImage(K, De),
+            topic: K.category || (Te ? Te.category : "Pflege"),
             minutes: Math.max(1, Math.round(Ft / 180)),
             text: Ce.length > 160 ? Ce.slice(0, Ce.lastIndexOf(" ", 160)) + " …" : Ce,
           };
@@ -16757,11 +16795,25 @@ function O1() {
           { className: "guide-head" },
           h("span", { className: "eyebrow" }, "Ratgeber"),
           h("h1", null, "Tipps aus der Baumschule."),
-          h("p", null, "Praktisches Wissen rund um Hecken, Beerensträucher und Pflege – damit Ihre Pflanzen gut anwachsen und lange Freude machen."),
+          h("p", null, "Praktisches Wissen zu Hecken, Säulenobst, Beerensträuchern, immergrünen Gehölzen und Gartengestaltung – damit Ihre Pflanzen gut anwachsen und lange Freude machen."),
         ),
-        v.length > 0 && K(v[0], 0, !0),
+        Te0.length > 1 &&
+          h(
+            "div",
+            { className: "guide-filter", role: "group", "aria-label": "Nach Thema filtern" },
+            ...[{ name: "Alle Themen", slug: "", count: v.length }, ...Te0].map((Ce) =>
+              h(
+                "button",
+                { key: Ce.slug || "alle", type: "button", className: pf_cur === Ce.slug ? "guide-filter__pill is-active" : "guide-filter__pill", "aria-pressed": pf_cur === Ce.slug, onClick: () => pf_pick(Ce.slug) },
+                Ce.name,
+                h("span", { className: "guide-filter__count" }, Ce.count),
+              ),
+            ),
+          ),
+        h("p", { className: "sr-only", role: "status" }, `${pf_list.length} ${pf_list.length === 1 ? "Tipp" : "Tipps"} angezeigt`),
+        pf_list.length > 0 && K(pf_list[0], v.indexOf(pf_list[0]), !0),
         // 4 weitere Artikel als 2×2, sonst Dreierraster (keine einzelne Karte allein in einer Reihe)
-        h("div", { className: (v.length - 1) % 3 === 1 && v.length > 2 ? "guide-grid guide-grid--two" : "guide-grid" }, ...v.slice(1).map((De, Te) => K(De, Te + 1, !1))),
+        h("div", { className: (pf_list.length - 1) % 3 === 1 && pf_list.length > 2 ? "guide-grid guide-grid--two" : "guide-grid" }, ...pf_list.slice(1).map((De) => K(De, v.indexOf(De), !1))),
         h(
           "section",
           { className: "guide-help" },

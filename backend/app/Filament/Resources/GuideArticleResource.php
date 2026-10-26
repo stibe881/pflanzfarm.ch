@@ -31,7 +31,15 @@ class GuideArticleResource extends Resource
                     ->live(onBlur: true)
                     ->afterStateUpdated(fn ($state, Forms\Set $set, ?GuideArticle $record) => $record ? null : $set('slug', Str::slug($state))),
                 Forms\Components\TextInput::make('slug')->label('Adresse (URL)')->prefix('/ratgeber/')->suffix('/')->required()->alphaDash()->unique(ignoreRecord: true),
+                Forms\Components\Select::make('guide_category_id')->label('Kategorie')->required()
+                    ->relationship('category', 'name', fn ($query) => $query->orderBy('sort')->orderBy('name'))
+                    ->preload()->searchable()
+                    ->createOptionForm([Forms\Components\TextInput::make('name')->label('Name der neuen Kategorie')->required()->maxLength(60)->unique('guide_categories', 'name')])
+                    ->createOptionModalHeading('Neue Kategorie')
+                    ->helperText('Erscheint als Filter auf der Ratgeber-Seite. Fehlt eine passende Kategorie, mit «+» eine neue anlegen.'),
                 Forms\Components\Select::make('product_id')->label('Passendes Produkt')->relationship('product', 'name')->placeholder('keines')->live(),
+                Forms\Components\FileUpload::make('image')->label('Bild (optional)')->image()->imageEditor()->disk('public')->directory('ratgeber')->maxSize(5120)->columnSpanFull()
+                    ->helperText('Ohne eigenes Bild wird das Bild des passenden Produkts oder ein Gartenbild verwendet.'),
                 Forms\Components\Textarea::make('excerpt')->label('Kurztext für Übersicht und Google')->rows(2)->maxLength(300)->columnSpanFull()
                     ->helperText('1–2 Sätze. Leer = Anfang des Textes.'),
                 Forms\Components\Textarea::make('body')->label('Text')->required()->rows(12)->columnSpanFull()
@@ -53,10 +61,12 @@ class GuideArticleResource extends Resource
             ->reorderable('sort')
             ->columns([
                 Tables\Columns\TextColumn::make('title')->label('Titel')->searchable()->wrap(),
+                Tables\Columns\TextColumn::make('category.name')->label('Kategorie')->badge()->placeholder('–')->sortable(),
                 Tables\Columns\TextColumn::make('product.name')->label('Produkt')->placeholder('–'),
                 Tables\Columns\ToggleColumn::make('published')->label('Veröffentlicht'),
                 Tables\Columns\TextColumn::make('updated_at')->label('Geändert')->date('d.m.Y'),
             ])
+            ->filters([Tables\Filters\SelectFilter::make('guide_category_id')->label('Kategorie')->relationship('category', 'name')])
             ->actions([Tables\Actions\EditAction::make(), Tables\Actions\DeleteAction::make()]);
     }
 

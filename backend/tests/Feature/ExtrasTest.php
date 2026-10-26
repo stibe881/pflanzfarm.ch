@@ -240,4 +240,34 @@ XML;
         $this->assertStringContainsString('foto-400.webp 400w', $p['imageSet']);
         $this->assertSame('/storage/produkte/foto-1600.webp', $p['gallery'][0]);
     }
+
+    public function test_guide_has_categories_filter_data_and_admin_can_create_category_inline(): void
+    {
+        \App\Support\GuideContent::install(); // wiederholbar: keine Duplikate
+        $this->assertSame(25, GuideArticle::query()->count());
+        $this->assertSame(0, GuideArticle::query()->whereNull('guide_category_id')->count());
+
+        $catalog = $this->getJson('/api/catalog')->assertOk()->json();
+        $this->assertSame(['Heckenpflanzen', 'Immergrüne Gehölze', 'Säulenobst', 'Beerensträucher', 'Gartenbau & Gestaltung', 'Pflege & Boden'], array_column($catalog['guideCategories'], 'name'));
+        $article = collect($catalog['articles'])->firstWhere('id', 'saeulenobst-schneiden');
+        $this->assertSame('Säulenobst', $article['category']);
+
+        $admin = User::factory()->create(['role' => 'admin', 'email_verified_at' => now()]);
+        $this->actingAs($admin);
+        \Livewire\Livewire::test(\App\Filament\Resources\GuideArticleResource\Pages\CreateGuideArticle::class)
+            ->fillForm(['title' => 'Rosen schneiden', 'slug' => 'rosen-schneiden', 'body' => 'Im Frühling schneiden.'])
+            ->call('create')
+            ->assertHasFormErrors(['guide_category_id' => 'required']);
+
+        $component = \Livewire\Livewire::test(\App\Filament\Resources\GuideArticleResource\Pages\CreateGuideArticle::class)
+            ->fillForm(['title' => 'Rosen schneiden', 'slug' => 'rosen-schneiden', 'body' => 'Im Frühling schneiden.'])
+            ->callFormComponentAction('guide_category_id', 'createOption', ['name' => 'Rosen'])
+            ->assertHasNoFormComponentActionErrors();
+        $rosen = \App\Models\GuideCategory::query()->where('name', 'Rosen')->firstOrFail();
+        $this->assertSame('rosen', $rosen->slug);
+        $component->assertFormSet(['guide_category_id' => $rosen->id])->call('create')->assertHasNoFormErrors();
+        $this->assertSame($rosen->id, GuideArticle::query()->where('slug', 'rosen-schneiden')->value('guide_category_id'));
+
+        $this->get('/admin/guide-categories')->assertOk()->assertSee('Rosen');
+    }
 }
