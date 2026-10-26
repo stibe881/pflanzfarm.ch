@@ -151,7 +151,7 @@ const products: Product[] = [
     category: 'Heckenpflanzen',
     price: 15,
     image: '/assets/thuja-smaragd.jpg',
-    imageSet: '/assets/thuja-smaragd-400.webp 400w, /assets/thuja-smaragd-765.webp 765w',
+    imageSet: '/assets/thuja-smaragd-400.webp 400w, /assets/thuja-smaragd-800.webp 800w',
     badge: 'Bestseller',
     height: '80–100 cm',
     traits: ['Immergrün', 'Pflegeleicht'],
@@ -166,8 +166,8 @@ const products: Product[] = [
     latin: 'Photinia × fraseri ‘Red Robin’',
     category: 'Heckenpflanzen',
     price: 45,
-    image: '/assets/photinia-fraseri-red-robin.jpg',
-    imageSet: '/assets/photinia-fraseri-red-robin-400.webp 400w, /assets/photinia-fraseri-red-robin-765.webp 765w',
+    image: '/assets/photinia-red-robin.jpg',
+    imageSet: '/assets/photinia-red-robin-400.webp 400w, /assets/photinia-red-robin-800.webp 800w',
     badge: 'Beliebt',
     height: 'Liefergrösse auf Anfrage',
     traits: ['Immergrün', 'Sonnig', 'Blütenreich'],
@@ -183,7 +183,7 @@ const products: Product[] = [
     category: 'Beerensträucher',
     price: 0,
     image: '/assets/diverse-beerenstraeucher.jpg',
-    imageSet: '/assets/diverse-beerenstraeucher-400.webp 400w, /assets/diverse-beerenstraeucher-765.webp 765w',
+    imageSet: '/assets/diverse-beerenstraeucher-400.webp 400w, /assets/diverse-beerenstraeucher-800.webp 800w',
     badge: 'Sortiment',
     height: 'Verschiedene Sorten',
     traits: ['Sonnig', 'Naschgarten'],
@@ -221,7 +221,7 @@ const categoryCards = [
     filter: 'Heckenpflanzen',
     text: 'Sichtschutz mit Stil',
     image: '/assets/thuja-smaragd.jpg',
-    imageSet: '/assets/thuja-smaragd-400.webp 400w, /assets/thuja-smaragd-765.webp 765w',
+    imageSet: '/assets/thuja-smaragd-400.webp 400w, /assets/thuja-smaragd-800.webp 800w',
     imageAlt: 'Thuja Smaragd aus dem Pflanzfarm-Sortiment',
   },
   {
@@ -229,7 +229,7 @@ const categoryCards = [
     filter: 'Beerensträucher',
     text: 'Genuss aus dem Garten',
     image: '/assets/diverse-beerenstraeucher.jpg',
-    imageSet: '/assets/diverse-beerenstraeucher-400.webp 400w, /assets/diverse-beerenstraeucher-765.webp 765w',
+    imageSet: '/assets/diverse-beerenstraeucher-400.webp 400w, /assets/diverse-beerenstraeucher-800.webp 800w',
     imageAlt: 'Diverse Beerensträucher aus dem Pflanzfarm-Sortiment',
   },
   {
@@ -283,7 +283,7 @@ const defaultPopup: PopupConfig = {
 
 const newsletterImageOptions = [
   { label: 'Thuja Smaragd', value: '/assets/thuja-smaragd.jpg', alt: 'Thuja Smaragd aus dem Pflanzfarm-Sortiment' },
-  { label: 'Photinia Red Robin', value: '/assets/photinia-fraseri-red-robin.jpg', alt: 'Photinia Red Robin aus dem Pflanzfarm-Sortiment' },
+  { label: 'Photinia Red Robin', value: '/assets/photinia-red-robin.jpg', alt: 'Photinia Red Robin aus dem Pflanzfarm-Sortiment' },
   { label: 'Pflanzfarm-Gartenprojekt', value: '/assets/pflanzfarm-garten-2.jpg', alt: 'Sichtschutz mit Photinia in einem Pflanzfarm-Gartenprojekt' },
 ]
 
