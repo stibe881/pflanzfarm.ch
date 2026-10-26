@@ -64,7 +64,7 @@ class ShopContent
             ],
             [
                 'name' => 'Taxus baccata (Eibe)', 'slug' => 'taxus-baccata-eibe', 'latin' => 'Taxus baccata',
-                'category' => 'Heckenpflanzen', 'badge' => 'Neu', 'image' => '/assets/taxus-baccata.jpg',
+                'category' => 'Heckenpflanzen', 'badge' => 'Neu', 'image' => '/assets/taxus-baccata-v2.jpg',
                 'traits' => ['Immergrün', 'Heimisch', 'Schnittverträglich'],
                 'description' => 'Die heimische Eibe wächst dicht und langlebig und verträgt jeden Schnitt. Für formschöne Hecken und Formgehölze in Sonne und Schatten.',
                 'evergreen' => true, 'locations' => ['sonne', 'halbschatten', 'schatten'], 'uses' => ['hecke', 'sichtschutz', 'solitaer'],
@@ -73,7 +73,7 @@ class ShopContent
             ],
             [
                 'name' => 'Prunus lusitanica (Portugiesischer Lorbeer)', 'slug' => 'prunus-lusitanica', 'latin' => 'Prunus lusitanica',
-                'category' => 'Heckenpflanzen', 'badge' => 'Neu', 'image' => '/assets/prunus-lusitanica.jpg',
+                'category' => 'Heckenpflanzen', 'badge' => 'Neu', 'image' => '/assets/prunus-lusitanica-v2.jpg',
                 'traits' => ['Immergrün', 'Glänzendes Laub', 'Schnittverträglich'],
                 'description' => 'Portugiesischer Lorbeer mit glänzend dunkelgrünem Laub und roten Blattstielen. Robuster, immergrüner Sichtschutz, der sich gut in Form schneiden lässt.',
                 'evergreen' => true, 'locations' => ['sonne', 'halbschatten'], 'uses' => ['hecke', 'sichtschutz', 'solitaer', 'bienen'],
@@ -82,7 +82,7 @@ class ShopContent
             ],
             [
                 'name' => 'Immergrüne Kleingehölze', 'slug' => 'immergruene-kleingehoelze', 'latin' => 'Zwergkiefern (Pinus) – verschiedene Sorten',
-                'category' => 'Kleingehölze', 'badge' => 'Neu', 'image' => '/assets/immergruene-kleingehoelze.jpg', 'height_label' => 'Sorte wählbar',
+                'category' => 'Kleingehölze', 'badge' => 'Neu', 'image' => '/assets/immergruene-kleingehoelze-v2.jpg', 'height_label' => 'Sorte wählbar',
                 'traits' => ['Immergrün', 'Kompakt', 'Kübel'],
                 'description' => 'Kompakte Zwergkiefern für Steingarten, Grabbepflanzung, Kübel und kleine Gärten: Japanische Mädchenkiefer, Bergkiefer und Zwerg-Schlangenhautkiefer.',
                 'evergreen' => true, 'locations' => ['sonne', 'halbschatten'], 'uses' => ['kuebel', 'solitaer'],
