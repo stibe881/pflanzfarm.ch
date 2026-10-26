@@ -54,4 +54,12 @@ class AdminTest extends TestCase
         $staff = $this->team('staff');
         $this->actingAs($staff)->get('/admin/users/'.$admin->id.'/edit')->assertForbidden();
     }
+
+    public function test_admin_logout_redirects_to_customer_account_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'email_verified_at' => now()]);
+
+        $this->actingAs($admin)->post('/admin/logout')->assertRedirect(url('/konto'));
+        $this->assertGuest();
+    }
 }
