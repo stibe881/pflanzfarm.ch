@@ -268,4 +268,18 @@ class ShopTest extends TestCase
             $original === null ? unlink($file) : file_put_contents($file, $original);
         }
     }
+
+    public function test_pages_use_current_domain_for_link_preview(): void
+    {
+        config(['app.url' => 'https://pflanzfarm.gross-ict.ch']);
+
+        $html = $this->get('/')->assertOk()->getContent();
+        $this->assertStringContainsString('<meta property="og:image" content="https://pflanzfarm.gross-ict.ch/assets/og-image.jpg"', $html);
+        $this->assertStringContainsString('<meta property="og:url" content="https://pflanzfarm.gross-ict.ch/"', $html);
+        $this->assertStringNotContainsString('https://pflanzfarm.ch/', $html);
+        $this->assertStringContainsString('info@pflanzfarm.ch', $html);
+
+        config(['app.url' => 'https://pflanzfarm.ch']);
+        $this->assertStringContainsString('content="https://pflanzfarm.ch/assets/og-image.jpg"', $this->get('/kontakt')->assertOk()->getContent());
+    }
 }

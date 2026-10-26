@@ -9,9 +9,11 @@ use Illuminate\Http\Response;
 
 class SpaController extends Controller
 {
+    private const LIVE_SITE = 'https://pflanzfarm.ch';
+
     /**
-     * Liefert die Website aus. Vorgerenderte Seiten (public/<pfad>/index.html) bedient der Webserver direkt;
-     * hier landen dynamische Pfade wie neue Produkte, Konto oder Kasse.
+     * Liefert die Website aus. Auch vorgerenderte Seiten (public/<pfad>/index.html) laufen hier durch,
+     * damit Domain und Meta-Daten zur aktuellen Umgebung passen.
      */
     public function __invoke(?string $path = null): Response
     {
@@ -48,6 +50,13 @@ class SpaController extends Controller
             }
         } elseif (in_array($path, ['konto', 'kasse', 'bestellung/danke', 'warenkorb'], true)) {
             $html = str_replace('<meta name="theme-color"', '<meta name="robots" content="noindex" />'."\n    ".'<meta name="theme-color"', $html);
+        }
+
+        // Vorlagen und vorgerenderte Seiten enthalten die Live-Domain; auf der Testseite die eigene Domain einsetzen
+        // (Link-Vorschau in WhatsApp & Co. braucht absolute Bild-URLs, die auf diesem Server erreichbar sind)
+        $site = rtrim((string) config('app.url'), '/');
+        if ($site !== '' && $site !== self::LIVE_SITE) {
+            $html = str_replace(self::LIVE_SITE.'/', $site.'/', $html);
         }
 
         return response($html, $status)->header('Content-Type', 'text/html; charset=UTF-8')->header('Cache-Control', 'no-cache, must-revalidate');

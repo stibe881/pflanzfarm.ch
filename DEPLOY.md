@@ -53,8 +53,8 @@ server {
     client_max_body_size 10M;
 
     location / {
-        # Vorgerenderte Seiten (z. B. /shop/index.html) direkt ausliefern, sonst Laravel
-        try_files $uri $uri/index.html /index.php?$query_string;
+        # Dateien direkt ausliefern, Seiten (auch vorgerenderte) über Laravel – setzt die richtige Domain ein
+        try_files $uri /index.php?$query_string;
     }
     location ~ \.php$ {
         include fastcgi_params;

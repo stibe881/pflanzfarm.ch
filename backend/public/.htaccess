@@ -1,5 +1,5 @@
-# Vorgerenderte Seiten (z. B. /shop/index.html) direkt ausliefern
-DirectoryIndex index.html index.php
+# Alle Seiten über Laravel ausliefern (setzt in vorgerenderten Seiten die richtige Domain ein)
+DirectoryIndex index.php
 
 # Seiten immer frisch prüfen (sonst zeigt der Browser nach einem Update alte Inhalte),
 # Dateien mit Versions-Hash (index-1a2b3c4d.js/.css) und Schriften dürfen lange im Cache bleiben.
@@ -34,6 +34,10 @@ DirectoryIndex index.html index.php
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
+
+    # Ordner mit vorgerenderter Seite (z. B. /shop/) ebenfalls an Laravel
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ index.php [L]
 
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
