@@ -2474,3 +2474,45 @@ a.pill-link--soft {
     grid-column: auto;
   }
 }
+
+/* «Alle … ansehen»-Links: Pille statt Unterstreichung */
+a.text-link,
+span.text-link {
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 8px 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sage);
+  color: var(--ink);
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+a.text-link svg,
+span.text-link svg {
+  box-sizing: content-box;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  transition: transform 0.2s;
+}
+a.text-link:hover {
+  background: #cad8c5;
+}
+a.text-link:hover svg,
+a:hover span.text-link svg {
+  transform: translateX(3px);
+}
+.references-preview a.text-link {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.references-preview a.text-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.references-preview a.text-link svg {
+  background: #fff;
+  color: var(--ink);
+}
