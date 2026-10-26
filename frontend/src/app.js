@@ -17063,6 +17063,16 @@ function O1() {
                           h("button", { type: "button", onClick: () => pf_setBo(!0) }, "Cookie-Einstellungen"),
                         ),
                       ),
+                      h(
+                        "div",
+                        { className: "container pf-footer__credit" },
+                        h(
+                          "a",
+                          { href: "https://gross-ict.ch", target: "_blank", rel: "noopener", "aria-label": "Diese Webseite wurde erstellt von Gross ICT (öffnet in neuem Fenster)" },
+                          h("span", null, "Diese Webseite wurde erstellt von"),
+                          h("span", { className: "pf-footer__credit-logo" }, h("img", { src: He("/assets/gross-ict-logo.webp"), alt: "", width: 118, height: 18, loading: "lazy", decoding: "async" })),
+                        ),
+                      ),
                     ),
                   ),
                 ],

@@ -2779,3 +2779,45 @@ button.inline-link:hover {
     padding: 26px 20px;
   }
 }
+
+/* Fusszeile: Hinweis auf die Agentur */
+.pf-footer__credit {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 16px;
+}
+.pf-footer__credit a {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 10px;
+  color: #8fb197;
+  font-size: 0.74rem;
+  text-decoration: none;
+}
+.pf-footer__credit-logo {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #f6f2e9;
+  transition: background 0.2s;
+}
+.pf-footer__credit-logo img {
+  display: block;
+  width: 118px;
+  height: auto;
+}
+.pf-footer__credit a:hover {
+  color: #fff;
+}
+.pf-footer__credit a:hover .pf-footer__credit-logo {
+  background: #fff;
+}
+@media (max-width: 760px) {
+  .pf-footer__credit,
+  .pf-footer__credit a {
+    justify-content: flex-start;
+  }
+}
