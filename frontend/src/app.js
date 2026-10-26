@@ -13581,6 +13581,102 @@ function pf_Profile({ product: o }) {
       ),
   );
 }
+function pf_CartDrawer({ added: o, lines: C, total: _, onClose: y, onQty: L, onCheckout: X, onCart: Se }) {
+  const Le = H.useRef(null);
+  H.useEffect(() => {
+    const ne = document.body.style.overflow,
+      Ne = document.activeElement;
+    ((document.body.style.overflow = "hidden"), window.setTimeout(() => Le.current && Le.current.focus(), 0));
+    const A = (p) => p.key === "Escape" && y();
+    return (
+      window.addEventListener("keydown", A),
+      () => {
+        (window.removeEventListener("keydown", A), (document.body.style.overflow = ne), Ne && Ne.focus && Ne.focus());
+      }
+    );
+  }, []);
+  const ne = pf_shipping(C, "lieferung"),
+    Ne = pf_catalogSettings.freeDeliveryFrom > 0 ? pf_catalogSettings.freeDeliveryFrom / 100 - _ : 0;
+  return h(
+    "div",
+    { className: "drawer-backdrop", onClick: (A) => A.target === A.currentTarget && y() },
+    h(
+      "aside",
+      { className: "cart-drawer", role: "dialog", "aria-modal": "true", "aria-labelledby": "cart-drawer-title", tabIndex: -1, ref: Le },
+      h(
+        "header",
+        null,
+        h("h2", { id: "cart-drawer-title" }, "Warenkorb"),
+        h("button", { type: "button", className: "icon-button", onClick: y, "aria-label": "Warenkorb schliessen" }, h(Pm, { size: 20 })),
+      ),
+      o && h("p", { className: "cart-drawer__added", role: "status" }, h(za, { size: 16 }), ` ${o.quantity > 1 ? o.quantity + " × " : ""}${o.name} (${o.variant}) hinzugefügt`),
+      C.length
+        ? h(
+            "ul",
+            { className: "cart-drawer__lines" },
+            ...C.map((A) =>
+              h(
+                "li",
+                { key: A.key },
+                h("img", { src: He(A.product.image), srcSet: At(A.product.imageSet), sizes: "64px", alt: "", loading: "lazy" }),
+                h(
+                  "div",
+                  null,
+                  h("b", null, A.product.name),
+                  h("small", null, A.variant, pf_line(A.product, A.variant, A.quantity).percent ? ` · −${pf_line(A.product, A.variant, A.quantity).percent} % Mengenrabatt` : ""),
+                  h(
+                    "div",
+                    { className: "quantity-control quantity-control--small" },
+                    h("button", { type: "button", "aria-label": `${A.product.name}: Menge verringern`, onClick: () => L(A.key, -1) }, h(Fm, { size: 14 })),
+                    h("span", null, A.quantity),
+                    h("button", { type: "button", "aria-label": `${A.product.name}: Menge erhöhen`, onClick: () => L(A.key, 1) }, h(Uc, { size: 14 })),
+                  ),
+                ),
+                h("strong", null, Sa(pf_line(A.product, A.variant, A.quantity).total)),
+              ),
+            ),
+          )
+        : h("p", { className: "cart-drawer__empty" }, "Ihr Warenkorb ist leer."),
+      C.length > 0 &&
+        h(
+          "footer",
+          null,
+          h("div", { className: "cart-drawer__sum" }, h("span", null, "Zwischensumme"), h("strong", null, Sa(_))),
+          h(
+            "small",
+            null,
+            pf_pickupOnly(C).length
+              ? "Enthält Grössen nur zur Abholung."
+              : Ne > 0 && ne > 0
+                ? `Lieferung ${Sa(ne)} · noch ${Sa(Ne)} bis zur Gratis-Lieferung · Abholung gratis`
+                : ne > 0
+                  ? `Lieferung ${Sa(ne)} · Abholung gratis`
+                  : "Lieferung gratis",
+          ),
+          h("button", { type: "button", className: "button button--primary button--full", onClick: X }, "Zur Kasse ", h(Ve, { size: 17 })),
+          h(
+            "div",
+            { className: "cart-drawer__links" },
+            h("button", { type: "button", className: "inline-link", onClick: Se }, "Warenkorb bearbeiten"),
+            h("button", { type: "button", className: "inline-link", onClick: y }, "Weiter einkaufen"),
+          ),
+        ),
+    ),
+  );
+}
+function pf_BeforeAfter({ before: o, beforeSet: C, after: _, afterSet: y, title: L }) {
+  const [X, Se] = H.useState(50);
+  return h(
+    "div",
+    { className: "before-after", style: { "--pos": `${X}%` } },
+    h("img", { src: He(_), srcSet: y ? At(y) : void 0, sizes: "(max-width: 900px) 92vw, 50vw", alt: `${L} – nachher`, loading: "lazy" }),
+    h("div", { className: "before-after__before" }, h("img", { src: He(o), srcSet: C ? At(C) : void 0, sizes: "(max-width: 900px) 92vw, 50vw", alt: `${L} – vorher`, loading: "lazy" })),
+    h("span", { className: "before-after__tag before-after__tag--l", "aria-hidden": "true" }, "Vorher"),
+    h("span", { className: "before-after__tag before-after__tag--r", "aria-hidden": "true" }, "Nachher"),
+    h("span", { className: "before-after__handle", "aria-hidden": "true" }),
+    h("input", { type: "range", min: 0, max: 100, value: X, onChange: (Le) => Se(+Le.target.value), "aria-label": `Vorher/Nachher vergleichen: ${L}` }),
+  );
+}
 function pf_StockAlert({ variantId: o, label: C }) {
   const [_, y] = H.useState(""),
     [L, X] = H.useState(""),

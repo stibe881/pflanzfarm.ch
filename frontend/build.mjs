@@ -10,6 +10,25 @@ const pub = join(here, "..", "backend", "public");
 const assets = join(pub, "assets");
 const hash = (s) => createHash("sha256").update(s).digest("hex").slice(0, 8);
 
+// Sicherheitsprüfung: Jede verwendete pf_…-Funktion/Komponente muss im Quelltext definiert sein
+// (sonst stürzt die Seite erst beim Klick im Browser ab, z. B. «pf_CartDrawer is not defined»).
+{
+  const src = readFileSync(join(here, "src", "app.js"), "utf8");
+  const used = new Set([...src.matchAll(/\b(pf_[A-Za-z0-9_]+)\b/g)].map((m) => m[1]));
+  const isDefined = (n) =>
+    [
+      `function\\s+${n}\\b`, // function pf_X(
+      `\\b${n}\\s*=(?![=>])`, // pf_X = … (auch in const-Ketten)
+      `\\b${n}\\s*\\]\\s*\\)?\\s*=`, // [a, pf_setX] = useState / ([…, pf_x]) =>
+      `\\[\\s*${n}\\s*,`, // [pf_x, …] =
+    ].some((r) => new RegExp(r).test(src));
+  const missing = [...used].filter((n) => !isDefined(n));
+  if (missing.length) {
+    console.error("Abbruch: nicht definiert im Quelltext: " + missing.join(", "));
+    process.exit(1);
+  }
+}
+
 const js = await build({
   entryPoints: [join(here, "src", "app.js")],
   bundle: true,
