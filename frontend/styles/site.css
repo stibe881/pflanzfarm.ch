@@ -1944,3 +1944,23 @@ a.search-hit:focus-visible {
 .product-purchase .button--cart {
   white-space: nowrap;
 }
+
+/* ---------- Kontrast (WCAG AA) ---------- */
+:root {
+  /* Terrakotta als Textfarbe: dunklere Stufe, 5.8:1 auf Creme */
+  --terracotta-text: #9a4b30;
+}
+.ref-tile__category,
+.about-focus__list > article > span {
+  color: var(--terracotta-text);
+}
+/* Hinweisbox «Ihr Gartenprojekt» / «Persönliche Beratung»: dunkler Text auf Terrakotta (5:1) */
+.about-callout,
+.about-callout p:not(.about-kicker),
+.about-callout .about-kicker {
+  color: var(--ink-deep);
+}
+/* Hero: dunkle Grundfläche, solange Bild/Video lädt (heller Text bleibt lesbar) */
+.hero {
+  background-color: #143d31;
+}
