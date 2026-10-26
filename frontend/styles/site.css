@@ -2643,3 +2643,78 @@ button.inline-link:hover {
     font-size: 0.72rem;
   }
 }
+
+/* Bestätigungsdialog (statt Browser-Popup) */
+.pf-confirm {
+  width: min(440px, calc(100% - 32px));
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 24px 60px rgba(13, 42, 34, 0.28);
+}
+.pf-confirm::backdrop {
+  background: rgba(13, 42, 34, 0.45);
+  backdrop-filter: blur(2px);
+}
+.pf-confirm[open] {
+  animation: pf-confirm-in 0.18s ease-out;
+}
+@keyframes pf-confirm-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+.pf-confirm__box {
+  padding: 28px 28px 24px;
+}
+.pf-confirm__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 16px;
+  border-radius: 999px;
+  background: var(--sage);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+.pf-confirm__icon--danger {
+  background: #f6e1d8;
+  color: #9a3412;
+}
+.pf-confirm h2 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+.pf-confirm p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.pf-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+.pf-confirm__danger {
+  background: #9a3412;
+  color: #fff;
+}
+.pf-confirm__danger:hover {
+  background: #7c2d12;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pf-confirm[open] {
+    animation: none;
+  }
+}
+@media (max-width: 480px) {
+  .pf-confirm__actions .button {
+    flex: 1 1 100%;
+  }
+}

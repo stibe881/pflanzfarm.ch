@@ -14120,6 +14120,48 @@ function pf_Thanks({ onClear: o, onNavigate: C }) {
     h("p", null, "Wir melden uns, sobald wir Ihre Bestellung bestätigt und den Termin festgelegt haben. Fragen? +41 79 336 14 95"),
   );
 }
+// Bestätigungsdialog im Stil der Website (statt window.confirm): pf_confirm({ title, text, confirm, cancel, danger }) → Promise<boolean>
+let pf_confirmOpen = null;
+const pf_confirm = (o) => new Promise((C) => (pf_confirmOpen ? pf_confirmOpen({ ...o, resolve: C }) : C(window.confirm(o.text || o.title))));
+function pf_ConfirmHost() {
+  const [o, C] = H.useState(null),
+    _ = H.useRef(null),
+    y = H.useRef(null);
+  H.useEffect(() => ((pf_confirmOpen = (L) => ((y.current = document.activeElement), C(L))), () => (pf_confirmOpen = null)), []);
+  H.useEffect(() => {
+    const L = _.current;
+    if (o && L && !L.open) L.showModal();
+  }, [o]);
+  const L = (X) => {
+    (_.current && _.current.open && _.current.close(), o && o.resolve(X), C(null), y.current && y.current.focus && y.current.focus());
+  };
+  return o
+    ? h(
+        "dialog",
+        {
+          ref: _,
+          className: "pf-confirm",
+          "aria-labelledby": "pf-confirm-title",
+          "aria-describedby": o.text ? "pf-confirm-text" : void 0,
+          onCancel: (X) => (X.preventDefault(), L(!1)),
+          onClick: (X) => X.target === X.currentTarget && L(!1),
+        },
+        h(
+          "div",
+          { className: "pf-confirm__box" },
+          h("span", { className: o.danger ? "pf-confirm__icon pf-confirm__icon--danger" : "pf-confirm__icon", "aria-hidden": "true" }, "!"),
+          h("h2", { id: "pf-confirm-title" }, o.title),
+          o.text && h("p", { id: "pf-confirm-text" }, o.text),
+          h(
+            "div",
+            { className: "pf-confirm__actions" },
+            h("button", { type: "button", className: "button button--soft", onClick: () => L(!1), autoFocus: !0 }, o.cancel || "Abbrechen"),
+            h("button", { type: "button", className: o.danger ? "button pf-confirm__danger" : "button button--primary", onClick: () => L(!0) }, o.confirm || "OK"),
+          ),
+        ),
+      )
+    : null;
+}
 function pf_Account({ user: o, setUser: C, toast: _, onNavigate: y }) {
   const L = new URLSearchParams(window.location.search),
     [X, Se] = H.useState(L.get("reset") ? "reset" : "login"),
@@ -14253,10 +14295,14 @@ function pf_Account({ user: o, setUser: C, toast: _, onNavigate: y }) {
                           type: "button",
                           className: "inline-link inline-link--danger",
                           disabled: ge,
-                          onClick: () =>
-                            window.confirm(
-                              `Bestellung ${Z.number} wirklich stornieren?${Z.paymentStatus === "bezahlt" ? " Der bezahlte Betrag wird Ihnen zurückerstattet." : ""}`,
-                            ) &&
+                          onClick: async () =>
+                            (await pf_confirm({
+                              title: `Bestellung ${Z.number} stornieren?`,
+                              text: `Die Bestellung wird storniert und Sie erhalten eine Bestätigung per E-Mail.${Z.paymentStatus === "bezahlt" ? " Den bezahlten Betrag erstatten wir Ihnen zurück." : ""}`,
+                              confirm: "Ja, stornieren",
+                              cancel: "Nein, behalten",
+                              danger: !0,
+                            })) &&
                             ye(`/me/orders/${encodeURIComponent(Z.number)}/cancel`, { method: "POST" }, (Q) => {
                               (Qe((je) => je.map((xe) => (xe.number === Z.number ? Q.order : xe))), _("Die Bestellung wurde storniert. Sie erhalten eine Bestätigung per E-Mail."));
                             }),
@@ -17059,6 +17105,7 @@ function O1() {
             ],
           }),
         }),
+      h(pf_ConfirmHost),
       pf_drawer &&
         h(pf_CartDrawer, {
           added: pf_drawer.name ? pf_drawer : null,
