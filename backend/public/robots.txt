@@ -1,7 +1,0 @@
-User-agent: *
-Disallow: /admin
-Disallow: /api
-Disallow: /konto
-Disallow: /kasse
-
-Sitemap: https://pflanzfarm.ch/sitemap.xml

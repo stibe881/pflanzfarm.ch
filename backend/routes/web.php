@@ -16,6 +16,7 @@ Route::get('/test-zahlung/{number}', [TestPaymentController::class, 'show']);
 Route::post('/test-zahlung/{number}', [TestPaymentController::class, 'complete']);
 
 Route::get('/sitemap.xml', SitemapController::class);
+Route::get('/robots.txt', \App\Http\Controllers\RobotsController::class);
 Route::get('/pflegetipps/abmelden', [\App\Http\Controllers\Api\ExtrasController::class, 'careOptOut'])->name('care.optout');
 
 // Alle übrigen Pfade liefert die Website (Single-Page-App) aus.

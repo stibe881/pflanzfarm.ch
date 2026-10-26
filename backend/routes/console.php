@@ -9,5 +9,7 @@ Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->
 Schedule::command('pflanzfarm:newsletter-planen')->everyMinute()->withoutOverlapping();
 // Zahlungserinnerungen für überfällige Rechnungen, werktags morgens
 Schedule::command('pflanzfarm:zahlungserinnerungen')->weekdays()->at('08:30');
+// Sicherheitsnetz: offene Stripe-Zahlungen abgleichen (abgelaufene stornieren, bezahlte verbuchen)
+Schedule::command('pflanzfarm:stripe-abgleich')->everyFifteenMinutes()->withoutOverlapping();
 // Pflegetipps nach der Lieferung und saisonale Erinnerungen
 Schedule::command('pflanzfarm:pflegemails')->dailyAt('09:15');

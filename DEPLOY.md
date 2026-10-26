@@ -77,7 +77,13 @@ server {
 | `STRIPE_WEBHOOK_SECRET` | Signatur-Geheimnis des Webhooks (siehe unten) |
 | `SANCTUM_STATEFUL_DOMAINS` | `pflanzfarm.ch,www.pflanzfarm.ch` |
 
-### Resend
+### Resend und Stripe einrichten
+
+Am einfachsten mit dem geführten Befehl `php artisan pflanzfarm:einrichten` (Schlüssel abfragen, Domain und Webhooks
+anlegen, prüfen). Prüfen: `php artisan pflanzfarm:status --testmail=…` oder Admin → Systemstatus.
+Domainwechsel: `php artisan pflanzfarm:domain pflanzfarm.ch --live`. Ausführliche Anleitung: [HETZNER.md](HETZNER.md).
+
+### Resend (von Hand)
 
 1. Konto auf resend.com erstellen, Domain `pflanzfarm.ch` hinzufügen und die angezeigten DNS-Einträge (SPF, DKIM) beim Domain-Anbieter eintragen.
 2. API-Schlüssel erstellen und als `RESEND_API_KEY` eintragen.

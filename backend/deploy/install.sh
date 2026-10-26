@@ -4,22 +4,7 @@
 # PHP-Version wählbar, z. B.:          PHP=php85 sh backend/deploy/install.sh
 set -e
 cd "$(dirname "$0")/.."
-# PHP 8.5 suchen (Hetzner hat je nach Server z. B. php85 oder php8.5 zusätzlich zu php)
-if [ -z "$PHP" ]; then
-  PHP=php
-  for c in php8.5 php85 /usr/bin/php8.5 /usr/bin/php85 /usr/local/bin/php85 /opt/php85/bin/php; do
-    if command -v "$c" >/dev/null 2>&1; then PHP="$c"; break; fi
-  done
-fi
-
-echo "PHP: $($PHP -r 'echo PHP_VERSION;') ($PHP)"
-$PHP -r 'exit(version_compare(PHP_VERSION, "8.5.0", ">=") ? 0 : 1);' || {
-  echo "Es wird PHP 8.5 oder neuer benötigt."
-  echo "Verfügbare PHP-Versionen auf diesem Server:"
-  ls /usr/bin/php* /usr/local/bin/php* /opt/php*/bin/php 2>/dev/null | sed 's/^/  /'
-  echo "Dann z. B.: PHP=/pfad/zu/php85 sh backend/deploy/install.sh"
-  exit 1; }
-
+. deploy/php.sh
 MISSING=$($PHP -r 'echo implode(" ", array_filter(["intl","gd","zip","pdo_mysql","mbstring","dom","fileinfo","openssl"], fn($e) => !extension_loaded($e)));')
 if [ -n "$MISSING" ]; then
   echo "Fehlende PHP-Erweiterungen: $MISSING"
@@ -64,3 +49,5 @@ chmod -R ug+rwX storage bootstrap/cache
 
 echo ""
 echo "Fertig. Website: $(grep '^APP_URL=' .env | cut -d= -f2)   Admin: …/admin"
+grep -q '^MAIL_MAILER=resend' .env && grep -q '^STRIPE_FAKE=false' .env || \
+  echo "Tipp: E-Mail (Resend) und Zahlung (Stripe) einrichten mit:  sh backend/deploy/artisan.sh pflanzfarm:einrichten"

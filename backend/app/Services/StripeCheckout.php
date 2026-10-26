@@ -12,6 +12,68 @@ class StripeCheckout
         return new StripeClient((string) config('services.stripe.secret'));
     }
 
+    /** test | live | null (kein Schlüssel) – erkennbar am Präfix sk_test_ / sk_live_ bzw. rk_… */
+    public static function keyMode(?string $key = null): ?string
+    {
+        $key = (string) ($key ?? config('services.stripe.secret'));
+
+        return match (true) {
+            $key === '' => null,
+            (bool) preg_match('/^(sk|rk)_test_/', $key) => 'test',
+            (bool) preg_match('/^(sk|rk)_live_/', $key) => 'live',
+            default => 'unbekannt',
+        };
+    }
+
+    /** Auf der Testseite nur Testschlüssel, auf der echten Website nur Live-Schlüssel. */
+    public static function keyProblem(?string $key = null): ?string
+    {
+        $mode = self::keyMode($key);
+        $test = (bool) config('pflanzfarm.test_mode');
+
+        return match (true) {
+            $mode === null => 'Kein Stripe-Schlüssel hinterlegt (STRIPE_SECRET).',
+            $mode === 'unbekannt' => 'Der Stripe-Schlüssel hat ein unbekanntes Format (erwartet sk_test_… oder sk_live_…).',
+            $test && $mode === 'live' => 'Auf der Testseite (PFLANZFARM_TEST_MODE=true) sind nur Stripe-Testschlüssel (sk_test_…) erlaubt.',
+            default => null,
+        };
+    }
+
+    /** Session mit den gewünschten Zahlungsarten; ist TWINT im Stripe-Konto (noch) nicht aktiv, nur mit Karte. */
+    private function createWithFallback(array $params): \Stripe\Checkout\Session
+    {
+        try {
+            return $this->client()->checkout->sessions->create($params);
+        } catch (\Stripe\Exception\InvalidRequestException $e) {
+            $methods = $params['payment_method_types'] ?? [];
+            if (count($methods) > 1 && in_array('card', $methods, true) && str_contains(strtolower($e->getMessage()), 'payment method')) {
+                report($e);
+
+                return $this->client()->checkout->sessions->create(['payment_method_types' => ['card']] + $params);
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Abgleich direkt bei Stripe, falls ein Webhook nicht ankommt (z. B. Webhook noch nicht eingerichtet):
+     * bezahlt → als bezahlt markieren, abgelaufen → stornieren und Bestand freigeben.
+     */
+    public function sync(Order $order): void
+    {
+        $sessionId = (string) $order->stripe_session_id;
+        if ($order->payment_status !== 'ausstehend' || $sessionId === '' || str_starts_with($sessionId, 'test_') || config('pflanzfarm.fake_payments')) {
+            return;
+        }
+        $session = $this->retrieveSession($sessionId);
+        $orders = app(OrderService::class);
+        if (($session->payment_status ?? null) === 'paid') {
+            $orders->markPaid($order, $session->payment_intent ?? null);
+        } elseif (($session->status ?? null) === 'expired') {
+            $orders->cancel($order, 'abgebrochen');
+        }
+    }
+
     /** Erstellt eine Stripe-Checkout-Session (Karte und TWINT) und gibt die Zahlungs-URL zurück. */
     public function createSession(Order $order): string
     {
@@ -20,6 +82,9 @@ class StripeCheckout
             $order->update(['stripe_session_id' => 'test_'.$order->number]);
 
             return '/test-zahlung/'.$order->number.'?t='.$order->access_token;
+        }
+        if ($problem = self::keyProblem()) {
+            throw new \RuntimeException($problem);
         }
 
         $lines = $order->items->map(fn ($item) => [
@@ -43,7 +108,7 @@ class StripeCheckout
         }
 
         $base = rtrim(config('app.url'), '/');
-        $session = $this->client()->checkout->sessions->create([
+        $session = $this->createWithFallback([
             'mode' => 'payment',
             'payment_method_types' => config('services.stripe.methods'),
             'line_items' => $lines,
@@ -61,6 +126,11 @@ class StripeCheckout
         return $session->url;
     }
 
+    public function retrieveSession(string $id): object
+    {
+        return $this->client()->checkout->sessions->retrieve($id);
+    }
+
     /** Erstattet eine Stripe-Zahlung vollständig (Karte oder TWINT). */
     public function refund(Order $order): void
     {
@@ -69,7 +139,7 @@ class StripeCheckout
         }
         $intent = $order->stripe_payment_intent;
         if (! $intent && $order->stripe_session_id) {
-            $intent = $this->client()->checkout->sessions->retrieve($order->stripe_session_id)->payment_intent;
+            $intent = $this->retrieveSession($order->stripe_session_id)->payment_intent;
         }
         if (! $intent) {
             throw new \RuntimeException('Zu dieser Bestellung ist keine Stripe-Zahlung hinterlegt.');

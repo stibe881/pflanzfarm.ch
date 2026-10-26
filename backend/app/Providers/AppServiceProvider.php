@@ -38,6 +38,14 @@ class AppServiceProvider extends ServiceProvider
             $model::observe(\App\Observers\ImageObserver::class);
         }
 
+        // Testseite: alle Mails an eine feste Adresse (Original-Empfänger steht im Betreff)
+        if (($redirect = config('pflanzfarm.mail_redirect_to')) && config('pflanzfarm.test_mode')) {
+            Event::listen(\Illuminate\Mail\Events\MessageSending::class, function (\Illuminate\Mail\Events\MessageSending $e) use ($redirect) {
+                $to = collect($e->message->getTo())->map->getAddress()->join(', ');
+                $e->message->to($redirect)->cc()->bcc()->subject('[Test an '.$to.'] '.$e->message->getSubject());
+            });
+        }
+
         Event::listen(MessageSent::class, [TrackNewsletter::class, 'sent']);
         Event::listen(\Resend\Laravel\Events\EmailOpened::class, [TrackNewsletter::class, 'opened']);
         Event::listen(\Resend\Laravel\Events\EmailClicked::class, [TrackNewsletter::class, 'clicked']);

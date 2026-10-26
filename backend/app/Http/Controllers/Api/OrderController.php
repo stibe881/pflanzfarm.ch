@@ -108,6 +108,15 @@ class OrderController extends Controller
     public function show(Request $request, string $number): JsonResponse
     {
         $order = $this->authorized($request, $number);
+        // Danke-Seite: Zahlungsstand notfalls direkt bei Stripe abfragen (falls der Webhook verspätet ist)
+        if ($order->payment_status === 'ausstehend') {
+            try {
+                $this->stripe->sync($order);
+                $order->refresh();
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
 
         return response()->json(['order' => self::summary($order->load('items'))]);
     }
