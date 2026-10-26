@@ -2825,9 +2825,9 @@ button.inline-link:hover {
     linear-gradient(90deg, rgba(10, 42, 31, 0.78) 0%, rgba(10, 42, 31, 0.62) 32%, rgba(10, 42, 31, 0.22) 62%, rgba(10, 42, 31, 0.06) 100%),
     linear-gradient(0deg, rgba(10, 42, 31, 0.45) 0%, rgba(10, 42, 31, 0) 28%);
 }
-.hero__video,
+/* Farbauffrischung ist im Video eingerechnet; das Standbild erhält sie per Filter */
 .hero__poster img {
-  filter: saturate(1.15) contrast(1.04) brightness(1.06);
+  filter: saturate(1.12) contrast(1.03) brightness(1.04);
 }
 .hero__content h1,
 .hero__content p {
