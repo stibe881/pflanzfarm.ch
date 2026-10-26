@@ -13122,7 +13122,7 @@ const pf_Phone = ee("Phone", [
     ["path", { d: "M12 6v6l4 2", key: "pfclock2" }],
   ]);
 // Google-Analytics-Mess-ID eintragen (z. B. "G-XXXXXXXXXX"). Leer = Analytics wird nie geladen.
-const pf_gaId = "",
+const pf_gaId = "G-595C54NRLK",
   pf_consentKey = "pflanzfarm-consent-v2",
   pf_readConsent = () => {
     try {
