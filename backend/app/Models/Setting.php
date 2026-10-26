@@ -31,7 +31,7 @@ class Setting extends Model
         'invoice_due_days' => 30,
         'cash_enabled' => true,
         'iban' => '',
-        'vat_number' => '',
+        'vat_number' => 'CHE-214.008.517',
         'notify_email' => 'info@pflanzfarm.ch',
         'low_stock_threshold' => 10,
         'reminders_enabled' => true,

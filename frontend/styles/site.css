@@ -2519,3 +2519,66 @@ button.inline-link {
 button.inline-link:hover {
   color: var(--terracotta-text);
 }
+
+/* AGB, Versandbedingungen, Widerrufsbelehrung */
+.legal-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 28px;
+}
+.legal-doc {
+  max-width: 780px;
+  margin-bottom: 20px;
+  padding: 32px 36px;
+  border: 1px solid #dfe6dc;
+  border-radius: 10px;
+  background: #fff;
+  scroll-margin-top: 130px;
+}
+.legal-doc h2 {
+  margin: 0 0 18px;
+  font-size: 1.9rem;
+}
+.legal-doc__intro {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--sage-soft);
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+.legal-doc__part + .legal-doc__part {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #e8ece6;
+}
+.legal-doc h3 {
+  margin: 0 0 8px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+.legal-doc p,
+.legal-doc li {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+.legal-doc ol {
+  margin: 0;
+  padding-left: 1.3em;
+  display: grid;
+  gap: 6px;
+}
+@media (max-width: 760px) {
+  .legal-doc {
+    padding: 22px 20px;
+  }
+  .legal-doc h2 {
+    font-size: 1.5rem;
+  }
+}

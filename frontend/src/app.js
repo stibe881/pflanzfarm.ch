@@ -14330,18 +14330,70 @@ function pf_Account({ user: o, setUser: C, toast: _, onNavigate: y }) {
     ),
   );
 }
+// Rechtstexte von Pflanzfarm (AGB, Versandbedingungen, Widerrufsbelehrung): [Überschrift, Einleitung, Aufzählung]
 const pf_terms = [
-  ["Geltungsbereich", "Diese Allgemeinen Geschäftsbedingungen gelten für alle Bestellungen über die Website der Pflanzfarm Steinmann, Inhaber Thomas Steinmann, Untergretti 2, 6245 Ebersecken (nachfolgend «Pflanzfarm»). Abweichende Vereinbarungen, etwa für Pflanzservice oder Gartenprojekte, gelten nur, wenn sie schriftlich bestätigt wurden."],
-  ["Bestellung und Vertragsschluss", "Die Darstellung der Pflanzen im Shop ist kein verbindliches Angebot. Mit dem Absenden der Bestellung geben Sie ein verbindliches Angebot ab; Sie erhalten umgehend eine Eingangsbestätigung per E-Mail. Der Vertrag kommt zustande, wenn wir die Bestellung bestätigen oder die Ware liefern bzw. zur Abholung bereitstellen. Können wir eine Bestellung nicht ausführen, informieren wir Sie und erstatten bereits geleistete Zahlungen vollständig."],
-  ["Preise", "Alle Preise verstehen sich in Schweizer Franken inklusive gesetzlicher Mehrwertsteuer. Lieferkosten werden im Warenkorb und in der Kasse ausgewiesen. Abholung in Ebersecken ist kostenlos."],
-  ["Zahlung", "Sie können mit Kredit- oder Debitkarte oder TWINT (abgewickelt über Stripe), auf Rechnung oder bei Abholung bar bezahlen. Rechnungen sind innert 30 Tagen ohne Abzug zahlbar. Wir behalten uns vor, einzelne Zahlungsarten im Einzelfall auszuschliessen. Die Ware bleibt bis zur vollständigen Bezahlung unser Eigentum."],
-  ["Lieferung und Abholung", "Wir liefern in die ganze Schweiz. Den Liefer- oder Abholtermin vereinbaren wir nach Eingang der Bestellung persönlich mit Ihnen; Pflanzen werden bevorzugt in den Pflanzzeiten im Frühling und Herbst geliefert. Bei Lieferung muss die Zufahrt für unser Fahrzeug möglich sein. Die Gefahr geht mit der Übergabe der Ware auf Sie über."],
-  ["Lebende Pflanzen", "Pflanzen sind Naturprodukte. Wuchs, Form, Farbe und Höhe können innerhalb der angegebenen Grössenklasse von den Abbildungen abweichen; dies ist kein Mangel. Bitte pflanzen und wässern Sie die Pflanzen möglichst rasch nach Erhalt und beachten Sie unsere Pflegehinweise."],
-  ["Prüfung und Mängel", "Bitte prüfen Sie die Ware bei Übernahme. Offensichtliche Mängel oder Transportschäden melden Sie uns innert 5 Tagen mit Fotos an info@pflanzfarm.ch. Bei berechtigten Mängeln liefern wir nach unserer Wahl Ersatz oder erstatten den Kaufpreis der betroffenen Pflanzen. Für das Anwachsen nach der Pflanzung übernehmen wir keine Garantie, da Standort, Pflege und Witterung ausserhalb unseres Einflusses liegen – ausser es wurde für einen Pflanzservice schriftlich etwas anderes vereinbart."],
-  ["Rückgabe und Stornierung", "Ein gesetzliches Widerrufsrecht für Online-Käufe besteht in der Schweiz nicht. Lebende Pflanzen sind vom Umtausch und von der Rückgabe ausgeschlossen. Bis zu unserer Bestätigung können Sie eine Bestellung kostenlos stornieren; danach nur nach Absprache."],
-  ["Haftung", "Wir haften für Schäden nur bei Vorsatz oder grober Fahrlässigkeit, soweit gesetzlich zulässig. Die Haftung für Folgeschäden und entgangenen Gewinn ist ausgeschlossen."],
-  ["Datenschutz", "Wie wir mit Ihren Daten umgehen, erfahren Sie in unserer Datenschutzerklärung."],
-  ["Anwendbares Recht und Gerichtsstand", "Es gilt ausschliesslich schweizerisches Recht unter Ausschluss des Wiener Kaufrechts. Gerichtsstand ist, soweit gesetzlich zulässig, der Sitz der Pflanzfarm."],
+  {
+    id: "agb",
+    title: "Allgemeine Geschäftsbedingungen",
+    sections: [
+      ["§ 1 Geltungsbereich", "Diese AGB gelten für alle Verträge, die zwischen der Pflanzfarm (nachfolgend «Anbieter» genannt) und den Kunden über den Online-Shop abgeschlossen werden. Abweichende Bedingungen des Kunden finden keine Anwendung, sofern der Anbieter nicht ausdrücklich schriftlich zugestimmt hat.", []],
+      ["§ 2 Vertragsschluss", null, [
+        "Die Präsentation der Produkte im Online-Shop stellt kein rechtlich bindendes Angebot dar, sondern eine unverbindliche Aufforderung zur Bestellung.",
+        "Durch Anklicken des Buttons «Zahlungspflichtig bestellen» geben Sie ein verbindliches Angebot zum Abschluss eines Kaufvertrages ab.",
+        "Der Vertrag kommt erst mit der ausdrücklichen Annahme Ihrer Bestellung durch eine Auftragsbestätigung per E-Mail zustande.",
+      ]],
+      ["§ 3 Preise und Zahlungsbedingungen", null, [
+        "Alle angegebenen Preise verstehen sich in Schweizer Franken (CHF) inkl. der gesetzlichen Mehrwertsteuer, sofern diese anfällt.",
+        "Zusätzliche Versandkosten werden gesondert ausgewiesen und sind im Bestellvorgang zu berücksichtigen.",
+        "Die Zahlung erfolgt wahlweise per Kredit- oder Debitkarte, TWINT, auf Rechnung, bar bei Abholung oder mit anderen im Bestellprozess angebotenen Zahlungsmethoden.",
+      ]],
+      ["§ 4 Lieferung", null, [
+        "Die Lieferung erfolgt ausschliesslich an die von Ihnen angegebene Lieferadresse innerhalb der Schweiz. Nach Absprache können Sie die Ware auch bei uns in Ebersecken abholen.",
+        "Angaben zu Lieferzeiten und Verfügbarkeiten der Produkte finden Sie in unseren Versandbedingungen.",
+        "Teillieferungen können vorkommen, sofern dies für die Erfüllung der Bestellung notwendig ist.",
+      ]],
+      ["§ 5 Eigentumsvorbehalt", "Die gelieferten Waren bleiben bis zur vollständigen Bezahlung im Eigentum des Anbieters.", []],
+      ["§ 6 Gewährleistung und Haftung", null, [
+        "Es gilt das gesetzlich vorgeschriebene Gewährleistungsrecht.",
+        "Der Anbieter haftet nur für Schäden, die auf grober Fahrlässigkeit oder Vorsatz beruhen. Bei leichter Fahrlässigkeit haftet der Anbieter nur, sofern wesentliche Vertragspflichten (Kardinalpflichten) verletzt wurden.",
+        "Eine weitergehende Haftung ist ausgeschlossen.",
+      ]],
+      ["§ 7 Schlussbestimmungen", null, [
+        "Änderungen oder Ergänzungen des Vertrages bedürfen der Schriftform.",
+        "Sollte eine Bestimmung dieser AGB unwirksam sein, bleiben die übrigen Bestimmungen davon unberührt.",
+        "Gerichtsstand ist – soweit gesetzlich zulässig – der Sitz des Anbieters.",
+      ]],
+    ],
+  },
+  {
+    id: "versand",
+    title: "Versandbedingungen",
+    sections: [
+      ["1. Liefergebiet", "Die Lieferung erfolgt ausschliesslich innerhalb der Schweiz an die von Ihnen angegebene Lieferadresse.", []],
+      ["2. Lieferzeiten", null, [
+        "Die Bearbeitungszeit Ihrer Bestellung beträgt in der Regel 1–2 Werktage.",
+        "Die Zustellung erfolgt abhängig von der gewählten Versandart meist innerhalb von 2–5 Werktagen.",
+        "Bei Lieferverzögerungen informieren wir Sie umgehend per E-Mail.",
+      ]],
+      ["3. Versandkosten", null, [
+        "Die Versandkosten werden während des Bestellvorgangs transparent ausgewiesen und richten sich nach dem Gesamtbestellwert sowie der Lieferadresse.",
+        "Für Bestellungen ab einem bestimmten Bestellwert bieten wir versandkostenfreie Lieferung an (sofern im Online-Shop angegeben).",
+      ]],
+      ["4. Versanddienstleister", "Die Lieferung erfolgt über zuverlässige Versanddienstleister. Der Anbieter behält sich das Recht vor, den Versanddienstleister nach eigenem Ermessen zu wählen.", []],
+      ["5. Lieferung an Packstationen und Postfächer", "Sofern die gewählte Versandart dies zulässt, erfolgt die Lieferung auch an Packstationen oder Postfächer. Bitte beachten Sie, dass für solche Lieferungen eventuell abweichende Lieferzeiten gelten können.", []],
+    ],
+  },
+  {
+    id: "widerruf",
+    title: "Widerrufsbelehrung",
+    intro: "Wichtiger Hinweis für Verbraucher (Verbraucher im Sinne des Schweizer Konsumrechts): In der Schweiz besteht grundsätzlich kein gesetzliches Widerrufsrecht für Fernabsatzverträge, sofern der Unternehmer seinen Sitz in der Schweiz hat. Sollte dennoch ein Widerrufsrecht vereinbart werden (z. B. im Rahmen von Kulanzregelungen), gelten folgende Bedingungen:",
+    sections: [
+      ["1. Widerrufsrecht", "Sofern Ihnen ein Widerrufsrecht eingeräumt wurde, können Sie den Vertrag innerhalb von 14 Tagen ohne Angabe von Gründen widerrufen. Die Frist beginnt mit Erhalt der Ware.", []],
+      ["2. Widerrufsverfahren", "Um Ihr Widerrufsrecht auszuüben, senden Sie uns bitte eine eindeutige Erklärung per E-Mail an info@pflanzfarm.ch.", []],
+      ["3. Folgen des Widerrufs", "Im Falle eines wirksamen Widerrufs erstatten wir Ihnen alle Zahlungen, einschliesslich der Lieferkosten, unverzüglich (innerhalb von 14 Tagen) zurück, sobald die Ware zurückgegangen ist oder Sie den Nachweis der Rücksendung erbracht haben.", []],
+      ["4. Rücksendekosten", "Sofern nichts anderes vereinbart wurde, tragen Sie die unmittelbaren Kosten der Rücksendung der Ware.", []],
+    ],
+  },
 ];
 function O1() {
   const [o, C] = H.useState(() => t0(Ii())),
@@ -16304,6 +16356,7 @@ function O1() {
                       "CH-6245 Ebersecken",
                     ],
                   }),
+                  i.jsxs("p", { children: ["UID / MWST-Nr.: CHE-214.008.517"] }),
                   i.jsxs("p", {
                     children: [
                       i.jsx("a", { href: "tel:+41793361495", children: "+41 79 336 14 95" }),
@@ -16332,7 +16385,7 @@ function O1() {
                   i.jsx("h2", { children: "Bestellungen" }),
                   i.jsx("p", {
                     children:
-                      "Für Bestellungen im Online-Shop gelten unsere Allgemeinen Geschäftsbedingungen (AGB). Preise in Schweizer Franken inklusive Mehrwertsteuer.",
+                      "Für Bestellungen im Online-Shop gelten unsere Allgemeinen Geschäftsbedingungen (AGB) mit Versandbedingungen und Widerrufsbelehrung. Preise in Schweizer Franken inklusive Mehrwertsteuer.",
                   }),
                 ],
               }),
@@ -16830,8 +16883,23 @@ function O1() {
                     h(
                       "main",
                       { id: "main-content", tabIndex: -1, className: "legal-page container" },
-                      pf_PageHead("AGB", "Allgemeine Geschäftsbedingungen", "Für Bestellungen im Online-Shop der Pflanzfarm Steinmann. Stand: Oktober 2026."),
-                      h("div", { className: "legal-grid" }, ...pf_terms.map(([v, T]) => h("section", { key: v }, h("h2", null, v), h("p", null, T)))),
+                      pf_PageHead("AGB", "Allgemeine Geschäftsbedingungen", "Für Bestellungen im Online-Shop der Pflanzfarm Steinmann, mit Versandbedingungen und Widerrufsbelehrung. Stand: Oktober 2026."),
+                      h(
+                        "nav",
+                        { className: "legal-toc", "aria-label": "Inhalt" },
+                        ...pf_terms.map((v) => h("a", { key: v.id, className: "pill-link pill-link--soft", href: `#${v.id}` }, v.title)),
+                      ),
+                      ...pf_terms.map((v) =>
+                        h(
+                          "section",
+                          { key: v.id, id: v.id, className: "legal-doc", "aria-labelledby": `${v.id}-titel` },
+                          h("h2", { id: `${v.id}-titel` }, v.title),
+                          v.intro && h("p", { className: "legal-doc__intro" }, v.intro),
+                          ...v.sections.map(([T, E, K]) =>
+                            h("div", { key: T, className: "legal-doc__part" }, h("h3", null, T), E && h("p", null, E), K.length > 0 && h("ol", null, ...K.map((De) => h("li", { key: De }, De)))),
+                          ),
+                        ),
+                      ),
                     ),
                   h(
                     "footer",
