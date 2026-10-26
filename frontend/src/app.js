@@ -15083,12 +15083,11 @@ function O1() {
                   "aria-hidden": "true",
                   onCanPlay: (v) => Gc(v.currentTarget),
                   children: [
-                    i.jsx(
-                      "source",
-                      { src: He("/assets/pflanzfarm-hero-loop-540.mp4"), type: "video/mp4", media: "(max-width: 760px)" },
-                      "mp4-540",
-                    ),
-                    i.jsx("source", { src: He("/assets/pflanzfarm-hero-loop-720.mp4"), type: "video/mp4" }, "mp4-720"),
+                    // AV1 (kleiner, schärfer) zuerst, H.264 als Rückfall für ältere Browser; Handy erhält 540p
+                    h("source", { key: "av1-540", src: He("/assets/pflanzfarm-hero-loop-540-av1.mp4"), type: 'video/mp4; codecs="av01.0.04M.08"', media: "(max-width: 760px)" }),
+                    h("source", { key: "mp4-540", src: He("/assets/pflanzfarm-hero-loop-540-v2.mp4"), type: "video/mp4", media: "(max-width: 760px)" }),
+                    h("source", { key: "av1-1080", src: He("/assets/pflanzfarm-hero-loop-1080-av1.mp4"), type: 'video/mp4; codecs="av01.0.08M.08"' }),
+                    h("source", { key: "mp4-720", src: He("/assets/pflanzfarm-hero-loop-720-v2.mp4"), type: "video/mp4" }),
                   ],
                 }),
               i.jsx("div", { className: "hero__shade" }),

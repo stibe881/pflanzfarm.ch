@@ -2818,3 +2818,23 @@ button.inline-link:hover {
     justify-content: flex-start;
   }
 }
+
+/* Hero: Verlauf statt gleichmässiger Abdunkelung – dunkel nur hinter dem Text, rechts bleibt das Video hell */
+.hero__shade {
+  background:
+    linear-gradient(90deg, rgba(10, 42, 31, 0.78) 0%, rgba(10, 42, 31, 0.62) 32%, rgba(10, 42, 31, 0.22) 62%, rgba(10, 42, 31, 0.06) 100%),
+    linear-gradient(0deg, rgba(10, 42, 31, 0.45) 0%, rgba(10, 42, 31, 0) 28%);
+}
+.hero__video,
+.hero__poster img {
+  filter: saturate(1.15) contrast(1.04) brightness(1.06);
+}
+.hero__content h1,
+.hero__content p {
+  text-shadow: 0 1px 18px rgba(6, 26, 19, 0.35);
+}
+@media (max-width: 760px) {
+  .hero__shade {
+    background: linear-gradient(180deg, rgba(10, 42, 31, 0.46) 0%, rgba(10, 42, 31, 0.4) 45%, rgba(10, 42, 31, 0.62) 100%);
+  }
+}
