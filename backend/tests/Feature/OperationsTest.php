@@ -272,4 +272,20 @@ class OperationsTest extends TestCase
             ->expectsTable(['E-Mail', 'Rolle'], [['admin@pflanzfarm.test', 'admin']])
             ->assertFailed();
     }
+
+    public function test_test_accounts_command_restores_accounts_only_in_test_mode(): void
+    {
+        config(['pflanzfarm.test_mode' => false]);
+        $this->artisan('pflanzfarm:testkonten')->assertFailed();
+        $this->assertSame(0, User::query()->count());
+
+        config(['pflanzfarm.test_mode' => true]);
+        User::query()->create(['name' => 'Erika', 'email' => 'kunde@pflanzfarm.test', 'password' => 'Irgendwas-Anderes-1', 'role' => 'customer']);
+        $this->artisan('pflanzfarm:testkonten')->assertSuccessful();
+
+        $this->assertSame(3, User::query()->count());
+        $this->postJson('/api/login', ['email' => 'kunde@pflanzfarm.test', 'password' => 'Kunde-Test-2026'])
+            ->assertOk()->assertJsonMissingPath('redirect');
+        $this->assertSame('admin', User::query()->where('email', 'admin@pflanzfarm.test')->value('role'));
+    }
 }
