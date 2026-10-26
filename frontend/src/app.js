@@ -16506,13 +16506,6 @@ function O1() {
               h("a", { className: "button button--primary", ...Lk("contact") }, "Beratung anfragen ", h(Ve, { size: 18 })),
               h("a", { className: "button button--soft", href: "tel:+41793361495" }, h(pf_Phone, { size: 17 }), " 079 336 14 95"),
             ),
-            h(
-              "ul",
-              { className: "svc-facts", "aria-label": "Auf einen Blick" },
-              h("li", null, h("b", null, "Eigene"), h("span", null, "Baumschule")),
-              h("li", null, h("b", null, "Schweizweit"), h("span", null, "Lieferung")),
-              h("li", null, h("b", null, "Persönlich"), h("span", null, "vor Ort beraten")),
-            ),
           ),
           h(
             "figure",
@@ -16565,19 +16558,35 @@ function O1() {
             { className: "container" },
             h(
               "div",
-              { className: "svc-head svc-head--light" },
-              h("span", { className: "eyebrow eyebrow--light" }, "Ablauf"),
-              h("h2", { id: "ablauf" }, "So läuft Ihr Projekt ab."),
-            ),
-            h(
-              "ol",
-              { className: "svc-steps" },
-              ...[
-                ["Anfrage", "Per Telefon, E-Mail, WhatsApp oder über unser Formular – kurz beschreiben, was Sie vorhaben."],
-                ["Beratung & Offerte", "Telefonisch, bei uns in der Baumschule oder bei Ihnen vor Ort. Danach erhalten Sie eine klare Offerte."],
-                ["Lieferung & Pflanzung", "Zum vereinbarten Termin – auf Wunsch pflanzen wir gleich mit."],
-                ["Begleitung", "Auch nach der Pflanzung sind wir für Pflegefragen für Sie erreichbar."],
-              ].map(([v, T], E) => h("li", { key: v }, h("span", { className: "svc-steps__nr" }, String(E + 1).padStart(2, "0")), h("h3", null, v), h("p", null, T))),
+              { className: "svc-process__grid" },
+              h(
+                "figure",
+                { className: "svc-process__media" },
+                h("img", {
+                  src: He("/assets/pflanzfarm-garten-2.jpg"),
+                  srcSet: At("/assets/pflanzfarm-garten-2-640.webp 640w, /assets/pflanzfarm-garten-2-1280.webp 1280w"),
+                  sizes: "(max-width: 900px) 92vw, 40vw",
+                  alt: "Gartenanlage mit gepflanzten Hecken",
+                  loading: "lazy",
+                }),
+              ),
+              h(
+                "div",
+                { className: "svc-process__copy" },
+                h("span", { className: "eyebrow eyebrow--light" }, "Gut zu wissen"),
+                h("h2", { id: "ablauf" }, "Wie wir mit Ihnen arbeiten."),
+                h("p", { className: "svc-process__lead" }, "Sie sprechen von der ersten Frage bis zur Pflege mit denselben Leuten aus unserem Familienbetrieb. Was Sie vorab wissen sollten:"),
+                h(
+                  "dl",
+                  { className: "svc-facts-list" },
+                  ...[
+                    ["Kontakt", "Telefon, E-Mail, WhatsApp oder Kontaktformular – wir antworten in der Regel innert eines Arbeitstags."],
+                    ["Beratung", "Telefonisch, bei uns in der Baumschule in Ebersecken oder bei Ihnen im Garten."],
+                    ["Offerte", "Nach der Beratung erhalten Sie eine klare, schriftliche Offerte."],
+                    ["Pflanzzeit", "Die beste Zeit für Hecken und Gehölze ist Frühling oder Herbst – den Termin planen wir mit Ihnen."],
+                  ].map(([v, T]) => h("div", { key: v }, h("dt", null, v), h("dd", null, T))),
+                ),
+              ),
             ),
           ),
         ),
