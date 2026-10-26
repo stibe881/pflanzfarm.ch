@@ -2799,10 +2799,7 @@ button.inline-link:hover {
 .pf-footer__credit-logo {
   display: inline-flex;
   align-items: center;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: #f6f2e9;
-  transition: background 0.2s;
+  transition: opacity 0.2s;
 }
 .pf-footer__credit-logo img {
   display: block;
@@ -2813,7 +2810,7 @@ button.inline-link:hover {
   color: #fff;
 }
 .pf-footer__credit a:hover .pf-footer__credit-logo {
-  background: #fff;
+  opacity: 0.85;
 }
 @media (max-width: 760px) {
   .pf-footer__credit,
