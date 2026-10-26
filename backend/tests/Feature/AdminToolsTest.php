@@ -54,7 +54,7 @@ class AdminToolsTest extends TestCase
         $this->assertSame($a->customer_id, $b->customer_id);
         $this->assertSame('079 999 99 99', Customer::query()->find($a->customer_id)->phone);
         $this->assertSame(1, Customer::query()->count());
-        Mail::assertSent(OrderConfirmation::class, fn ($m) => preg_match('#<img src="https?://[^"]+/thuja-smaragd\.jpg"#', $m->render()) === 1);
+        Mail::assertSent(OrderConfirmation::class, fn ($m) => preg_match('#<img src="https?://[^"]+/thuja-smaragd-v2\.jpg"#', $m->render()) === 1);
     }
 
     public function test_board_moves_orders_and_remembers_view(): void
