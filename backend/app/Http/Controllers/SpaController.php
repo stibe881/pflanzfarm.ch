@@ -50,7 +50,7 @@ class SpaController extends Controller
             $html = str_replace('<meta name="theme-color"', '<meta name="robots" content="noindex" />'."\n    ".'<meta name="theme-color"', $html);
         }
 
-        return response($html, $status)->header('Content-Type', 'text/html; charset=UTF-8');
+        return response($html, $status)->header('Content-Type', 'text/html; charset=UTF-8')->header('Cache-Control', 'no-cache, must-revalidate');
     }
 
     private function productData(Product $product): array
