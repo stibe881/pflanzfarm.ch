@@ -2453,3 +2453,14 @@ a.pill-link--soft {
   border-color: rgba(255, 255, 255, 0.6);
   color: #fff;
 }
+
+/* Referenzen: heller Seitenkopf wie Ratgeber und Gartenservice */
+.references-head {
+  padding-top: 56px;
+}
+.references-head .guide-head {
+  margin-bottom: 0;
+}
+.references-page .references-body {
+  padding-top: 36px;
+}

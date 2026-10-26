@@ -15749,12 +15749,12 @@ function O1() {
         tabIndex: -1,
         className: "references-page",
         children: [
-          i.jsx("section", {
-            className: "references-hero",
-            children: i.jsxs("div", {
-              className: "container",
+          i.jsx("div", {
+            className: "references-head container",
+            children: i.jsxs("header", {
+              className: "guide-head",
               children: [
-                i.jsx("span", { className: "eyebrow eyebrow--light", children: "Referenzen" }),
+                i.jsx("span", { className: "eyebrow", children: "Referenzen" }),
                 i.jsxs("h1", { children: ["Gärten, die", i.jsx("br", {}), "weiterwachsen."] }),
                 i.jsx("p", {
                   children: "Wir verbinden Pflanzenwissen, Handwerk und Orte, an denen man gern zuhause ist.",
@@ -15763,7 +15763,7 @@ function O1() {
             }),
           }),
           i.jsxs("section", {
-            className: "container section",
+            className: "container section references-body",
             children: [
               i.jsxs("div", {
                 className: "reference-filter",
