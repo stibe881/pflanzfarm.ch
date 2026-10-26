@@ -13109,22 +13109,18 @@ function a0({ product: o, onOpen: C, onAdd: _, isSaved: y, onToggleSaved: L, jus
             className: "product-card__meta",
             children: [
               i.jsx("span", { children: o.height }),
-              pf_ready
-                ? i.jsxs("span", {
-                    className: (o.stock ?? 1) > 0 && !o.priceOnRequest ? "stock-dot" : "stock-dot stock-dot--request",
-                    children: [i.jsx("i", {}), (o.stock ?? 1) > 0 && !o.priceOnRequest ? " Auf Lager" : " Auf Anfrage"],
-                  })
-                : h("span", { className: "skeleton skeleton--text", "aria-hidden": "true" }),
+              i.jsxs("span", {
+                className: (o.stock ?? 1) > 0 && !o.priceOnRequest ? "stock-dot" : "stock-dot stock-dot--request",
+                children: [i.jsx("i", {}), (o.stock ?? 1) > 0 && !o.priceOnRequest ? " Auf Lager" : " Auf Anfrage"],
+              }),
             ],
           }),
           i.jsxs("div", {
             className: "product-card__bottom",
             children: [
-              pf_ready
-                ? i.jsx("strong", {
-                    children: o.priceOnRequest ? "Preis auf Anfrage" : (o.variants || []).length > 1 ? `ab ${Sa(o.price)}` : Sa(o.price),
-                  })
-                : h("strong", { className: "skeleton skeleton--price", "aria-label": "Preis wird geladen" }),
+              i.jsx("strong", {
+                children: o.priceOnRequest ? "Preis auf Anfrage" : (o.variants || []).length > 1 ? `ab ${Sa(o.price)}` : Sa(o.price),
+              }),
               i.jsx("button", {
                 className: X ? "round-button round-button--confirmed" : "round-button",
                 onClick: o.priceOnRequest || (o.variants || []).length > 1 || (o.stock ?? 1) <= 0 ? C : _,
@@ -13275,38 +13271,37 @@ function pf_Inquiry() {
   );
 }
 function pf_Map() {
-  const [o, C] = H.useState(!1);
   return h(
     "div",
     { className: "pf-map" },
-    o
-      ? h("iframe", {
-          title: "Karte: Pflanzfarm, Untergretti 2, 6245 Ebersecken",
-          src: "https://www.openstreetmap.org/export/embed.html?bbox=7.9013%2C47.1660%2C7.9413%2C47.1840&layer=mapnik&marker=47.17497%2C7.92130",
-          loading: "lazy",
-        })
-      : h(
-          "div",
-          { className: "pf-map__placeholder" },
-          h(Jm, { size: 30 }),
-          h("p", null, "Die Karte wird erst nach Ihrem Klick von OpenStreetMap geladen."),
-          h("button", { type: "button", className: "button button--dark", onClick: () => C(!0) }, "Karte anzeigen"),
-        ),
+    h("iframe", {
+      title: "Karte: Pflanzfarm, Untergretti 2, 6245 Ebersecken",
+      src: "https://www.openstreetmap.org/export/embed.html?bbox=7.9013%2C47.1660%2C7.9413%2C47.1840&layer=mapnik&marker=47.17497%2C7.92130",
+      loading: "lazy",
+    }),
   );
 }
+const pf_routeUrl = "https://www.google.com/maps/dir/?api=1&destination=Untergretti%202%2C%206245%20Ebersecken";
 function pf_ContactList() {
-  return h(
-    "ul",
-    { className: "contact-list" },
-    h("li", null, h(pf_Phone, { size: 18 }), h("a", { href: "tel:+41793361495" }, "+41 79 336 14 95")),
-    h("li", null, h(wc, { size: 18 }), h("a", { href: "mailto:info@pflanzfarm.ch" }, "info@pflanzfarm.ch")),
+  const o = (C, _, y, L, X = {}) =>
     h(
       "li",
-      null,
-      h(g1, { size: 18 }),
-      h("a", { href: "https://wa.me/41793361495", target: "_blank", rel: "noopener noreferrer" }, "WhatsApp-Nachricht"),
-    ),
-    h("li", null, h(Jm, { size: 18 }), h("span", null, "Untergretti 2, 6245 Ebersecken LU")),
+      { key: _ },
+      h(
+        "a",
+        { className: "contact-tile", href: L, ...X },
+        h("span", { className: "contact-tile__icon", "aria-hidden": "true" }, h(C, { size: 20 })),
+        h("span", { className: "contact-tile__text" }, h("small", null, _), h("b", null, y)),
+        h(Ve, { size: 18, className: "contact-tile__arrow", "aria-hidden": "true" }),
+      ),
+    );
+  return h(
+    "ul",
+    { className: "contact-tiles" },
+    o(pf_Phone, "Telefon", "+41 79 336 14 95", "tel:+41793361495"),
+    o(wc, "E-Mail", "info@pflanzfarm.ch", "mailto:info@pflanzfarm.ch"),
+    o(g1, "WhatsApp", "Nachricht schreiben", "https://wa.me/41793361495", { target: "_blank", rel: "noopener noreferrer" }),
+    o(Jm, "Adresse", "Untergretti 2, 6245 Ebersecken LU", pf_routeUrl, { target: "_blank", rel: "noopener noreferrer", "aria-label": "Route nach Untergretti 2, 6245 Ebersecken planen" }),
   );
 }
 let pf_catalogSettings = {
@@ -13319,8 +13314,7 @@ let pf_catalogSettings = {
   },
   pf_refs = null,
   pf_articles = null,
-  // erst nach dem Laden des Katalogs sind Preise und Bestand aktuell (vorher Platzhalter)
-  pf_ready = !1,
+
   pf_prefillText = "";
 const pf_xsrf = () => decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/) || [])[1] || ""),
   pf_api = async (o, C = {}) => {
@@ -14627,11 +14621,9 @@ function O1() {
               const De = jf(Ii());
               (y(De), X((Te) => (De.variants.includes(Te) ? Te : De.variants[0])));
             }
-            (pf_setVer((De) => De + 1), (pf_ready = !0), pf_setLoaded(!0));
+            (pf_setVer((De) => De + 1), pf_setLoaded(!0));
           })
-          .catch(() => {
-            ((pf_ready = !0), pf_setLoaded(!0));
-          }));
+          .catch(() => pf_setLoaded(!0)));
     }, []),
     H.useEffect(() => {
       const v = Q || (pf_cs !== null && R.active && nu && qc());
@@ -15618,9 +15610,7 @@ function O1() {
                     children: [
                       i.jsxs("div", {
                         children: [
-                          pf_loaded
-                            ? i.jsx("strong", { children: _.priceOnRequest ? "Preis auf Anfrage" : Sa(pf_line(_, L, d).unit) })
-                            : h("strong", { className: "skeleton skeleton--price", "aria-label": "Preis wird geladen" }),
+                          i.jsx("strong", { children: _.priceOnRequest ? "Preis auf Anfrage" : Sa(pf_line(_, L, d).unit) }),
                           i.jsx("span", {
                             children: !_.priceOnRequest && pf_line(_, L, d).percent ? `statt ${Sa(pf_vd(_, L).price)} · inkl. MwSt.` : "inkl. MwSt.",
                           }),
@@ -15685,11 +15675,9 @@ function O1() {
                     { className: "avail-box", "aria-label": "Lieferung und Verfügbarkeit" },
                     h(
                       "li",
-                      { className: !pf_loaded ? "" : _.priceOnRequest || pf_vd(_, L).stock <= 0 ? "avail-box--muted" : "avail-box--ok" },
+                      { className: _.priceOnRequest || pf_vd(_, L).stock <= 0 ? "avail-box--muted" : "avail-box--ok" },
                       h(za, { size: 17 }),
-                      !pf_loaded
-                        ? h("span", { className: "skeleton skeleton--text" })
-                        : h("span", null, _.priceOnRequest ? "Verfügbarkeit auf Anfrage" : pf_vd(_, L).stock > 0 ? `An Lager: ${pf_vd(_, L).stock} Stück` : "Zurzeit ausverkauft"),
+                      h("span", null, _.priceOnRequest ? "Verfügbarkeit auf Anfrage" : pf_vd(_, L).stock > 0 ? `An Lager: ${pf_vd(_, L).stock} Stück` : "Zurzeit ausverkauft"),
                     ),
                     !_.priceOnRequest &&
                       h(
@@ -16348,7 +16336,7 @@ function O1() {
               ["Google Analytics",
                 "Wenn Sie einwilligen, nutzen wir Google Analytics 4 der Google Ireland Limited (Irland) bzw. Google LLC (USA), um die Nutzung unserer Website statistisch auszuwerten, etwa welche Seiten besucht werden und über welche Wege Besucherinnen und Besucher zu uns finden. Dafür werden Cookies gesetzt und Nutzungsdaten wie aufgerufene Seiten, Verweildauer, ungefährer Standort sowie Geräte- und Browserinformationen an Google übermittelt; IP-Adressen werden von Google Analytics 4 nicht gespeichert. Dabei können Daten in die USA übermittelt werden; Google ist unter dem Swiss-U.S. Data Privacy Framework zertifiziert. Die Daten werden höchstens 14 Monate aufbewahrt. Ohne Ihre Einwilligung wird Google Analytics nicht geladen. Sie können Ihre Einwilligung jederzeit über «Cookie-Einstellungen» widerrufen."],
               ["Karte und externe Links",
-                "Die Karte auf der Kontaktseite wird erst nach Ihrem Klick von OpenStreetMap (OpenStreetMap Foundation, Grossbritannien) geladen; dabei wird Ihre IP-Adresse an OpenStreetMap übermittelt. Links zu Instagram, Facebook, WhatsApp oder Google Maps sind einfache Verlinkungen – Daten fliessen erst, wenn Sie diese anklicken."],
+                "Auf der Kontaktseite binden wir eine Karte von OpenStreetMap (OpenStreetMap Foundation, Grossbritannien) ein. Beim Anzeigen der Karte wird Ihre IP-Adresse an OpenStreetMap übermittelt; es werden dabei keine Cookies zu Werbezwecken gesetzt. Links zu Instagram, Facebook, WhatsApp oder Google Maps sind einfache Verlinkungen – Daten fliessen erst, wenn Sie diese anklicken."],
               ["Ihre Rechte", [
                 "Sie können Auskunft über Ihre Daten verlangen sowie deren Berichtigung, Löschung oder Herausgabe. Schreiben Sie uns dazu an ",
                 i.jsx("a", { href: "mailto:info@pflanzfarm.ch", children: "info@pflanzfarm.ch" }, "m"),
@@ -16502,35 +16490,115 @@ function O1() {
     pf_service = () =>
       h(
         "main",
-        { id: "main-content", tabIndex: -1, className: "legal-page container info-page" },
-        pf_PageHead(
-          "Gartenservice",
-          "Von der Beratung bis zur eingewachsenen Hecke.",
-          "Wir begleiten Ihr Gartenprojekt persönlich – mit Pflanzen aus unserer Baumschule in Ebersecken und Erfahrung aus Gartenbau und Landschaftsbau.",
-        ),
+        { id: "main-content", tabIndex: -1, className: "service-page" },
         h(
-          "div",
-          { className: "service-grid" },
-          ...[
-            [In, "Beratung & Standortanalyse", "Wir schauen uns Boden, Licht, Platz und Nutzung an und empfehlen Pflanzen, die bei Ihnen langfristig gedeihen."],
-            [il, "Pflanzkonzepte", "Ob Sichtschutz, Naschgarten oder Formgehölze: Wir planen Auswahl, Abstände und Grössen passend zu Ihrem Garten."],
-            [Rc, "Lieferung schweizweit", "Wir liefern Ihre Pflanzen zuverlässig in die ganze Schweiz – oder Sie holen sie nach Absprache bei uns in Ebersecken ab."],
-            [za, "Pflanzservice", "Auf Wunsch setzen wir Ihre Hecke oder Gartenpflanzen fachgerecht – inklusive Bodenvorbereitung und Angiessen."],
-            [pf_Clock, "Pflege & Schnitt", "Damit Ihre Pflanzen gesund bleiben: Heckenschnitt, Formschnitt und Pflege von Gehölzen nach Absprache."],
-            [Jm, "Baumschule vor Ort", "Besuchen Sie uns nach Vereinbarung und wählen Sie Ihre Pflanzen direkt in unseren Pflanzenquartieren aus."],
-          ].map(([v, T, E]) => h("article", { key: T, className: "service-card" }, h(v, { size: 24 }), h("h2", null, T), h("p", null, E))),
+          "section",
+          { className: "svc-hero container" },
+          h(
+            "div",
+            { className: "svc-hero__copy" },
+            h("span", { className: "eyebrow" }, "Gartenservice"),
+            h("h1", null, "Von der Beratung bis zur eingewachsenen Hecke."),
+            h("p", { className: "svc-lead" }, "Wir begleiten Ihr Gartenprojekt persönlich – mit Pflanzen aus unserer eigenen Baumschule in Ebersecken und Erfahrung aus Gartenbau und Landschaftsbau."),
+            h(
+              "div",
+              { className: "svc-hero__actions" },
+              h("a", { className: "button button--primary", ...Lk("contact") }, "Beratung anfragen ", h(Ve, { size: 18 })),
+              h("a", { className: "button button--soft", href: "tel:+41793361495" }, h(pf_Phone, { size: 17 }), " 079 336 14 95"),
+            ),
+            h(
+              "ul",
+              { className: "svc-facts", "aria-label": "Auf einen Blick" },
+              h("li", null, h("b", null, "Eigene"), h("span", null, "Baumschule")),
+              h("li", null, h("b", null, "Schweizweit"), h("span", null, "Lieferung")),
+              h("li", null, h("b", null, "Persönlich"), h("span", null, "vor Ort beraten")),
+            ),
+          ),
+          h(
+            "figure",
+            { className: "svc-hero__media" },
+            h("img", {
+              src: He("/assets/pflanzfarm-garten-3.jpg"),
+              srcSet: At("/assets/pflanzfarm-garten-3-640.webp 640w, /assets/pflanzfarm-garten-3-1280.webp 1280w"),
+              sizes: "(max-width: 900px) 92vw, 46vw",
+              alt: "Frisch gepflanzte Thuja-Hecke in einem Garten",
+              fetchPriority: "high",
+            }),
+            h("figcaption", null, h(il, { size: 16 }), " Thuja-Sichtschutz, Kanton Luzern"),
+          ),
         ),
         h(
           "section",
-          { className: "service-steps", "aria-labelledby": "ablauf" },
-          h("h2", { id: "ablauf" }, "So läuft Ihr Projekt ab"),
+          { className: "svc-services container", "aria-labelledby": "leistungen" },
           h(
-            "ol",
-            null,
-            h("li", null, h("b", null, "Anfrage"), " – per Telefon, E-Mail, WhatsApp oder über unser Formular."),
-            h("li", null, h("b", null, "Beratung & Offerte"), " – telefonisch, bei uns in der Baumschule oder bei Ihnen vor Ort."),
-            h("li", null, h("b", null, "Lieferung & Pflanzung"), " – zum vereinbarten Termin, auf Wunsch mit Pflanzservice."),
-            h("li", null, h("b", null, "Begleitung"), " – wir bleiben auch nach der Pflanzung für Pflegefragen erreichbar."),
+            "div",
+            { className: "svc-head" },
+            h("span", { className: "eyebrow" }, "Leistungen"),
+            h("h2", { id: "leistungen" }, "Alles aus einer Hand."),
+          ),
+          h(
+            "div",
+            { className: "svc-grid" },
+            ...[
+              [In, "Beratung & Standortanalyse", "Wir schauen uns Boden, Licht, Platz und Nutzung an und empfehlen Pflanzen, die bei Ihnen langfristig gedeihen."],
+              [il, "Pflanzkonzepte", "Ob Sichtschutz, Naschgarten oder Formgehölze: Wir planen Auswahl, Abstände und Grössen passend zu Ihrem Garten."],
+              [Rc, "Lieferung schweizweit", "Wir liefern Ihre Pflanzen zuverlässig in die ganze Schweiz – oder Sie holen sie nach Absprache in Ebersecken ab."],
+              [za, "Pflanzservice", "Auf Wunsch setzen wir Ihre Hecke oder Gartenpflanzen fachgerecht – inklusive Bodenvorbereitung und Angiessen."],
+              [pf_Clock, "Pflege & Schnitt", "Damit Ihre Pflanzen gesund bleiben: Heckenschnitt, Formschnitt und Pflege von Gehölzen nach Absprache."],
+              [Jm, "Baumschule vor Ort", "Besuchen Sie uns nach Vereinbarung und wählen Sie Ihre Pflanzen direkt in unseren Pflanzenquartieren aus."],
+            ].map(([v, T, E], K) =>
+              h(
+                "article",
+                { key: T, className: K === 3 ? "svc-card svc-card--accent" : "svc-card" },
+                h("span", { className: "svc-card__icon", "aria-hidden": "true" }, h(v, { size: 22 })),
+                h("h3", null, T),
+                h("p", null, E),
+              ),
+            ),
+          ),
+        ),
+        h(
+          "section",
+          { className: "svc-process", "aria-labelledby": "ablauf" },
+          h(
+            "div",
+            { className: "container" },
+            h(
+              "div",
+              { className: "svc-head svc-head--light" },
+              h("span", { className: "eyebrow eyebrow--light" }, "Ablauf"),
+              h("h2", { id: "ablauf" }, "So läuft Ihr Projekt ab."),
+            ),
+            h(
+              "ol",
+              { className: "svc-steps" },
+              ...[
+                ["Anfrage", "Per Telefon, E-Mail, WhatsApp oder über unser Formular – kurz beschreiben, was Sie vorhaben."],
+                ["Beratung & Offerte", "Telefonisch, bei uns in der Baumschule oder bei Ihnen vor Ort. Danach erhalten Sie eine klare Offerte."],
+                ["Lieferung & Pflanzung", "Zum vereinbarten Termin – auf Wunsch pflanzen wir gleich mit."],
+                ["Begleitung", "Auch nach der Pflanzung sind wir für Pflegefragen für Sie erreichbar."],
+              ].map(([v, T], E) => h("li", { key: v }, h("span", { className: "svc-steps__nr" }, String(E + 1).padStart(2, "0")), h("h3", null, v), h("p", null, T))),
+            ),
+          ),
+        ),
+        h(
+          "section",
+          { className: "svc-cta container" },
+          h(
+            "div",
+            { className: "svc-cta__inner" },
+            h(
+              "div",
+              null,
+              h("h2", null, "Bereit für Ihr Gartenprojekt?"),
+              h("p", null, "Erzählen Sie uns von Ihrem Vorhaben – wir melden uns in der Regel innert eines Arbeitstags."),
+            ),
+            h(
+              "div",
+              { className: "svc-cta__actions" },
+              h("a", { className: "button button--primary", ...Lk("contact") }, "Anfrage senden ", h(Ve, { size: 18 })),
+              h("a", { className: "button button--ghost", href: "https://wa.me/41793361495", target: "_blank", rel: "noopener noreferrer" }, h(g1, { size: 17 }), " WhatsApp"),
+            ),
           ),
         ),
       ),
@@ -16649,49 +16717,79 @@ function O1() {
     pf_guideView = (v) => {
       const pf_a = pf_article(pf_path);
       if (pf_a) return pf_articlePage(pf_a, v);
+      const T = [
+          ["/assets/pflanzfarm-garten-3.jpg", "/assets/pflanzfarm-garten-3-640.webp 640w, /assets/pflanzfarm-garten-3-1280.webp 1280w"],
+          ["/assets/pflanzfarm-garten-2.jpg", "/assets/pflanzfarm-garten-2-640.webp 640w, /assets/pflanzfarm-garten-2-1280.webp 1280w"],
+          ["/assets/pflanzfarm-garten-1.jpg", "/assets/pflanzfarm-garten-1-640.webp 640w, /assets/pflanzfarm-garten-1-1280.webp 1280w"],
+        ],
+        E = (K, De) => {
+          const Te = K.product && Ql.find((yt) => yt.slug === K.product),
+            vt = T[De % T.length],
+            Ft = K.paras.join(" ").split(/\s+/).length,
+            Ce = K.excerpt || K.paras[0] || "";
+          return {
+            img: Te ? [Te.image, Te.imageSet] : vt,
+            topic: Te ? Te.category : "Pflege",
+            minutes: Math.max(1, Math.round(Ft / 180)),
+            text: Ce.length > 160 ? Ce.slice(0, Ce.lastIndexOf(" ", 160)) + " …" : Ce,
+          };
+        },
+        K = (De, Te, vt) => {
+          const Ft = E(De, Te);
+          return h(
+            "a",
+            {
+              key: De.id,
+              className: vt ? "guide-tile guide-tile--featured" : "guide-tile",
+              href: e0(`/ratgeber/${De.id}/`),
+              "data-nav": "",
+              onClick: (Ce) => {
+                pf_isPlainClick(Ce) && (Ce.preventDefault(), pf_openArticle(De.id));
+              },
+            },
+            h(
+              "span",
+              { className: "guide-tile__media" },
+              h("img", { src: He(Ft.img[0]), srcSet: Ft.img[1] ? At(Ft.img[1]) : void 0, sizes: vt ? "(max-width: 900px) 92vw, 50vw" : "(max-width: 900px) 92vw, 30vw", alt: "", loading: vt ? "eager" : "lazy" }),
+            ),
+            h(
+              "span",
+              { className: "guide-tile__body" },
+              h("span", { className: "guide-tile__meta" }, h("span", { className: "guide-tile__topic" }, Ft.topic), ` · ${Ft.minutes} Min. Lesezeit`),
+              h(vt ? "h2" : "h3", null, De.title),
+              h("p", null, Ft.text),
+              h("span", { className: "guide-tile__more" }, "Weiterlesen ", h(Ve, { size: 16 })),
+            ),
+          );
+        };
       return h(
         "main",
-        { id: "main-content", tabIndex: -1, className: "legal-page container info-page" },
-        pf_PageHead(
-          "Ratgeber",
-          "Tipps aus der Baumschule.",
-          "Praktisches Wissen rund um Hecken, Beerensträucher und Pflege – damit Ihre Pflanzen gut anwachsen und lange Freude machen.",
-        ),
+        { id: "main-content", tabIndex: -1, className: "guide-page container" },
         h(
-          "div",
-          { className: "guide-cards" },
-          ...v.map((T) =>
-            h(
-              "a",
-              {
-                key: T.id,
-                className: "guide-card",
-                href: e0(`/ratgeber/${T.id}/`),
-                "data-nav": "",
-                onClick: (K) => {
-                  pf_isPlainClick(K) && (K.preventDefault(), pf_openArticle(T.id));
-                },
-              },
-              h("h2", null, T.title),
-              h("p", null, T.excerpt || (T.paras[0] || "").slice(0, 170) + ((T.paras[0] || "").length > 170 ? " …" : "")),
-              h("span", { className: "text-link" }, "Weiterlesen ", h(Ve, { size: 16 })),
-            ),
-          ),
+          "header",
+          { className: "guide-head" },
+          h("span", { className: "eyebrow" }, "Ratgeber"),
+          h("h1", null, "Tipps aus der Baumschule."),
+          h("p", null, "Praktisches Wissen rund um Hecken, Beerensträucher und Pflege – damit Ihre Pflanzen gut anwachsen und lange Freude machen."),
         ),
+        v.length > 0 && K(v[0], 0, !0),
+        // 4 weitere Artikel als 2×2, sonst Dreierraster (keine einzelne Karte allein in einer Reihe)
+        h("div", { className: (v.length - 1) % 3 === 1 && v.length > 2 ? "guide-grid guide-grid--two" : "guide-grid" }, ...v.slice(1).map((De, Te) => K(De, Te + 1, !1))),
         h(
           "section",
-          { className: "about-callout" },
+          { className: "guide-help" },
           h(
             "div",
             null,
-            h("p", { className: "about-kicker" }, "Persönliche Beratung"),
+            h("span", { className: "eyebrow eyebrow--light" }, "Persönliche Beratung"),
             h("h2", null, "Ihre Frage ist nicht dabei?"),
             h("p", null, "Rufen Sie uns an oder schreiben Sie uns – wir helfen Ihnen gern weiter."),
           ),
           h(
             "div",
-            null,
-            h("a", { className: "button button--primary", ...Lk("contact") }, "Kontakt aufnehmen ", h(Ve, { size: 18 })),
+            { className: "guide-help__actions" },
+            h("a", { className: "button button--primary", href: "tel:+41793361495" }, h(pf_Phone, { size: 17 }), " 079 336 14 95"),
+            h("a", { className: "button button--ghost", ...Lk("contact") }, "Kontakt aufnehmen ", h(Ve, { size: 18 })),
           ),
         ),
       );
@@ -16722,32 +16820,20 @@ function O1() {
           h(
             "section",
             { className: "contact-card contact-card--wide" },
-            h("h2", null, "Anfahrt"),
-            h("p", null, "Pflanzfarm Steinmann, Untergretti 2, 6245 Ebersecken (Gemeinde Altishofen, Kanton Luzern)."),
             h(
-              "p",
-              { className: "contact-links" },
+              "div",
+              { className: "contact-route" },
+              h("div", null, h("h2", null, "Anfahrt"), h("p", null, "Untergretti 2, 6245 Ebersecken (Gemeinde Altishofen, Kanton Luzern). Parkplätze direkt beim Hof.")),
               h(
-                "a",
-                {
-                  className: "text-link",
-                  href: "https://www.google.com/maps/dir/?api=1&destination=Untergretti%202%2C%206245%20Ebersecken",
-                  target: "_blank",
-                  rel: "noopener noreferrer",
-                },
-                "Route mit Google Maps ",
-                h(i0, { size: 16 }),
-              ),
-              h(
-                "a",
-                {
-                  className: "text-link",
-                  href: "https://www.openstreetmap.org/?mlat=47.17497&mlon=7.92130#map=16/47.17497/7.92130",
-                  target: "_blank",
-                  rel: "noopener noreferrer",
-                },
-                "In OpenStreetMap öffnen ",
-                h(i0, { size: 16 }),
+                "div",
+                { className: "contact-route__actions" },
+                h("a", { className: "pill-link", href: pf_routeUrl, target: "_blank", rel: "noopener noreferrer" }, h(Jm, { size: 16 }), " Route planen"),
+                h(
+                  "a",
+                  { className: "pill-link pill-link--soft", href: "https://www.openstreetmap.org/?mlat=47.17497&mlon=7.92130#map=16/47.17497/7.92130", target: "_blank", rel: "noopener noreferrer" },
+                  "Grosse Karte ",
+                  h(i0, { size: 15 }),
+                ),
               ),
             ),
             h(pf_Map, null),
@@ -16937,7 +17023,7 @@ function O1() {
         h(
           "div",
           { className: "buy-bar", role: "region", "aria-label": "Schnell kaufen" },
-          h("div", null, h("b", null, _.name), h("small", null, `${L} · ${pf_loaded ? Sa(pf_line(_, L, d).unit) : "…"}`)),
+          h("div", null, h("b", null, _.name), h("small", null, `${L} · ${Sa(pf_line(_, L, d).unit)}`)),
           pf_vd(_, L).stock >= d
             ? h("button", { type: "button", className: "button button--primary", onClick: () => Kl(_, d, L) }, h(x1, { size: 17 }), d > 1 ? ` ${d} in den Warenkorb` : " In den Warenkorb")
             : h(

@@ -12,7 +12,15 @@ use Illuminate\Http\JsonResponse;
 
 class CatalogController extends Controller
 {
+    public const CACHE_KEY = 'catalog';
+
+    /** Katalog für die Website, 10 Minuten zwischengespeichert; jede Änderung im Admin leert den Speicher sofort. */
     public function __invoke(): JsonResponse
+    {
+        return response()->json(\Illuminate\Support\Facades\Cache::remember(self::CACHE_KEY, now()->addMinutes(10), fn () => $this->build()));
+    }
+
+    private function build(): array
     {
         $products = Product::query()->where('active', true)->orderBy('sort')->orderBy('id')
             ->with('activeVariants.shippingClass')->get()
@@ -20,7 +28,7 @@ class CatalogController extends Controller
 
         $popup = Popup::query()->current()->latest('starts_at')->first();
 
-        return response()->json([
+        return [
             'products' => $products,
             'references' => Reference::query()->where('active', true)->orderBy('sort')->orderBy('id')->get()->map(fn (Reference $r) => [
                 'id' => $r->id,
@@ -73,7 +81,7 @@ class CatalogController extends Controller
                     'deliverable' => $z->deliverable,
                 ])->values(),
             ],
-        ]);
+        ];
     }
 
     public static function product(Product $p): array

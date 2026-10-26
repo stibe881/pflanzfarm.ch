@@ -46,6 +46,14 @@ class AppServiceProvider extends ServiceProvider
             });
         }
 
+        // Katalog-Zwischenspeicher leeren, sobald sich Shop-Inhalte ändern (auch Lager durch Bestellungen)
+        foreach ([\App\Models\Product::class, \App\Models\ProductVariant::class, \App\Models\ShippingClass::class, \App\Models\Reference::class,
+            \App\Models\GuideArticle::class, \App\Models\Popup::class, \App\Models\Setting::class, \App\Models\DeliveryZone::class] as $model) {
+            foreach (['saved', 'updated', 'deleted'] as $event) {
+                $model::$event(fn () => \Illuminate\Support\Facades\Cache::forget(\App\Http\Controllers\Api\CatalogController::CACHE_KEY));
+            }
+        }
+
         Event::listen(MessageSent::class, [TrackNewsletter::class, 'sent']);
         Event::listen(\Resend\Laravel\Events\EmailOpened::class, [TrackNewsletter::class, 'opened']);
         Event::listen(\Resend\Laravel\Events\EmailClicked::class, [TrackNewsletter::class, 'clicked']);
