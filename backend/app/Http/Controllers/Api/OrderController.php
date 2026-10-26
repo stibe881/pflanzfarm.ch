@@ -94,7 +94,12 @@ class OrderController extends Controller
             } catch (Throwable $e) {
                 report($e);
                 $this->orders->cancel($order, 'abgebrochen');
-                throw ValidationException::withMessages(['payment_method' => 'Die Online-Zahlung ist im Moment nicht verfügbar. Bitte wählen Sie eine andere Zahlungsart oder versuchen Sie es später erneut.']);
+                $message = 'Die Online-Zahlung ist im Moment nicht verfügbar. Bitte wählen Sie eine andere Zahlungsart oder versuchen Sie es später erneut.';
+                // Testseite: genauen Grund anzeigen, damit die Einrichtung geprüft werden kann
+                if (config('pflanzfarm.test_mode')) {
+                    $message .= ' (Testseite – Grund: '.\Illuminate\Support\Str::limit($e->getMessage(), 300).')';
+                }
+                throw ValidationException::withMessages(['payment_method' => $message]);
             }
 
             return response()->json(['redirect' => $url, 'order' => self::summary($order)], 201);

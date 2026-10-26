@@ -294,4 +294,35 @@ class ShopTest extends TestCase
         $this->postJson('/api/contact', ['name' => 'Anna', 'contact' => 'anna@example.ch', 'topic' => 'Beratung', 'message' => 'Hallo'])
             ->assertStatus(422)->assertJsonValidationErrors('message');
     }
+
+    public function test_stripe_retries_without_email_rejected_by_stripe_and_test_site_shows_reason(): void
+    {
+        config(['pflanzfarm.fake_payments' => false, 'pflanzfarm.test_mode' => true, 'services.stripe.secret' => 'sk_test_123']);
+        $sent = [];
+        $keyBroken = false;
+        $stripe = Mockery::mock(StripeCheckout::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $stripe->shouldReceive('sendSession')->andReturnUsing(function (array $params) use (&$sent, &$keyBroken) {
+            if ($keyBroken) {
+                throw \Stripe\Exception\AuthenticationException::factory('Invalid API Key provided: sk_test_***123');
+            }
+            $sent[] = $params;
+            if (isset($params['customer_email'])) {
+                throw \Stripe\Exception\InvalidRequestException::factory('Invalid email address: kunde@pflanzfarm.test', 400, null, null, null, null, 'customer_email');
+            }
+
+            return \Stripe\Checkout\Session::constructFrom(['id' => 'cs_test_9', 'url' => 'https://checkout.stripe.com/c/pay/cs_test_9']);
+        });
+        $this->app->instance(StripeCheckout::class, $stripe);
+
+        $res = $this->postJson('/api/orders', $this->orderPayload(['payment_method' => 'stripe', 'email' => 'kunde@pflanzfarm.test']))->assertCreated();
+        $this->assertSame('https://checkout.stripe.com/c/pay/cs_test_9', $res->json('redirect'));
+        $this->assertCount(2, $sent);
+        $this->assertArrayNotHasKey('customer_email', $sent[1]);
+
+        // Anderer Fehler: Bestellung wird storniert, Testseite nennt den Grund
+        $keyBroken = true;
+        $small = ['payment_method' => 'stripe', 'items' => [['variant_id' => ProductVariant::query()->where('label', '80–100 cm')->value('id'), 'quantity' => 2]]];
+        $msg = $this->postJson('/api/orders', $this->orderPayload($small))->assertStatus(422)->json('errors.payment_method.0');
+        $this->assertStringContainsString('Invalid API Key', $msg);
+    }
 }

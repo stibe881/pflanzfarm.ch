@@ -39,17 +39,29 @@ class StripeCheckout
         };
     }
 
+    protected function sendSession(array $params): \Stripe\Checkout\Session
+    {
+        return $this->client()->checkout->sessions->create($params);
+    }
+
     /** Session mit den gewünschten Zahlungsarten; ist TWINT im Stripe-Konto (noch) nicht aktiv, nur mit Karte. */
     private function createWithFallback(array $params): \Stripe\Checkout\Session
     {
         try {
-            return $this->client()->checkout->sessions->create($params);
+            return $this->sendSession($params);
         } catch (\Stripe\Exception\InvalidRequestException $e) {
+            // Von Stripe abgelehnte E-Mail (z. B. Testadresse @…test): ohne vorausgefüllte E-Mail erneut versuchen
+            if ($e->getStripeParam() === 'customer_email' && isset($params['customer_email'])) {
+                report($e);
+                unset($params['customer_email']);
+
+                return $this->createWithFallback($params);
+            }
             $methods = $params['payment_method_types'] ?? [];
             if (count($methods) > 1 && in_array('card', $methods, true) && str_contains(strtolower($e->getMessage()), 'payment method')) {
                 report($e);
 
-                return $this->client()->checkout->sessions->create(['payment_method_types' => ['card']] + $params);
+                return $this->sendSession(['payment_method_types' => ['card']] + $params);
             }
             throw $e;
         }
