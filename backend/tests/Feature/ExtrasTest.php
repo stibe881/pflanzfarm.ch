@@ -286,4 +286,20 @@ XML;
         $care = collect($this->getJson('/api/catalog')->json('products'))->firstWhere('slug', $product->slug)['care'];
         $this->assertSame([['title' => 'Standort', 'text' => 'Sonnig bis halbschattig.'], ['title' => 'Pflege', 'text' => 'Formschnitt im Juni.']], $care);
     }
+
+    public function test_homepage_recommendations_are_chosen_in_admin(): void
+    {
+        $featured = fn () => collect($this->getJson('/api/catalog')->json('products'))->where('featured', true)->pluck('slug')->all();
+        $this->assertSame(['thuja-smaragd', 'photinia-fraseri-red-robin', 'diverse-beerenstraeucher'], $featured());
+
+        $admin = User::factory()->create(['role' => 'admin', 'email_verified_at' => now()]);
+        $this->actingAs($admin);
+        $eibe = \App\Models\Product::query()->where('slug', 'taxus-baccata-eibe')->firstOrFail();
+        \Livewire\Livewire::test(\App\Filament\Resources\ProductResource\Pages\EditProduct::class, ['record' => $eibe->getRouteKey()])
+            ->assertFormFieldExists('featured')
+            ->fillForm(['featured' => true])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertContains('taxus-baccata-eibe', $featured());
+    }
 }

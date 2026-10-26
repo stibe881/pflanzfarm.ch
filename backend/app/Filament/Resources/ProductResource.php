@@ -47,6 +47,7 @@ class ProductResource extends Resource
                     ->helperText('Bis 8 Bilder, z. B. Wuchs, Blüte, Hecke nach einem Jahr. Reihenfolge per Ziehen.'),
                 Forms\Components\Toggle::make('price_on_request')->label('Preis auf Anfrage (nicht online bestellbar)'),
                 Forms\Components\Toggle::make('active')->label('Im Shop sichtbar')->default(true),
+                Forms\Components\Toggle::make('featured')->label('Auf der Startseite empfehlen')->helperText('Erscheint auf der Startseite unter «Unsere Empfehlungen».'),
                 Forms\Components\TextInput::make('sort')->label('Reihenfolge')->numeric()->default(0),
             ]),
             Forms\Components\Section::make('Steckbrief und Shop-Filter')->collapsible()->columns(3)
@@ -129,11 +130,13 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('stock_total')->label('Lager')->state(fn (Product $record) => $record->variants->where('active', true)->sum('stock'))
                     ->badge()->color(fn ($state) => $state <= 0 ? 'danger' : ($state < 10 ? 'warning' : 'success')),
                 Tables\Columns\IconColumn::make('active')->label('Sichtbar')->boolean(),
+                Tables\Columns\ToggleColumn::make('featured')->label('Startseite')->tooltip('Auf der Startseite unter «Unsere Empfehlungen» zeigen'),
             ])
             ->modifyQueryUsing(fn ($query) => $query->with('variants'))
             ->filters([
                 Tables\Filters\SelectFilter::make('category')->label('Kategorie')->options(Product::CATEGORIES),
                 Tables\Filters\TernaryFilter::make('active')->label('Sichtbar'),
+                Tables\Filters\TernaryFilter::make('featured')->label('Auf der Startseite'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

@@ -58,6 +58,9 @@ class DatabaseSeeder extends Seeder
         $berries->variants()->create(['label' => 'Sorten und Grössen auf Anfrage', 'price' => 0, 'stock' => 6]);
         $berries->update(['locations' => ['sonne', 'halbschatten'], 'uses' => ['naschgarten', 'kuebel', 'bienen'], 'height_min_cm' => 100, 'height_max_cm' => 150, 'growth_cm' => 30, 'hardiness' => 'bis −25 °C', 'planting_months' => [3, 4, 10, 11]]);
 
+        // Empfehlungen auf der Startseite
+        Product::query()->whereIn('id', [$thuja->id, $photinia->id, $berries->id])->update(['featured' => true]);
+
         // Weitere Produkte aus dem bisherigen Shop
         \App\Support\ShopContent::install();
 

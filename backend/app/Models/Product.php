@@ -26,6 +26,7 @@ class Product extends Model
             'gallery' => 'array',
             'volume_discounts' => 'array',
             'active' => 'boolean',
+            'featured' => 'boolean',
             'price_on_request' => 'boolean',
         ];
     }

@@ -126,6 +126,7 @@ class CatalogController extends Controller
             'discounts' => collect($p->volume_discounts ?? [])->map(fn ($t) => ['minQty' => (int) $t['min_qty'], 'percent' => min(90, (int) $t['percent'])])
                 ->filter(fn ($t) => $t['minQty'] > 1 && $t['percent'] > 0)->sortBy('minQty')->values()->all(),
             'badge' => $p->badge,
+            'featured' => (bool) $p->featured,
             'height' => $p->height_label ?? ($variants->first()['label'] ?? ''),
             'traits' => $p->traits ?? [],
             'description' => $p->description,

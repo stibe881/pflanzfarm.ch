@@ -12768,6 +12768,7 @@ function At(o) {
 const Ql = [
     {
       id: "thuja-smaragd",
+      featured: !0,
       slug: "thuja-smaragd",
       name: "Thuja Smaragd",
       latin: "Thuja occidentalis „Smaragd“",
@@ -12793,6 +12794,7 @@ const Ql = [
     },
     {
       id: "photinia-fraseri-red-robin",
+      featured: !0,
       slug: "photinia-fraseri-red-robin",
       name: "Photinia fraseri ‘Red Robin’",
       latin: "Photinia × fraseri ‘Red Robin’",
@@ -12809,6 +12811,7 @@ const Ql = [
     },
     {
       id: "diverse-beerenstraeucher",
+      featured: !0,
       slug: "diverse-beerenstraeucher",
       priceOnRequest: !0,
       name: "Diverse Beerensträucher",
@@ -15174,7 +15177,8 @@ function O1() {
                 }),
                 i.jsx("div", {
                   className: "product-grid",
-                  children: Ql.map((v) =>
+                  // Im Admin als «Auf der Startseite empfehlen» markierte Produkte; ohne Auswahl die ersten drei
+                  children: (Ql.some((v) => v.featured) ? Ql.filter((v) => v.featured) : Ql.slice(0, 3)).map((v) =>
                     i.jsx(
                       a0,
                       {
