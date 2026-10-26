@@ -27,7 +27,6 @@ class Product extends Model
             'volume_discounts' => 'array',
             'active' => 'boolean',
             'price_on_request' => 'boolean',
-            'plants_per_meter' => 'float',
         ];
     }
 

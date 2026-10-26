@@ -103,58 +103,13 @@ a.text-link {
   color: var(--ink);
 }
 
-/* Hecken-Rechner & CTA */
-.hedge-cta {
-  background: var(--sage-soft);
-}
-.hedge-cta__inner {
-  display: grid;
-  grid-template-columns: 1fr minmax(0, 1.05fr);
-  gap: 48px;
-  align-items: center;
-}
-.hedge-cta__copy h2 {
-  margin: 8px 0 14px;
-}
-.hedge-cta__copy p {
-  line-height: 1.6;
-  margin-bottom: 24px;
-}
-.hedge-cta--inline {
-  margin: 56px 0;
-  padding: 40px;
-  border-radius: 8px;
-}
-.hedge-calc {
-  background: #fff;
-  border: 1px solid #dfe6dc;
-  border-radius: 8px;
-  padding: 26px;
-  box-shadow: var(--shadow);
-}
-.hedge-calc h3 {
-  margin: 0 0 16px;
-  font-size: 1.3rem;
-}
-.hedge-calc--compact {
-  box-shadow: none;
-  margin: 26px 0;
-  padding: 20px;
-}
-.hedge-calc__fields {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 14px;
-}
-.hedge-calc label,
+/* Formularfelder Anfrageformular */
 .inquiry-form label {
   display: grid;
   gap: 6px;
   font-size: 0.8rem;
   font-weight: 700;
 }
-.hedge-calc input[type="number"],
-.hedge-calc select,
 .inquiry-form input,
 .inquiry-form select,
 .inquiry-form textarea {
@@ -166,54 +121,6 @@ a.text-link {
   background: #fff;
   color: var(--ink);
   font-weight: 400;
-}
-.hedge-calc__result {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin: 18px 0 14px;
-}
-.hedge-calc__result > span {
-  display: block;
-  padding: 14px 16px;
-  border-radius: 6px;
-  background: var(--sage-soft);
-  font-size: 0.85rem;
-}
-.hedge-calc__result b {
-  display: block;
-  font-family: var(--font-display);
-  font-size: 1.75rem;
-  line-height: 1.1;
-}
-.hedge-calc__result small {
-  display: block;
-  margin-top: 4px;
-  color: #4b6a5d;
-  font-size: 0.72rem;
-}
-.hedge-calc .hedge-calc__check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-.hedge-calc__check input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--ink);
-}
-.hedge-calc__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.hedge-calc__note {
-  margin: 14px 0 0;
-  font-size: 0.74rem;
-  color: #4b6a5d;
-  line-height: 1.5;
 }
 
 /* Info-Seiten: Gartenservice, Ratgeber, Kontakt */
@@ -370,29 +277,10 @@ a.text-link {
   justify-self: start;
 }
 @media (max-width: 900px) {
-  .hedge-cta__inner,
   .service-grid,
   .contact-grid,
   .inquiry-form__grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .hedge-cta__inner {
-    gap: 28px;
-  }
-  .hedge-cta--inline {
-    padding: 22px 16px;
-  }
-}
-@media (max-width: 520px) {
-  .hedge-calc {
-    padding: 18px;
-  }
-  .hedge-calc__fields,
-  .hedge-calc__result {
-    grid-template-columns: 1fr;
-  }
-  .hedge-calc__actions .button {
-    width: 100%;
   }
 }
 
@@ -1682,40 +1570,6 @@ a.search-hit:focus-visible {
 .profile__months li.on {
   background: var(--ink);
   color: #fff;
-}
-
-/* ---------- Hecken-Vorschau ---------- */
-.hedge-preview {
-  margin: 4px 0 16px;
-}
-.hedge-preview svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-.hedge-preview__ground {
-  stroke: #b9a88f;
-  stroke-width: 2;
-}
-.hedge-preview__hedge {
-  fill: #2f6a4a;
-}
-.hedge-preview__plant {
-  fill: #7a5a3a;
-}
-.hedge-preview__value {
-  font-size: 12px;
-  font-weight: 700;
-  fill: var(--ink);
-}
-.hedge-preview__label {
-  font-size: 11px;
-  fill: #4b6a5d;
-}
-.hedge-preview figcaption {
-  font-size: 0.72rem;
-  color: #4b6a5d;
-  line-height: 1.5;
 }
 
 /* ---------- Platzhalter beim Laden ---------- */

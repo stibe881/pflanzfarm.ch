@@ -40,8 +40,6 @@ class ProductResource extends Resource
                 Forms\Components\TagsInput::make('traits')->label('Merkmale')->suggestions(['Immergrün', 'Pflegeleicht', 'Sonnig', 'Blütenreich', 'Naschgarten', 'Winterhart']),
                 Forms\Components\TextInput::make('badge')->label('Etikett')->placeholder('z. B. Bestseller'),
                 Forms\Components\TextInput::make('height_label')->label('Grössenangabe auf der Karte')->placeholder('leer = erste Grösse'),
-                Forms\Components\TextInput::make('plants_per_meter')->label('Pflanzen pro Laufmeter')->numeric()->step(0.5)
-                    ->helperText('Für den Hecken-Rechner. Leer lassen, wenn die Pflanze nicht im Rechner erscheinen soll.'),
                 Forms\Components\FileUpload::make('image')->label('Hauptbild')->image()->imageEditor()->disk('public')->directory('produkte')
                     ->maxSize(5120),
                 Forms\Components\FileUpload::make('gallery')->label('Weitere Bilder (Galerie)')->image()->multiple()->reorderable()->appendFiles()
@@ -52,7 +50,7 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('sort')->label('Reihenfolge')->numeric()->default(0),
             ]),
             Forms\Components\Section::make('Steckbrief und Shop-Filter')->collapsible()->columns(3)
-                ->description('Erscheint auf der Produktseite als Steckbrief, wird für die Filter im Shop und für die Hecken-Vorschau im Rechner verwendet.')
+                ->description('Erscheint auf der Produktseite als Steckbrief und wird für die Filter im Shop verwendet.')
                 ->schema([
                     Forms\Components\CheckboxList::make('locations')->label('Standort')->options(Product::LOCATIONS)->columns(3)->columnSpan(2),
                     Forms\Components\Toggle::make('evergreen')->label('Immergrün')->inline(false),
@@ -60,7 +58,7 @@ class ProductResource extends Resource
                     Forms\Components\TextInput::make('height_min_cm')->label('Endhöhe von')->numeric()->integer()->suffix('cm')->minValue(10)->maxValue(5000),
                     Forms\Components\TextInput::make('height_max_cm')->label('Endhöhe bis')->numeric()->integer()->suffix('cm')->minValue(10)->maxValue(5000)->gte('height_min_cm'),
                     Forms\Components\TextInput::make('growth_cm')->label('Zuwachs pro Jahr')->numeric()->integer()->suffix('cm')->minValue(1)->maxValue(300)
-                        ->helperText('Durchschnitt, für die Hecken-Vorschau'),
+                        ->helperText('Durchschnitt'),
                     Forms\Components\TextInput::make('hardiness')->label('Winterhärte')->placeholder('z. B. bis −25 °C')->maxLength(40),
                     Forms\Components\CheckboxList::make('planting_months')->label('Pflanzzeit')->columnSpan(2)->columns(6)
                         ->options(collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => \Illuminate\Support\Carbon::create(2026, $m, 1)->locale('de_CH')->isoFormat('MMM')])->all()),

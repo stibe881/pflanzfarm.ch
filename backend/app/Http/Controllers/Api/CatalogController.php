@@ -109,7 +109,6 @@ class CatalogController extends Controller
             'height' => $p->height_label ?? ($variants->first()['label'] ?? ''),
             'traits' => $p->traits ?? [],
             'description' => $p->description,
-            'perMeter' => $p->plants_per_meter,
             'profile' => [
                 'evergreen' => $p->evergreen,
                 'locations' => array_values((array) $p->locations),

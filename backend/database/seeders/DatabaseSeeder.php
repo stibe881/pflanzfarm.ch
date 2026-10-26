@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
         $thuja = Product::query()->create([
             'name' => 'Thuja Smaragd', 'slug' => 'thuja-smaragd', 'latin' => 'Thuja occidentalis „Smaragd“',
             'category' => 'Heckenpflanzen', 'badge' => 'Bestseller', 'image' => $this->img('/assets/thuja-smaragd.jpg'),
-            'traits' => ['Immergrün', 'Pflegeleicht'], 'plants_per_meter' => 3, 'sort' => 1,
+            'traits' => ['Immergrün', 'Pflegeleicht'], 'sort' => 1,
             'description' => 'Der bewährte Klassiker für dichte, formschöne Hecken und natürlichen Sichtschutz.',
         ]);
         $thuja->update(['evergreen' => true, 'locations' => ['sonne', 'halbschatten'], 'uses' => ['hecke', 'sichtschutz'], 'height_min_cm' => 300, 'height_max_cm' => 500, 'growth_cm' => 25, 'hardiness' => 'bis −30 °C', 'planting_months' => [3, 4, 5, 9, 10, 11]]);
@@ -42,7 +42,7 @@ class DatabaseSeeder extends Seeder
         $photinia = Product::query()->create([
             'name' => 'Photinia fraseri ‘Red Robin’', 'slug' => 'photinia-fraseri-red-robin', 'latin' => 'Photinia × fraseri ‘Red Robin’',
             'category' => 'Heckenpflanzen', 'badge' => 'Beliebt', 'image' => $this->img('/assets/photinia-red-robin.jpg'),
-            'traits' => ['Immergrün', 'Sonnig', 'Blütenreich'], 'plants_per_meter' => 2, 'sort' => 2,
+            'traits' => ['Immergrün', 'Sonnig', 'Blütenreich'], 'sort' => 2,
             'height_label' => 'Liefergrösse auf Anfrage',
             'description' => 'Glanzmispel mit attraktivem rotem Austrieb für strukturierte, immergrüne Pflanzungen.',
         ]);

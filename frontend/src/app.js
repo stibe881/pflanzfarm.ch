@@ -12769,7 +12769,6 @@ const Ql = [
     {
       id: "thuja-smaragd",
       slug: "thuja-smaragd",
-      perMeter: 3,
       name: "Thuja Smaragd",
       latin: "Thuja occidentalis „Smaragd“",
       category: "Heckenpflanzen",
@@ -12795,7 +12794,6 @@ const Ql = [
     {
       id: "photinia-fraseri-red-robin",
       slug: "photinia-fraseri-red-robin",
-      perMeter: 2,
       name: "Photinia fraseri ‘Red Robin’",
       latin: "Photinia × fraseri ‘Red Robin’",
       category: "Heckenpflanzen",
@@ -12948,7 +12946,7 @@ const Ql = [
     privacy: "Datenschutzerklärung der Pflanzfarm Steinmann nach dem Schweizer Datenschutzgesetz (DSG).",
     imprint: "Impressum der Pflanzfarm Steinmann, Untergretti 2, 6245 Ebersecken.",
     accessibility: "Erklärung zur Barrierefreiheit der Website der Pflanzfarm Steinmann.",
-    service: "Gartenservice der Pflanzfarm Steinmann: Standortberatung, Pflanzkonzepte, Lieferung, Pflanzservice und Pflege – mit Hecken-Rechner für Ihre Offerte.",
+    service: "Gartenservice der Pflanzfarm Steinmann: Standortberatung, Pflanzkonzepte, Lieferung, Pflanzservice und Pflege – mit persönlicher Offerte.",
     guide: "Ratgeber der Pflanzfarm: Thuja-Hecke pflanzen, Photinia schneiden, Beerensträucher setzen und richtig giessen – praktische Tipps aus der Baumschule.",
     contact: "Kontakt zur Pflanzfarm Steinmann in Ebersecken: Telefon, E-Mail, WhatsApp, Anfahrt und Offertanfrage für Hecken und Gartenprojekte.",
     checkout: "Bestellung abschliessen: Lieferung oder Abholung, Zahlung mit Karte, TWINT, Rechnung oder bar.",
@@ -13152,13 +13150,7 @@ const pf_Phone = ee("Phone", [
   pf_Clock = ee("Clock", [
     ["circle", { cx: "12", cy: "12", r: "10", key: "pfclock1" }],
     ["path", { d: "M12 6v6l4 2", key: "pfclock2" }],
-  ]),
-  pf_hedgePlants = () =>
-    Ql.filter((o) => o.perMeter && !o.priceOnRequest).map((o) => ({
-      id: o.id,
-      label: o.variants && o.variants.length === 1 && !/Anfrage/.test(o.variants[0]) ? `${o.name} (${o.variants[0]})` : o.name,
-      perMeter: o.perMeter,
-    }));
+  ]);
 // Google-Analytics-Mess-ID eintragen (z. B. "G-XXXXXXXXXX"). Leer = Analytics wird nie geladen.
 const pf_gaId = "",
   pf_consentKey = "pflanzfarm-consent-v2",
@@ -13198,95 +13190,6 @@ const pf_gaId = "",
     }
     window.gtag("consent", "update", { analytics_storage: o ? "granted" : "denied" });
   };
-function pf_Hedge({ onAdd: o, onRequest: C, initial: _, compact: y = !1 }) {
-  const pf_plants = pf_hedgePlants(),
-    [L, X] = H.useState("10"),
-    [Se, Le] = H.useState(_ || (pf_plants[0] && pf_plants[0].id)),
-    [ne, Ne] = H.useState(!1);
-  if (!pf_plants.length) return null;
-  const A = pf_plants.find((O) => O.id === Se) ?? pf_plants[0],
-    p = Ql.find((O) => O.id === A.id),
-    pf_v = pf_vd(p, p.variants[0]),
-    B = Math.max(0, parseFloat(String(L).replace(",", ".")) || 0),
-    ge = Math.ceil(B * A.perMeter),
-    O = ge * pf_v.price;
-  return h(
-    "div",
-    { className: y ? "hedge-calc hedge-calc--compact" : "hedge-calc" },
-    h("h3", null, y ? "Hecken-Rechner" : "Hecken-Rechner"),
-    h(
-      "div",
-      { className: "hedge-calc__fields" },
-      h(
-        "label",
-        null,
-        "Heckenlänge in Metern",
-        h("input", {
-          type: "number",
-          inputMode: "decimal",
-          min: "1",
-          step: "0.5",
-          value: L,
-          onChange: (re) => X(re.target.value),
-        }),
-      ),
-      h(
-        "label",
-        null,
-        "Pflanze",
-        h(
-          "select",
-          { value: Se, onChange: (re) => Le(re.target.value) },
-          ...pf_plants.map((re) => h("option", { key: re.id, value: re.id }, re.label)),
-        ),
-      ),
-    ),
-    h(
-      "div",
-      { className: "hedge-calc__result", role: "status", "aria-live": "polite" },
-      h("span", null, h("b", null, ge), " Pflanzen", h("small", null, `${A.perMeter} Stück pro Meter`)),
-      h("span", null, h("b", null, Sa(O)), " Richtpreis", h("small", null, "Pflanzen, exkl. Lieferung & Pflanzung")),
-    ),
-    h(pf_HedgePreview, { product: p, variant: p.variants[0], perMeter: A.perMeter }),
-    h(
-      "label",
-      { className: "hedge-calc__check" },
-      h("input", { type: "checkbox", checked: ne, onChange: (re) => Ne(re.target.checked) }),
-      " Pflanzservice gewünscht",
-    ),
-    h(
-      "div",
-      { className: "hedge-calc__actions" },
-      h(
-        "button",
-        {
-          type: "button",
-          className: "button button--primary",
-          onClick: () =>
-            C(
-              `Ich interessiere mich für eine Hecke:\n- Länge: ${B} m\n- Pflanze: ${A.label}\n- Anzahl gemäss Rechner: ${ge} Stück\n- Richtpreis Pflanzen: ${Sa(O)}\n- Pflanzservice gewünscht: ${ne ? "Ja" : "Nein"}\n- Gewünschter Termin: `,
-            ),
-        },
-        "Offerte anfragen ",
-        h(Ve, { size: 17 }),
-      ),
-      ge > 0 &&
-        pf_v.stock >= ge &&
-        h(
-          "button",
-          { type: "button", className: "button button--soft", onClick: () => o(p, ge, p.variants[0]) },
-          `${ge} Stück in den Warenkorb`,
-        ),
-    ),
-    h(
-      "p",
-      { className: "hedge-calc__note" },
-      pf_v.stock < ge
-        ? `Aktuell sind ${pf_v.stock} Stück an Lager – fragen Sie uns für grössere Mengen gern an.`
-        : "Empfehlung für eine dichte Hecke. Je nach Pflanzengrösse und Standort beraten wir Sie gern persönlich.",
-    ),
-  );
-}
 function pf_Inquiry() {
   const [o, C] = H.useState(() => ({ name: "", contact: "", topic: "Offerte für eine Hecke", place: "", message: pf_prefillText, website: "" })),
     [pf_state, pf_setState] = H.useState("idle"),
@@ -13638,12 +13541,7 @@ const pf_icon = (o, C = 18) =>
   pf_locLabels = { sonne: "Sonne", halbschatten: "Halbschatten", schatten: "Schatten" },
   pf_useLabels = { hecke: "Hecke", sichtschutz: "Sichtschutz", naschgarten: "Naschgarten", kuebel: "Kübel / Terrasse", solitaer: "Einzelpflanze", bienen: "Bienenfreundlich" },
   pf_m = (o) => (o >= 100 ? `${(o / 100).toLocaleString("de-CH", { maximumFractionDigits: 1 })} m` : `${o} cm`),
-  pf_heightText = (o) => (!o || (!o.heightMin && !o.heightMax) ? "" : o.heightMin && o.heightMax && o.heightMin !== o.heightMax ? `${pf_m(o.heightMin).replace(" m", "")}–${pf_m(o.heightMax)}` : pf_m(o.heightMax || o.heightMin)),
-  // Starthöhe aus der Grösse, z. B. «80–100 cm» → 90
-  pf_startHeight = (o) => {
-    const C = String(o || "").match(/(\d+)\s*[–-]\s*(\d+)\s*cm/) || String(o || "").match(/(\d+)\s*cm/);
-    return C ? (C[2] ? (+C[1] + +C[2]) / 2 : +C[1]) : null;
-  };
+  pf_heightText = (o) => (!o || (!o.heightMin && !o.heightMax) ? "" : o.heightMin && o.heightMax && o.heightMin !== o.heightMax ? `${pf_m(o.heightMin).replace(" m", "")}–${pf_m(o.heightMax)}` : pf_m(o.heightMax || o.heightMin));
 function pf_Profile({ product: o }) {
   const C = o.profile || {},
     _ = pf_heightText(C);
@@ -13681,136 +13579,6 @@ function pf_Profile({ product: o }) {
           ...y.map((X, Se) => h("li", { key: Se, className: C.months.includes(Se + 1) ? "on" : "", title: L[Se], "aria-hidden": "true" }, X)),
         ),
       ),
-  );
-}
-// Hecken-Vorschau: Höhe nach 1, 3 und 5 Jahren (ohne Rückschnitt), aus Starthöhe und Zuwachs
-function pf_HedgePreview({ product: o, variant: C, perMeter: _ }) {
-  const y = o.profile || {},
-    L = pf_startHeight(C);
-  if (!L || !y.growth) return null;
-  const X = y.heightMax || L + y.growth * 6,
-    Se = [0, 1, 3, 5].map((A) => ({ year: A, cm: Math.min(X, Math.round(L + y.growth * A)) })),
-    Le = Math.max(...Se.map((A) => A.cm), 150),
-    ne = 120,
-    Ne = Math.max(2, Math.min(5, Math.round(_ || 3)));
-  return h(
-    "figure",
-    { className: "hedge-preview" },
-    h(
-      "svg",
-      { viewBox: "0 0 360 160", role: "img", "aria-label": `Höhe der Hecke: ${Se.map((A) => (A.year ? `nach ${A.year} ${A.year === 1 ? "Jahr" : "Jahren"} ca. ${pf_m(A.cm)}` : `heute ca. ${pf_m(A.cm)}`)).join(", ")}` },
-      h("line", { x1: 0, x2: 360, y1: 136, y2: 136, className: "hedge-preview__ground" }),
-      ...Se.map((A, p) => {
-        const B = 12 + p * 88,
-          ge = Math.max(8, Math.round((A.cm / Le) * ne)),
-          O = 136 - ge;
-        return h(
-          "g",
-          { key: A.year },
-          h("rect", { x: B, y: O, width: 72, height: ge, rx: Math.min(18, ge / 2), className: "hedge-preview__hedge", style: { opacity: 0.55 + p * 0.15 } }),
-          ...Array.from({ length: Ne }, (re, ve) => h("circle", { key: ve, cx: B + ((ve + 0.5) * 72) / Ne, cy: 136, r: 2.4, className: "hedge-preview__plant" })),
-          h("text", { x: B + 36, y: O - 6, textAnchor: "middle", className: "hedge-preview__value" }, pf_m(A.cm)),
-          h("text", { x: B + 36, y: 154, textAnchor: "middle", className: "hedge-preview__label" }, A.year ? `${A.year} ${A.year === 1 ? "Jahr" : "Jahre"}` : "heute"),
-        );
-      }),
-    ),
-    h("figcaption", null, `Wuchs ohne Rückschnitt bei ca. ${y.growth} cm pro Jahr${y.heightMax ? `, Endhöhe ${pf_heightText(y)}` : ""}. Die Hecke lässt sich auf jeder Höhe halten.`),
-  );
-}
-function pf_CartDrawer({ added: o, lines: C, total: _, onClose: y, onQty: L, onCheckout: X, onCart: Se }) {
-  const Le = H.useRef(null);
-  H.useEffect(() => {
-    const ne = document.body.style.overflow,
-      Ne = document.activeElement;
-    ((document.body.style.overflow = "hidden"), window.setTimeout(() => Le.current && Le.current.focus(), 0));
-    const A = (p) => p.key === "Escape" && y();
-    return (
-      window.addEventListener("keydown", A),
-      () => {
-        (window.removeEventListener("keydown", A), (document.body.style.overflow = ne), Ne && Ne.focus && Ne.focus());
-      }
-    );
-  }, []);
-  const ne = pf_shipping(C, "lieferung"),
-    Ne = pf_catalogSettings.freeDeliveryFrom > 0 ? pf_catalogSettings.freeDeliveryFrom / 100 - _ : 0;
-  return h(
-    "div",
-    { className: "drawer-backdrop", onClick: (A) => A.target === A.currentTarget && y() },
-    h(
-      "aside",
-      { className: "cart-drawer", role: "dialog", "aria-modal": "true", "aria-labelledby": "cart-drawer-title", tabIndex: -1, ref: Le },
-      h(
-        "header",
-        null,
-        h("h2", { id: "cart-drawer-title" }, "Warenkorb"),
-        h("button", { type: "button", className: "icon-button", onClick: y, "aria-label": "Warenkorb schliessen" }, h(Pm, { size: 20 })),
-      ),
-      o && h("p", { className: "cart-drawer__added", role: "status" }, h(za, { size: 16 }), ` ${o.quantity > 1 ? o.quantity + " × " : ""}${o.name} (${o.variant}) hinzugefügt`),
-      C.length
-        ? h(
-            "ul",
-            { className: "cart-drawer__lines" },
-            ...C.map((A) =>
-              h(
-                "li",
-                { key: A.key },
-                h("img", { src: He(A.product.image), srcSet: At(A.product.imageSet), sizes: "64px", alt: "", loading: "lazy" }),
-                h(
-                  "div",
-                  null,
-                  h("b", null, A.product.name),
-                  h("small", null, A.variant, pf_line(A.product, A.variant, A.quantity).percent ? ` · −${pf_line(A.product, A.variant, A.quantity).percent} % Mengenrabatt` : ""),
-                  h(
-                    "div",
-                    { className: "quantity-control quantity-control--small" },
-                    h("button", { type: "button", "aria-label": `${A.product.name}: Menge verringern`, onClick: () => L(A.key, -1) }, h(Fm, { size: 14 })),
-                    h("span", null, A.quantity),
-                    h("button", { type: "button", "aria-label": `${A.product.name}: Menge erhöhen`, onClick: () => L(A.key, 1) }, h(Uc, { size: 14 })),
-                  ),
-                ),
-                h("strong", null, Sa(pf_line(A.product, A.variant, A.quantity).total)),
-              ),
-            ),
-          )
-        : h("p", { className: "cart-drawer__empty" }, "Ihr Warenkorb ist leer."),
-      C.length > 0 &&
-        h(
-          "footer",
-          null,
-          h("div", { className: "cart-drawer__sum" }, h("span", null, "Zwischensumme"), h("strong", null, Sa(_))),
-          h(
-            "small",
-            null,
-            pf_pickupOnly(C).length
-              ? "Enthält Grössen nur zur Abholung."
-              : Ne > 0 && ne > 0
-                ? `Lieferung ${Sa(ne)} · noch ${Sa(Ne)} bis zur Gratis-Lieferung · Abholung gratis`
-                : ne > 0
-                  ? `Lieferung ${Sa(ne)} · Abholung gratis`
-                  : "Lieferung gratis",
-          ),
-          h("button", { type: "button", className: "button button--primary button--full", onClick: X }, "Zur Kasse ", h(Ve, { size: 17 })),
-          h(
-            "div",
-            { className: "cart-drawer__links" },
-            h("button", { type: "button", className: "inline-link", onClick: Se }, "Warenkorb bearbeiten"),
-            h("button", { type: "button", className: "inline-link", onClick: y }, "Weiter einkaufen"),
-          ),
-        ),
-    ),
-  );
-}
-function pf_BeforeAfter({ before: o, beforeSet: C, after: _, afterSet: y, title: L }) {
-  const [X, Se] = H.useState(50);
-  return h(
-    "div",
-    { className: "before-after", style: { "--pos": `${X}%` } },
-    h("img", { src: He(_), srcSet: y ? At(y) : void 0, sizes: "(max-width: 900px) 92vw, 50vw", alt: `${L} – nachher`, loading: "lazy" }),
-    h("div", { className: "before-after__before" }, h("img", { src: He(o), srcSet: C ? At(C) : void 0, sizes: "(max-width: 900px) 92vw, 50vw", alt: `${L} – vorher`, loading: "lazy" })),
-    h("span", { className: "before-after__tag before-after__tag--l", "aria-hidden": "true" }, "Vorher"),
-    h("span", { className: "before-after__tag before-after__tag--r", "aria-hidden": "true" }, "Nachher"),
-    h("span", { className: "before-after__handle", "aria-hidden": "true" }),
-    h("input", { type: "range", min: 0, max: 100, value: X, onChange: (Le) => Se(+Le.target.value), "aria-label": `Vorher/Nachher vergleichen: ${L}` }),
   );
 }
 function pf_StockAlert({ variantId: o, label: C }) {
@@ -15357,32 +15125,6 @@ function O1() {
               }),
             ],
           }),
-          i.jsx("section", {
-            className: "section hedge-cta",
-            "aria-labelledby": "hedge-cta-title",
-            children: i.jsxs("div", {
-              className: "container hedge-cta__inner",
-              children: [
-                i.jsxs("div", {
-                  className: "hedge-cta__copy",
-                  children: [
-                    i.jsx("span", { className: "eyebrow", children: "Offerte für Ihre Hecke" }),
-                    i.jsx("h2", { id: "hedge-cta-title", children: "Wie viele Pflanzen braucht Ihre Hecke?" }),
-                    i.jsx("p", {
-                      children:
-                        "Geben Sie die Länge Ihrer Hecke ein und erhalten Sie sofort Stückzahl und Richtpreis. Für Lieferung, Pflanzung oder grössere Projekte erstellen wir Ihnen gern eine persönliche Offerte.",
-                    }),
-                    i.jsxs("a", {
-                      className: "button button--dark",
-                      ...Lk("contact"),
-                      children: ["Beratung anfragen ", i.jsx(Ve, { size: 18 })],
-                    }),
-                  ],
-                }),
-                i.jsx(pf_Hedge, { onAdd: Kl, onRequest: pf_request }),
-              ],
-            }),
-          }),
           i.jsxs("section", {
             className: Al ? "newsletter newsletter--subscribed container" : "newsletter container",
             children: [
@@ -15872,8 +15614,6 @@ function O1() {
                     pf_catalogSettings.planting !== !1 && h("li", null, h(In, { size: 17 }), h("span", null, "Pflanzservice in der Kasse dazubuchbar")),
                   ),
                   h(pf_Profile, { product: _ }),
-                  _.category === "Heckenpflanzen" &&
-                    i.jsx(pf_Hedge, { onAdd: Kl, onRequest: pf_request, initial: _.id, compact: !0 }, _.id),
                   i.jsx("div", {
                     className: "accordions",
                     children: E1.map((v) =>
@@ -16697,23 +16437,6 @@ function O1() {
             h("li", null, h("b", null, "Begleitung"), " – wir bleiben auch nach der Pflanzung für Pflegefragen erreichbar."),
           ),
         ),
-        h(
-          "section",
-          { className: "hedge-cta hedge-cta--inline" },
-          h(
-            "div",
-            { className: "hedge-cta__inner" },
-            h(
-              "div",
-              { className: "hedge-cta__copy" },
-              h("span", { className: "eyebrow" }, "Offerte für Ihre Hecke"),
-              h("h2", null, "Stückzahl und Richtpreis in Sekunden."),
-              h("p", null, "Berechnen Sie den Bedarf für Ihre Hecke und fordern Sie direkt eine unverbindliche Offerte an."),
-              h("a", { className: "button button--dark", ...Lk("contact") }, "Beratung anfragen ", h(Ve, { size: 18 })),
-            ),
-            h(pf_Hedge, { onAdd: Kl, onRequest: pf_request }),
-          ),
-        ),
       ),
     pf_article = (v) => {
       const T = (v.match(/^\/ratgeber\/([a-z0-9-]+)/) || [])[1];
@@ -16935,22 +16658,6 @@ function O1() {
           ),
         ),
         h(pf_Inquiry, null),
-        h(
-          "section",
-          { className: "hedge-cta hedge-cta--inline" },
-          h(
-            "div",
-            { className: "hedge-cta__inner" },
-            h(
-              "div",
-              { className: "hedge-cta__copy" },
-              h("span", { className: "eyebrow" }, "Hecken-Rechner"),
-              h("h2", null, "Wie viele Pflanzen brauchen Sie?"),
-              h("p", null, "Länge eingeben, Pflanze wählen und die Offertanfrage mit allen Angaben direkt absenden."),
-            ),
-            h(pf_Hedge, { onAdd: Kl, onRequest: pf_request }),
-          ),
-        ),
       );
   return i.jsxs(i.Fragment, {
     children: [

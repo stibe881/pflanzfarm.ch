@@ -37,7 +37,7 @@ drei Bestellungen in verschiedenen Zuständen und einen Newsletter-Abonnenten. D
 
 ## Was du testen kannst
 
-- [ ] **Shop**: Produkte, Grössen mit unterschiedlichem Preis, Merkliste (Herz), Hecken-Rechner
+- [ ] **Shop**: Produkte, Grössen mit unterschiedlichem Preis, Merkliste (Herz)
 - [ ] **Warenkorb** bleibt nach dem Neuladen erhalten
 - [ ] **Versandkosten**: Photinia allein (CHF 12), dazu eine Thuja 120–140 cm (es zählt die teuerste Klasse: CHF 120), dazu Thuja 140–160 cm (nur Abholung möglich)
 - [ ] **Kasse als Gast** mit Lieferung und Rechnung → Danke-Seite → Rechnung (PDF mit QR-Zahlteil) → E-Mails im Test-Postfach
@@ -81,7 +81,7 @@ drei Bestellungen in verschiedenen Zuständen und einen Newsletter-Abonnenten. D
 - [ ] **Produkte → Werkzeuge**: Preise um x % anpassen, Export nach Excel/CSV, Import geänderter Preise und Lager;
       «Duplizieren» in der Produktliste
 - [ ] **Steckbrief** im Produkt ausfüllen (Standort, Endhöhe, Zuwachs, Winterhärte, Pflanzzeit) → Produktseite,
-      Shop-Filter («Filter»), Hecken-Vorschau im Rechner
+      Shop-Filter («Filter»)
 - [ ] **Referenz mit Vorher-Bild** → Schieberegler auf der Referenzen-Seite
 - [ ] **Shop-Design**: Mini-Warenkorb nach «In den Warenkorb», Kaufleiste beim Scrollen auf dem Handy,
       Kasse in drei Schritten, Produktbilder in der Bestellbestätigung
