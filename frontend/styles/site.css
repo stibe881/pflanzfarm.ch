@@ -2465,16 +2465,6 @@ a.pill-link--soft {
   padding-top: 36px;
 }
 
-/* Kategorie-Kacheln auf der Startseite: alle gleich gross */
-@media (min-width: 761px) {
-  .category-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .category-grid .category-card:first-child {
-    grid-column: auto;
-  }
-}
-
 /* «Alle … ansehen»-Links: Pille statt Unterstreichung */
 a.text-link,
 span.text-link {

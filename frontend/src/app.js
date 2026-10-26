@@ -12826,32 +12826,6 @@ const Ql = [
       stock: 6,
     },
   ],
-  j1 = [
-    {
-      name: "Heckenpflanzen",
-      filter: "Heckenpflanzen",
-      text: "Sichtschutz mit Stil",
-      image: "/assets/thuja-smaragd.jpg",
-      imageSet: "/assets/thuja-smaragd-400.webp 400w, /assets/thuja-smaragd-800.webp 800w",
-      imageAlt: "Thuja Smaragd aus dem Pflanzfarm-Sortiment",
-    },
-    {
-      name: "Beerensträucher",
-      filter: "Beerensträucher",
-      text: "Genuss aus dem Garten",
-      image: "/assets/diverse-beerenstraeucher.jpg",
-      imageSet: "/assets/diverse-beerenstraeucher-400.webp 400w, /assets/diverse-beerenstraeucher-800.webp 800w",
-      imageAlt: "Diverse Beerensträucher aus dem Pflanzfarm-Sortiment",
-    },
-    {
-      name: "Baumschule",
-      filter: "Alle Pflanzen",
-      text: "Direkt vor Ort entdecken",
-      image: "/assets/pflanzfarm-garten-1.jpg",
-      imageSet: "/assets/pflanzfarm-garten-1-640.webp 640w, /assets/pflanzfarm-garten-1-1280.webp 1280w",
-      imageAlt: "Pflanzenquartiere der Pflanzfarm",
-    },
-  ],
   Sf = [
     {
       title: "Formgehölze & Taxus",
@@ -15164,55 +15138,6 @@ function O1() {
               ),
             ),
           ),
-          i.jsxs("section", {
-            className: "section category-section container",
-            children: [
-              i.jsxs("div", {
-                className: "section-heading section-heading--split",
-                children: [
-                  i.jsx("div", {
-                    children: i.jsxs("h2", {
-                      children: ["Für jeden Garten", i.jsx("br", {}), "die richtige Pflanze."],
-                    }),
-                  }),
-                  i.jsxs("a", {
-                    className: "text-link",
-                    ...Lk("shop"),
-                    children: ["Alle Kategorien ansehen ", i.jsx(Ve, { size: 16 })],
-                  }),
-                ],
-              }),
-              i.jsx("div", {
-                className: "category-grid",
-                children: j1.map((v) =>
-                  i.jsxs(
-                    "a",
-                    {
-                      className: "category-card",
-                      ...Lk("shop", () => p(v.filter)),
-                      children: [
-                        i.jsx("img", {
-                          className: "category-card__image",
-                          src: He(v.image),
-                          srcSet: At(v.imageSet),
-                          sizes: "(max-width: 760px) 92vw, (max-width: 1000px) 46vw, 32vw",
-                          loading: "lazy",
-                          decoding: "async",
-                          alt: v.imageAlt,
-                        }),
-                        i.jsxs("span", {
-                          className: "category-card__body",
-                          children: [i.jsx("strong", { children: v.name }), i.jsx("span", { children: v.text })],
-                        }),
-                        i.jsx("span", { className: "circle-arrow", children: i.jsx(Ve, { size: 18 }) }),
-                      ],
-                    },
-                    v.name,
-                  ),
-                ),
-              }),
-            ],
-          }),
           i.jsxs("section", {
             className: Al ? "newsletter newsletter--subscribed container" : "newsletter container",
             children: [
