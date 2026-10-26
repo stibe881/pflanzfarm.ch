@@ -10,13 +10,13 @@ use App\Models\Order;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\OrderService;
+use App\Support\SafeMail;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -157,7 +157,7 @@ class AccountController extends Controller
         $order->refresh();
         $order->mailCustomer(new OrderStatusUpdate($order));
         if ($notify = Setting::get('notify_email')) {
-            Mail::to($notify)->send(new CustomerCancelledOrder($order));
+            SafeMail::send($notify, new CustomerCancelledOrder($order));
         }
 
         return response()->json(['order' => OrderController::summary($order->load('items'))]);

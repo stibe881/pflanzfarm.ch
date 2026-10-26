@@ -3,19 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\NewsletterConfirmation;
 use App\Models\NewsletterSubscriber;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Services\InvoicePdf;
 use App\Services\OrderService;
 use App\Services\StripeCheckout;
+use App\Support\SafeMail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use App\Mail\NewsletterConfirmation;
 use Throwable;
 
 class OrderController extends Controller
@@ -60,7 +61,7 @@ class OrderController extends Controller
             'preferred_date.before' => 'Der Wunschtermin darf höchstens sechs Monate in der Zukunft liegen.',
         ]);
         // Wochenenden: kein Liefer-/Abholtermin
-        if (! empty($data['preferred_date']) && \Illuminate\Support\Carbon::parse($data['preferred_date'])->isSunday()) {
+        if (! empty($data['preferred_date']) && Carbon::parse($data['preferred_date'])->isSunday()) {
             throw ValidationException::withMessages(['preferred_date' => 'Am Sonntag liefern wir nicht und haben geschlossen. Bitte wählen Sie einen anderen Tag.']);
         }
 
@@ -78,7 +79,7 @@ class OrderController extends Controller
             $sub = NewsletterSubscriber::query()->firstOrNew(['email' => strtolower($data['email'])]);
             if ($sub->status !== 'bestaetigt') {
                 $sub->fill(['status' => 'ausstehend', 'source' => 'bestellung'])->save();
-                Mail::to($sub->email)->send(new NewsletterConfirmation($sub));
+                SafeMail::send($sub->email, new NewsletterConfirmation($sub));
             }
         }
 

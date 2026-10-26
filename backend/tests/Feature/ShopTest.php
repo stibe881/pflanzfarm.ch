@@ -282,4 +282,16 @@ class ShopTest extends TestCase
         config(['app.url' => 'https://pflanzfarm.ch']);
         $this->assertStringContainsString('content="https://pflanzfarm.ch/assets/og-image.jpg"', $this->get('/kontakt')->assertOk()->getContent());
     }
+
+    public function test_order_and_contact_survive_failing_mail_server(): void
+    {
+        // Mailserver nicht erreichbar (wie eine nicht bestätigte Resend-Domain): Bestellung muss trotzdem klappen
+        \Illuminate\Support\Facades\Mail::shouldReceive('to')->andThrow(new \RuntimeException('The pflanzfarm.ch domain is not verified.'));
+
+        $this->postJson('/api/orders', $this->orderPayload(['newsletter' => true]))->assertCreated();
+        $this->assertSame(1, \App\Models\Order::query()->count());
+
+        $this->postJson('/api/contact', ['name' => 'Anna', 'contact' => 'anna@example.ch', 'topic' => 'Beratung', 'message' => 'Hallo'])
+            ->assertStatus(422)->assertJsonValidationErrors('message');
+    }
 }

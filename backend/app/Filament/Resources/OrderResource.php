@@ -11,6 +11,7 @@ use App\Services\InvoicePdf;
 use App\Services\OrderService;
 use App\Services\OrderWorkflow;
 use App\Services\PaymentReminders;
+use Filament\Actions\ActionGroup;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
@@ -198,12 +199,12 @@ class OrderResource extends Resource
                 })->deselectRecordsAfterCompletion(),
             Tables\Actions\BulkAction::make('deliveryNotes')->label('Lieferscheine drucken')->icon('heroicon-o-clipboard-document-list')->color('gray')
                 ->action(fn (Collection $records) => response()->streamDownload(
-                    fn () => print(app(InvoicePdf::class)->deliveryNotes($records->reject(fn ($o) => $o->status === 'storniert')->values())),
+                    fn () => print (app(InvoicePdf::class)->deliveryNotes($records->reject(fn ($o) => $o->status === 'storniert')->values())),
                     'Lieferscheine-'.now()->format('Y-m-d').'.pdf'
                 )),
             Tables\Actions\BulkAction::make('pickingList')->label('Rüstliste für Auswahl')->icon('heroicon-o-clipboard-document-check')->color('gray')
                 ->action(fn (Collection $records) => response()->streamDownload(
-                    fn () => print(app(InvoicePdf::class)->pickingList(null, $records->reject(fn ($o) => $o->status === 'storniert')->values())),
+                    fn () => print (app(InvoicePdf::class)->pickingList(null, $records->reject(fn ($o) => $o->status === 'storniert')->values())),
                     'Ruestliste-Auswahl-'.now()->format('Y-m-d').'.pdf'
                 )),
         ];
@@ -259,13 +260,13 @@ class OrderResource extends Resource
                 ->requiresConfirmation()
                 ->action(fn (Order $record) => $record->update(['payment_status' => 'bezahlt', 'paid_at' => now()])),
             $class::make('invoice')->label('Rechnung')->icon('heroicon-o-document-arrow-down')->color('gray')
-                ->action(fn (Order $record) => response()->streamDownload(fn () => print(app(InvoicePdf::class)->render($record)), app(InvoicePdf::class)->filename($record))),
+                ->action(fn (Order $record) => response()->streamDownload(fn () => print (app(InvoicePdf::class)->render($record)), app(InvoicePdf::class)->filename($record))),
             $class::make('deliveryNote')->label('Lieferschein')->icon('heroicon-o-clipboard-document-list')->color('gray')
                 ->visible(fn (Order $record) => $record->status !== 'storniert')
-                ->action(fn (Order $record) => response()->streamDownload(fn () => print(app(InvoicePdf::class)->deliveryNote($record)), 'Lieferschein-'.$record->number.'.pdf')),
+                ->action(fn (Order $record) => response()->streamDownload(fn () => print (app(InvoicePdf::class)->deliveryNote($record)), 'Lieferschein-'.$record->number.'.pdf')),
             $class::make('creditNote')->label('Gutschrift')->icon('heroicon-o-receipt-refund')->color('gray')
                 ->visible(fn (Order $record) => (bool) $record->refunded_at)
-                ->action(fn (Order $record) => response()->streamDownload(fn () => print(app(InvoicePdf::class)->creditNote($record)), 'Gutschrift-'.$record->number.'.pdf')),
+                ->action(fn (Order $record) => response()->streamDownload(fn () => print (app(InvoicePdf::class)->creditNote($record)), 'Gutschrift-'.$record->number.'.pdf')),
             $class::make('remind')->label('Zahlungserinnerung')->icon('heroicon-o-bell-alert')->color('warning')
                 ->visible(fn (Order $record) => $record->email && $record->payment_method === 'invoice' && $record->payment_status === 'offen' && $record->status !== 'storniert')
                 ->requiresConfirmation()
@@ -279,8 +280,9 @@ class OrderResource extends Resource
                 ->visible(fn (Order $record) => $record->email && $record->payment_status !== 'ausstehend')
                 ->requiresConfirmation()
                 ->action(function (Order $record) {
-                    $record->mailCustomer(new OrderConfirmation($record));
-                    Notification::make()->title('Bestellbestätigung gesendet')->success()->send();
+                    $record->mailCustomer(new OrderConfirmation($record))
+                        ? Notification::make()->title('Bestellbestätigung gesendet')->success()->send()
+                        : Notification::make()->title('E-Mail konnte nicht gesendet werden')->body('Bitte unter Einstellungen → Systemstatus den E-Mail-Versand prüfen.')->danger()->send();
                 }),
             $class::make('cancel')->label('Stornieren')->icon('heroicon-o-x-circle')->color('danger')
                 ->visible(fn (Order $record) => in_array($record->status, ['neu', 'bestaetigt'], true))
@@ -332,7 +334,7 @@ class OrderResource extends Resource
 
         return [
             ...$all->only($primary)->values()->all(),
-            \Filament\Actions\ActionGroup::make($all->except($primary)->values()->all())
+            ActionGroup::make($all->except($primary)->values()->all())
                 ->label('Mehr')->icon('heroicon-m-ellipsis-vertical')->button()->color('gray'),
         ];
     }

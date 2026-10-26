@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\NewsletterConfirmation;
+use App\Models\NewsletterSend;
 use App\Models\NewsletterSubscriber;
+use App\Support\SafeMail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class NewsletterController extends Controller
@@ -23,7 +24,7 @@ class NewsletterController extends Controller
             return response()->json(['ok' => true, 'status' => 'bestaetigt']);
         }
         $subscriber->fill(['status' => 'ausstehend', 'source' => $data['source'] ?? 'website', 'token' => Str::random(48)])->save();
-        Mail::to($email)->send(new NewsletterConfirmation($subscriber));
+        SafeMail::send($email, new NewsletterConfirmation($subscriber));
 
         return response()->json(['ok' => true, 'status' => 'ausstehend']);
     }
@@ -44,7 +45,7 @@ class NewsletterController extends Controller
         $subscriber = NewsletterSubscriber::query()->where('token', $token)->first();
         $subscriber?->update(['status' => 'abgemeldet', 'unsubscribed_at' => now()]);
         if ($subscriber && $request->integer('s')) {
-            \App\Models\NewsletterSend::query()->whereKey($request->integer('s'))->where('email', $subscriber->email)
+            NewsletterSend::query()->whereKey($request->integer('s'))->where('email', $subscriber->email)
                 ->whereNull('unsubscribed_at')->update(['unsubscribed_at' => now()]);
         }
 

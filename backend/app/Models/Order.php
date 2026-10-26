@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use App\Support\SafeMail;
+use Illuminate\Contracts\Mail\Mailable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class Order extends Model
 {
-    use \Illuminate\Database\Eloquent\Factories\HasFactory;
+    use HasFactory;
 
     public const STATUSES = ['neu' => 'Neu', 'bestaetigt' => 'Bestätigt', 'geliefert' => 'Geliefert / abgeholt', 'storniert' => 'Storniert'];
 
@@ -85,7 +90,7 @@ class Order extends Model
     }
 
     /** Fälligkeitsdatum einer Rechnung */
-    public function dueDate(): \Illuminate\Support\Carbon
+    public function dueDate(): Carbon
     {
         return $this->created_at->copy()->addDays((int) Setting::get('invoice_due_days'));
     }
@@ -122,9 +127,9 @@ class Order extends Model
     /**
      * Verlauf: Systemereignisse, Änderungen im Admin und interne Notizen, neueste zuerst.
      *
-     * @return \Illuminate\Support\Collection<int, array{at: \Illuminate\Support\Carbon, title: string, by: ?string, text: ?string, type: string}>
+     * @return Collection<int, array{at: Carbon, title: string, by: ?string, text: ?string, type: string}>
      */
-    public function timeline(): \Illuminate\Support\Collection
+    public function timeline(): Collection
     {
         $events = collect([
             [$this->created_at, 'Bestellung eingegangen ('.(self::SOURCES[$this->source] ?? $this->source).')', 'system'],
@@ -158,14 +163,13 @@ class Order extends Model
     }
 
     /** E-Mail an die Kundschaft, sofern eine Adresse erfasst ist (Telefonbestellungen evtl. ohne). */
-    public function mailCustomer(\Illuminate\Contracts\Mail\Mailable $mail): bool
+    public function mailCustomer(Mailable $mail): bool
     {
         if (! $this->email) {
             return false;
         }
-        \Illuminate\Support\Facades\Mail::to($this->email)->send($mail);
 
-        return true;
+        return SafeMail::send($this->email, $mail);
     }
 
     public function paymentStatusLabel(): string

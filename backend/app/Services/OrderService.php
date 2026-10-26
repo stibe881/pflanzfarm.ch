@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Mail\CreditNoteMail;
+use App\Mail\LowStockAlert;
 use App\Mail\NewOrderNotification;
 use App\Mail\OrderConfirmation;
 use App\Models\Coupon;
@@ -11,8 +13,8 @@ use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\SafeMail;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -200,7 +202,7 @@ class OrderService
             return;
         }
         ProductVariant::query()->whereKey($variants->pluck('id'))->update(['low_stock_notified_at' => now()]);
-        Mail::to($to)->send(new \App\Mail\LowStockAlert($variants->map->fresh()->all()));
+        SafeMail::send($to, new LowStockAlert($variants->map->fresh()->all()));
     }
 
     /** Bestätigungsmail an Kundschaft und Hinweis ans Team. */
@@ -208,7 +210,7 @@ class OrderService
     {
         $order->mailCustomer(new OrderConfirmation($order));
         if ($notify = Setting::get('notify_email')) {
-            Mail::to($notify)->send(new NewOrderNotification($order));
+            SafeMail::send($notify, new NewOrderNotification($order));
         }
     }
 
@@ -266,6 +268,6 @@ class OrderService
             app(StripeCheckout::class)->refund($order);
         }
         $order->update(['payment_status' => 'erstattet', 'refund_amount' => $order->total, 'refunded_at' => now()]);
-        $order->mailCustomer(new \App\Mail\CreditNoteMail($order->fresh('items')));
+        $order->mailCustomer(new CreditNoteMail($order->fresh('items')));
     }
 }

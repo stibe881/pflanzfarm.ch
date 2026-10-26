@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Mail\ContactMessage;
 use App\Models\Setting;
+use App\Support\SafeMail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class ContactController extends Controller
 {
@@ -30,7 +31,10 @@ class ContactController extends Controller
             $data['email'] = $data['contact'];
         }
 
-        Mail::to(Setting::get('notify_email'))->send(new ContactMessage($data));
+        // Die Anfrage existiert nur als E-Mail – schlägt der Versand fehl, muss die Kundschaft es erfahren
+        if (! SafeMail::send(Setting::get('notify_email'), new ContactMessage($data))) {
+            throw ValidationException::withMessages(['message' => 'Ihre Nachricht konnte gerade nicht gesendet werden. Bitte rufen Sie uns an (079 336 14 95) oder schreiben Sie an info@pflanzfarm.ch.']);
+        }
 
         return response()->json(['ok' => true]);
     }

@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DeliveryZone;
 use App\Models\GuideArticle;
+use App\Models\GuideCategory;
 use App\Models\Popup;
 use App\Models\Product;
 use App\Models\Reference;
 use App\Models\Setting;
+use App\Services\ImageOptimizer;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class CatalogController extends Controller
 {
@@ -17,7 +22,7 @@ class CatalogController extends Controller
     /** Katalog für die Website, 10 Minuten zwischengespeichert; jede Änderung im Admin leert den Speicher sofort. */
     public function __invoke(): JsonResponse
     {
-        return response()->json(\Illuminate\Support\Facades\Cache::remember(self::CACHE_KEY, now()->addMinutes(10), fn () => $this->build()));
+        return response()->json(Cache::remember(self::CACHE_KEY, now()->addMinutes(10), fn () => $this->build()));
     }
 
     private function build(): array
@@ -57,7 +62,7 @@ class CatalogController extends Controller
                 'product' => $a->product?->slug,
             ]),
             // Kategorien in der Admin-Reihenfolge (nur solche mit veröffentlichten Artikeln)
-            'guideCategories' => \App\Models\GuideCategory::query()->whereHas('articles', fn ($q) => $q->where('published', true))
+            'guideCategories' => GuideCategory::query()->whereHas('articles', fn ($q) => $q->where('published', true))
                 ->orderBy('sort')->orderBy('name')->get(['name', 'slug'])->map(fn ($c) => ['name' => $c->name, 'slug' => $c->slug]),
             'popup' => $popup ? [
                 'id' => $popup->id,
@@ -81,7 +86,7 @@ class CatalogController extends Controller
                 'testMode' => (bool) config('pflanzfarm.test_mode'),
                 'planting' => (bool) Setting::get('planting_enabled'),
                 'plantingMinFee' => (int) Setting::get('planting_min_fee') / 100,
-                'zones' => \App\Models\DeliveryZone::query()->orderBy('sort')->orderBy('id')->get()->map(fn ($z) => [
+                'zones' => DeliveryZone::query()->orderBy('sort')->orderBy('id')->get()->map(fn ($z) => [
                     'name' => $z->name,
                     'ranges' => collect($z->postal_ranges)->map(fn ($r) => [(int) $r['from'], (int) (($r['to'] ?? null) ?: $r['from'])])->values(),
                     'surcharge' => $z->surcharge / 100,
@@ -116,7 +121,7 @@ class CatalogController extends Controller
             'image' => self::image($p->image),
             'imageSet' => self::imageSet($p->image),
             'gallery' => collect($p->gallery ?? [])->map(fn ($g) => self::image(
-                \Illuminate\Support\Facades\Storage::disk('public')->exists($v = \App\Services\ImageOptimizer::variant($g, 1600)) ? $v : $g
+                Storage::disk('public')->exists($v = ImageOptimizer::variant($g, 1600)) ? $v : $g
             ))->values()->all(),
             'discounts' => collect($p->volume_discounts ?? [])->map(fn ($t) => ['minQty' => (int) $t['min_qty'], 'percent' => min(90, (int) $t['percent'])])
                 ->filter(fn ($t) => $t['minQty'] > 1 && $t['percent'] > 0)->sortBy('minQty')->values()->all(),
@@ -159,7 +164,7 @@ class CatalogController extends Controller
         }
         if (! $path || ! str_starts_with($path, '/assets/')) {
             // Hochgeladene Bilder: optimierte WebP-Fassungen, falls vorhanden
-            return ($path ? \App\Services\ImageOptimizer::srcset(ltrim($path, '/')) : null) ?? self::image($path);
+            return ($path ? ImageOptimizer::srcset(ltrim($path, '/')) : null) ?? self::image($path);
         }
         // Für die mitgelieferten Bilder gibt es WebP-Varianten in zwei Breiten.
         $map = [
