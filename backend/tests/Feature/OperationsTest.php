@@ -254,4 +254,22 @@ class OperationsTest extends TestCase
         $this->app['env'] = 'testing';
         Mail::assertSentCount(1);
     }
+
+    public function test_password_reset_command_sets_new_password_and_lists_team_accounts(): void
+    {
+        $admin = User::query()->create(['name' => 'Admin', 'email' => 'admin@pflanzfarm.test', 'password' => 'Alt-Passwort-2026', 'role' => 'admin']);
+
+        $this->artisan('pflanzfarm:passwort', ['email' => 'Admin@Pflanzfarm.test'])
+            ->expectsQuestion('Neues Passwort (mind. 12 Zeichen, Gross-/Kleinbuchstaben und Zahl)', 'Pflanzfarm-Test-2026')
+            ->assertSuccessful();
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('Pflanzfarm-Test-2026', $admin->fresh()->password));
+
+        $this->postJson('/api/login', ['email' => 'admin@pflanzfarm.test', 'password' => 'Pflanzfarm-Test-2026'])
+            ->assertOk()->assertJsonPath('redirect', '/admin');
+
+        $this->artisan('pflanzfarm:passwort', ['email' => 'weg@pflanzfarm.test'])
+            ->expectsOutputToContain('Kein Konto')
+            ->expectsTable(['E-Mail', 'Rolle'], [['admin@pflanzfarm.test', 'admin']])
+            ->assertFailed();
+    }
 }

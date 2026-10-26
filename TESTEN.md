@@ -32,6 +32,9 @@ Stoppen: `docker compose down`. Alles auf Anfang zurücksetzen (Datenbank leeren
 | Team | `team@pflanzfarm.test` | `Pflanzfarm-Test-2026` |
 | Kunde (mit 2 Beispielbestellungen) | `kunde@pflanzfarm.test` | `Kunde-Test-2026` |
 
+Auf Hetzner hat `admin@pflanzfarm.test` stattdessen das Passwort aus `TEST_ADMIN_PASSWORD` in `backend/.env` (gilt ab der ersten Installation, späteres Ändern in `.env` wirkt nicht mehr). Passwort jederzeit neu setzen:
+`sh backend/deploy/artisan.sh pflanzfarm:passwort admin@pflanzfarm.test`
+
 Die Testdaten enthalten zusätzlich Beispielpreise für drei weitere Thuja-Grössen, Beispiel-Versandklassen (Photinia als «Paket» CHF 12, Thuja 120–140 cm als «Grosslieferung» CHF 120, Thuja 140–160 cm nur Abholung), eine Beispiel-IBAN für QR-Rechnungen,
 drei Bestellungen in verschiedenen Zuständen und einen Newsletter-Abonnenten. Diese Daten gibt es nur in der Testumgebung.
 

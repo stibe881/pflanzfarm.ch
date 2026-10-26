@@ -2516,3 +2516,16 @@ a:hover span.text-link svg {
   background: #fff;
   color: var(--ink);
 }
+
+/* Text-Schaltflächen («Passwort vergessen?» usw.): ohne Unterstrich, nur so breit wie der Text */
+button.inline-link {
+  justify-self: start;
+  width: auto;
+  border-bottom: 0;
+  padding: 4px 2px;
+  text-decoration: none;
+  color: var(--ink);
+}
+button.inline-link:hover {
+  color: var(--terracotta-text);
+}

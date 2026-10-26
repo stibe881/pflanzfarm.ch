@@ -86,6 +86,7 @@ php ~/public_html/pflanzfarm/backend/artisan schedule:run
 - `https://pflanzfarm.gross-ict.ch` öffnen (nur falls `SITE_PASSWORD` gesetzt ist, fragt der Browser nach dem Passwort, Benutzername beliebig)
 - Oben steht der gelbe Balken «Testumgebung»
 - Admin: `https://pflanzfarm.gross-ict.ch/admin` mit `admin@pflanzfarm.test` und deinem `TEST_ADMIN_PASSWORD`
+  (Passwort vergessen oder Anmeldung klappt nicht: `sh backend/deploy/artisan.sh pflanzfarm:passwort admin@pflanzfarm.test` – setzt ein neues Passwort bzw. zeigt, welche Admin-Konten es gibt)
 
 Solange Resend und Stripe nicht eingerichtet sind, werden E-Mails nur in `backend/storage/logs/laravel.log`
 protokolliert und Zahlungen mit Karte/TWINT simuliert. Einrichten: siehe Abschnitt 7.
